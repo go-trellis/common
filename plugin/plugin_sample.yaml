@@ -1,0 +1,12 @@
+## export TRELLIS_PLUGIN_FILENAME=config_path
+
+plugins:
+  - name: test1
+    script_file: ./test1.sh
+    interval: 0s
+  - name: test2
+    script_file: ./test2.sh
+    interval: 5s
+  - name: test3
+    script_file: ./test3.sh
+    interval: 5s

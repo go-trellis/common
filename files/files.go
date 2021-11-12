@@ -255,9 +255,9 @@ func (p *fileGem) write(name string, b []byte, opts ...WriteOption) (n int, err 
 
 func (p *fileGem) FileInfo(name string) (os.FileInfo, error) {
 	p.Lock()
-	defer p.Unlock()
 	fi, err := p.tryOpen(name)
 	if err != nil {
+		p.Unlock()
 		return nil, err
 	}
 	p.Unlock()

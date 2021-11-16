@@ -23,52 +23,47 @@ import (
 	"xorm.io/xorm"
 )
 
-// Repo trellis xorm
-type Repo struct {
-	isTransaction bool
-	txSession     *xorm.Session
+// Transaction 事务处理对象
+// TODO: Engines 为一个option，可以支持redis等
+type Transaction interface {
+	SetEngines(engines map[string]*xorm.Engine)
+	Session() *xorm.Session
+	BeginTransaction(name string) error
+	BeginNonTransaction(name string) error
+}
 
-	engines   map[string]*xorm.Engine
-	defEngine *xorm.Engine
+// TXFunc Transaction function
+type TXFunc func(repos ...interface{}) error
+
+// Inheritor inherit function
+type Inheritor interface {
+	Inherit(repo interface{}) error
+}
+
+// Inherit new repository from origin repository
+func Inherit(new, origin interface{}) error {
+	if inheritor, ok := new.(Inheritor); ok {
+		return inheritor.Inherit(origin)
+	}
+	return nil
+}
+
+// Derivative derive function
+type Derivative interface {
+	Derive() (repo interface{}, err error)
+}
+
+// Derive derive from developer function
+func Derive(origin interface{}) (interface{}, error) {
+	if d, ok := origin.(Derivative); ok {
+		return d.Derive()
+	}
+	return nil, nil
 }
 
 // New get trellis xorm committer
-func New() Committer {
+func New() Transaction {
 	return &Repo{}
-}
-
-// SetEngines set xorm engines
-func (p *Repo) SetEngines(engines map[string]*xorm.Engine) {
-	if defEngine, exist := engines[DefaultDatabase]; exist {
-		p.engines = engines
-		p.defEngine = defEngine
-	} else {
-		panic(ErrNotFoundDefaultDatabase)
-	}
-}
-
-// Session get session
-func (p *Repo) Session() *xorm.Session {
-	return p.txSession
-}
-
-// GetEngine get engine by name
-func (p *Repo) getEngine(name string) (*xorm.Engine, error) {
-	if engine, _exist := p.engines[name]; _exist {
-		return engine, nil
-	}
-	return nil, ErrNotFoundXormEngine
-}
-
-func (p *Repo) checkRepos(txFunc interface{}, originRepos ...interface{}) error {
-	if reposLen := len(originRepos); reposLen < 1 {
-		return ErrAtLeastOneRepo
-	}
-
-	if txFunc == nil {
-		return ErrNotFoundTransactionFunction
-	}
-	return nil
 }
 
 func getRepo(v interface{}) *Repo {
@@ -98,10 +93,10 @@ func createNewTXorm(origin interface{}) (*Repo, interface{}, error) {
 		return nil, nil, err
 	}
 
-	newTxorm := getRepo(newRepoI)
+	newTXorm := getRepo(newRepoI)
 
-	if newTxorm == nil {
+	if newTXorm == nil {
 		return nil, nil, ErrFailToConvertTXToNonTX
 	}
-	return newTxorm, newRepoI, nil
+	return newTXorm, newRepoI, nil
 }

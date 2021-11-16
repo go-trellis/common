@@ -55,7 +55,6 @@ func NewEnginesFromConfig(conf config.Config) (engines map[string]*xorm.Engine, 
 		databaseConf := conf.GetValuesConfig(key)
 		switch driver := databaseConf.GetString("driver", "mysql"); driver {
 		case driver:
-
 			databaseName := databaseConf.GetString("database", key)
 			if databaseName == "" {
 				return nil, errcode.Newf("not found database: %s", key)

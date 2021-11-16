@@ -48,8 +48,8 @@ const (
 	AfterCommit
 )
 
-// LogicFuncs logic functions
-type LogicFuncs struct {
+// LogicFunc logic functions
+type LogicFunc struct {
 	BeforeLogic interface{}
 	AfterLogic  interface{}
 	OnError     interface{}
@@ -89,69 +89,57 @@ func DeepFields(iface interface{}, vType reflect.Type, fields []reflect.Value) i
 	return nil
 }
 
-// GetLogicFuncs reflect logic function
-func GetLogicFuncs(fn interface{}) (funcs LogicFuncs) {
-	switch fn := fn.(type) {
+// GetLogicFunc reflect logic function
+func GetLogicFunc(input interface{}) *LogicFunc {
+	if input == nil {
+		return nil
+	}
+	lFunc := &LogicFunc{}
+	switch fn := input.(type) {
 	case TXFunc, func(repos []interface{}) (err error):
 		{
-			funcs.Logic = fn
+			lFunc.Logic = fn
 		}
 	case map[int]interface{}:
-		{
-			if hookBeforeFn, exist := fn[BeforeLogic]; exist {
-				funcs.BeforeLogic = hookBeforeFn
-			}
-
-			if logicFn, exist := fn[Logic]; exist {
-				funcs.Logic = logicFn
-			}
-
-			if hookAfterFn, exist := fn[AfterLogic]; exist {
-				funcs.AfterLogic = hookAfterFn
-			}
-
-			if errFn, exist := fn[OnError]; exist {
-				funcs.OnError = errFn
-			}
-
-			if afterCommitFn, exist := fn[AfterCommit]; exist {
-				funcs.AfterCommit = afterCommitFn
-			}
+		if hookBeforeFn, exist := fn[BeforeLogic]; exist {
+			lFunc.BeforeLogic = hookBeforeFn
+		}
+		if logicFn, exist := fn[Logic]; exist {
+			lFunc.Logic = logicFn
+		}
+		if hookAfterFn, exist := fn[AfterLogic]; exist {
+			lFunc.AfterLogic = hookAfterFn
+		}
+		if errFn, exist := fn[OnError]; exist {
+			lFunc.OnError = errFn
+		}
+		if afterCommitFn, exist := fn[AfterCommit]; exist {
+			lFunc.AfterCommit = afterCommitFn
 		}
 	default:
-		funcs.Logic = fn
+		lFunc.Logic = fn
 	}
 
-	return
+	return lFunc
 }
 
 // CallFunc execute transaction function with logic functions and args
-func CallFunc(fn interface{}, funcs LogicFuncs, args []interface{}) ([]interface{}, error) {
-	if fn == nil {
+func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
+	if input == nil {
 		return nil, nil
 	}
 
-	switch _logicFunc := fn.(type) {
+	switch _logicFunc := input.(type) {
 	case TXFunc:
 		{
-			return nil, _logicFunc(args)
+			return nil, _logicFunc(args...)
 		}
-	case func(repos []interface{}) (err error):
+	case func(repos ...interface{}) (err error):
 		{
-			if err := _logicFunc(args); err != nil {
-				return nil, err
-			}
-			return nil, nil
+			return nil, _logicFunc(args...)
 		}
 	default:
-		values, err := call(fn, args...)
-		if err != nil {
-			if funcs.OnError != nil {
-				_, _ = call(funcs.OnError, err)
-			}
-			return nil, err
-		}
-		return values, nil
+		return call(input, args...)
 	}
 }
 

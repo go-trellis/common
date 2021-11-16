@@ -17,7 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package txorm
 
-import common "trellis.tech/trellis/common.v0"
+import (
+	common "trellis.tech/trellis/common.v0"
+)
+
+// Committer 事务处理者
+type Committer interface {
+	TX(fn interface{}, repos ...interface{}) error
+	TXWithName(fn interface{}, name string, repos ...interface{}) error
+	NonTX(fn interface{}, repos ...interface{}) error
+	NonTXWithName(fn interface{}, name string, repos ...interface{}) error
+}
 
 // Committer gorm committer
 type committer struct {
@@ -46,29 +56,21 @@ func (p *committer) NonTXWithName(fn interface{}, name string, repos ...interfac
 	)
 
 	for _, origin := range repos {
-		repo := getRepo(origin)
-		if repo == nil {
-			return ErrStructCombineWithRepo
-		}
 
-		_newTxorm, _newRepoI, err := createNewTXorm(origin)
+		_newTXorm, _newRepoI, err := p.newRepo(origin)
 		if err != nil {
 			return err
 		}
 
-		_newRepos = append(_newRepos, _newRepoI)
-
-		_newTxorm.engines = repo.engines
-		_newTxorm.defEngine = repo.defEngine
-
-		if err := _newTxorm.beginNonTransaction(name); err != nil {
+		if err := _newTXorm.BeginNonTransaction(name); err != nil {
 			return err
 		}
 
-		_newTXormRepos = append(_newTXormRepos, _newTxorm)
+		_newRepos = append(_newRepos, _newRepoI)
+		_newTXormRepos = append(_newTXormRepos, _newTXorm)
 	}
 
-	return _newTXormRepos[0].commitNonTransaction(fn, _newRepos...)
+	return _newTXormRepos[0].commit(false, fn, _newRepos...)
 }
 
 // TX do transaction function by default database
@@ -88,23 +90,15 @@ func (p *committer) TXWithName(fn interface{}, name string, repos ...interface{}
 	)
 	for _, origin := range repos {
 
-		repo := getRepo(origin)
-		if repo == nil {
-			return ErrStructCombineWithRepo
-		}
-
-		_newTXorm, _newRepoI, err := createNewTXorm(origin)
+		_newTXorm, _newRepoI, err := p.newRepo(origin)
 		if err != nil {
 			return err
 		}
-
-		_newTXorm.engines = repo.engines
-		_newTXorm.defEngine = repo.defEngine
 		_newRepos = append(_newRepos, _newRepoI)
 		_newTXormRepos = append(_newTXormRepos, _newTXorm)
 	}
 
-	if err := _newTXormRepos[0].beginTransaction(name); err != nil {
+	if err := _newTXormRepos[0].BeginTransaction(name); err != nil {
 		return err
 	}
 
@@ -113,7 +107,25 @@ func (p *committer) TXWithName(fn interface{}, name string, repos ...interface{}
 		_newTXormRepos[i].isTransaction = _newTXormRepos[0].isTransaction
 	}
 
-	return _newTXormRepos[0].commitTransaction(fn, _newRepos...)
+	return _newTXormRepos[0].commit(true, fn, _newRepos...)
+}
+
+func (p *committer) newRepo(origin interface{}) (*Repo, interface{}, error) {
+
+	repo := getRepo(origin)
+	if repo == nil {
+		return nil, nil, ErrStructCombineWithRepo
+	}
+
+	_newTXorm, _newRepoI, err := createNewTXorm(origin)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	_newTXorm.engines = repo.engines
+	_newTXorm.defEngine = repo.defEngine
+
+	return _newTXorm, _newRepoI, nil
 }
 
 func (p *committer) checkRepos(txFunc interface{}, originRepos ...interface{}) error {

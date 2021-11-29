@@ -85,3 +85,11 @@ func fileToReaderType(name string) ReaderType {
 		return ReaderTypeSuffix
 	}
 }
+
+func ReadFile(name string) ([]byte, error) {
+	data, _, err := filesRepo.Read(name)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}

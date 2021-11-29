@@ -22,6 +22,7 @@ import (
 	"reflect"
 	"strings"
 
+	"trellis.tech/trellis/common.v0/errcode"
 	"trellis.tech/trellis/common.v0/types"
 )
 
@@ -30,62 +31,74 @@ func (p *AdapterConfig) copyDollarSymbol(key string, maps *map[string]interface{
 	if key != "" {
 		tokens = append(tokens, key)
 	}
-	for k, v := range *maps {
-		if v == nil {
-			return nil
-		}
-		keys := append(tokens, k)
-		switch reflect.TypeOf(v).Kind() {
-		case reflect.Map:
-			{
-				vm, ok := v.(map[string]interface{})
-				if !ok {
-					continue
-				}
-				err := p.copyDollarSymbol(strings.Join(keys, "."), &vm)
-				if err != nil {
-					return err
-				}
-			}
-		case reflect.String:
-			{
-				s, ok := v.(string)
-				if !ok {
-					continue
-				}
-				_, matched := types.FindStringSubmatchMap(s, includeReg)
-				if !matched {
-					continue
-				}
-
-				pkey := s[2 : len(s)-1]
-				if p.EnvAllowed && (p.EnvPrefix == "" || strings.HasPrefix(pkey, p.EnvPrefix)) {
-					if env := os.Getenv(pkey); env != "" {
-						if err := p.setKeyValue(strings.Join(keys, "."), env); err != nil {
-							return err
-						}
-						continue
-					}
-				}
-
-				vm, err := p.getKeyValue(pkey)
-				if err != nil {
-					return err
-				}
-				err = p.setKeyValue(strings.Join(keys, "."), vm)
-				if err != nil {
-					return err
-				}
-			}
+	for mapK, mapV := range *maps {
+		value := p.checkValue(mapV)
+		if value != nil {
+			(*maps)[mapK] = value
 		}
 	}
 	return nil
+}
+
+func (p *AdapterConfig) checkValue(value interface{}) interface{} {
+	if value == nil {
+		return nil
+	}
+
+	t := reflect.TypeOf(value)
+	switch t.Kind() {
+	case reflect.String:
+		s, ok := value.(string)
+		if !ok {
+			return value
+		}
+		_, matched := types.FindStringSubmatchMap(s, includeReg)
+		if !matched {
+			return value
+		}
+
+		pKey := s[2 : len(s)-1]
+
+		if p.EnvAllowed && (p.EnvPrefix == "" || strings.HasPrefix(pKey, p.EnvPrefix)) {
+			if env := os.Getenv(pKey); env != "" {
+				return env
+			}
+		}
+		v, err := p.getKeyValue(pKey)
+		if err != nil {
+			return nil
+		}
+
+		return v
+	case reflect.Int, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
+		return value
+	case reflect.Slice:
+		vs := value.([]interface{})
+		for i, v := range vs {
+			newV := p.checkValue(v)
+			vs[i] = newV
+		}
+		return vs
+	case reflect.Map:
+		vs, ok := value.(map[string]interface{})
+		if !ok {
+			return value
+		}
+		for k, v := range vs {
+			newV := p.checkValue(v)
+			vs[k] = newV
+		}
+		return vs
+	default:
+		panic(errcode.Newf("not suppered type: %+v", t))
+	}
 }
 
 func (p *AdapterConfig) getKeyValue(key string) (interface{}, error) {
 
 	tokens := strings.Split(key, ".")
 	vm := p.configs[tokens[0]]
+
 	for i, t := range tokens {
 		if i == 0 {
 			continue

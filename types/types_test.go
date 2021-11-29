@@ -36,13 +36,16 @@ func TestFlags(t *testing.T) {
 		Duration types.Duration `yaml:"duration" json:"duration"`
 	}
 
-	var testTime = &tTime{Time: types.Time(timeNow), Secret: "haha", Duration: types.Duration(time.Second * 5)}
+	tt := types.Time(timeNow)
+
+	var testTime = &tTime{Time: tt, Secret: "haha", Duration: types.Duration(time.Second * 5)}
 
 	out, err := yaml.Marshal(testTime)
 	if err != nil {
 		testutils.NotOk(t, err, "failed marshal yaml of time struct")
 	}
-	testutils.Assert(t, strings.Contains(string(out), types.FormatRFC3339(timeNow)), "out of the time")
+	testutils.Assert(t, strings.Contains(string(out), types.FormatRFC3339(timeNow)),
+		"out of the time: %q-%q", string(out), types.FormatRFC3339(timeNow))
 	testutils.Assert(t, strings.Contains(string(out), "<hidden>"), "not hide data : %s", string(out))
 	testutils.Assert(t, strings.Contains(string(out), "5s"), "not contains 5s: %s", string(out))
 

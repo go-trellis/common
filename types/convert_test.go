@@ -33,12 +33,12 @@ func Test_QuoteToASCIIWithoutBackslashed(t *testing.T) {
 	test := Test{A: 1, Q: "中国"}
 	bs, _ := json.Marshal(test)
 
-	revertToString := types.QuoteBytesToASCIIWithoutBackslashed(bs)
+	revertToString := types.QuoteBytesToASCIIWithoutBackSlashed(bs)
 	nTest := &Test{}
 	err := json.Unmarshal([]byte(revertToString), nTest)
 	testutils.Ok(t, err)
 	testutils.Equals(t, 1, nTest.A)
 	testutils.Equals(t, "中国", nTest.Q)
 
-	testutils.Equals(t, "\\a\\b\\f\\n\\r\\t\\v' @", types.QuoteToASCIIWithoutBackslashed("\a\b\f\n\r\t\v' @"))
+	testutils.Equals(t, "\\a\\b\\f\\n\\r\\t\\v' @", types.QuoteToASCIIWithoutBackSlashed("\a\b\f\n\r\t\v' @"))
 }

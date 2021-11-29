@@ -34,6 +34,11 @@ const (
 	wrongFile = "wrong_file"
 )
 
+type TestSlice struct {
+	Name  string `yaml:"name" json:"name"`
+	Value string `yaml:"value" json:"value"`
+}
+
 func TestNewJSONConfig(t *testing.T) {
 	c, err := config.NewConfig(wrongFile)
 	testutils.NotOk(t, err)
@@ -42,10 +47,11 @@ func TestNewJSONConfig(t *testing.T) {
 	testutils.NotOk(t, err)
 	testutils.Equals(t, c, nil)
 
-	err = config.ReadJSONFile(wrongFile, nil)
+	err = config.ReadJSONFileToModel(wrongFile, nil)
 	testutils.NotOk(t, err)
 
-	err = os.Setenv("PRE_USER", shell.Output("whoami"))
+	whoami := shell.Output("whoami")
+	err = os.Setenv("PRE_USER", whoami)
 	testutils.Ok(t, err)
 
 	c, err = config.NewConfigOptions(
@@ -63,9 +69,20 @@ func TestNewJSONConfig(t *testing.T) {
 }
 
 func TestNewYAMLConfig(t *testing.T) {
+	c, err := config.NewConfig(wrongFile)
+	testutils.NotOk(t, err)
+	testutils.Equals(t, c, nil)
+	c, err = config.NewConfig("")
+	testutils.NotOk(t, err)
+	testutils.Equals(t, c, nil)
+
+	err = config.ParseYAMLFileToModel(wrongFile, nil)
+	testutils.NotOk(t, err)
+	err = os.Setenv("PRE_USER", shell.Output("whoami"))
+	testutils.Ok(t, err)
 
 	// c, err := config.NewConfig(yamlFile)
-	c, err := config.NewConfigOptions(
+	c, err = config.NewConfigOptions(
 		config.OptionFile(yamlFile),
 		config.OptionENVAllowed(),
 		config.OptionENVPrefix("PRE"))
@@ -73,6 +90,7 @@ func TestNewYAMLConfig(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
+
 	testutils.Ok(t, err)
 	testutils.Assert(t, c != nil, "loaded config should not be nil")
 	faceList := c.GetList("b.d")
@@ -84,9 +102,22 @@ func TestNewYAMLConfig(t *testing.T) {
 }
 
 func testFunc(t *testing.T, c config.Config) {
-	testutils.Assert(t, c.GetString("b.u") == "", "env user should be empty")
 
 	envUser := os.Getenv("PRE_USER")
+
+	var slices []TestSlice
+	err := c.ToObject("s", &slices)
+	testutils.Ok(t, err)
+
+	for _, k := range slices {
+		if k.Name == "slice_user_right" {
+			testutils.Assert(t, k.Value == envUser, "user should be %q", k.Value)
+		} else if k.Name == "slice_user_wrong" {
+			testutils.Assert(t, k.Value == "", "user should be %q", k.Value)
+		}
+	}
+
+	testutils.Assert(t, c.GetString("b.u") == "", "env user should be empty")
 	testutils.Assert(t, c.GetString("b.pre") == envUser, "env prefix user should be: "+envUser)
 	testutils.Assert(t, c.GetString("b.xxx") == "", "b.xxx should be empty")
 

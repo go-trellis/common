@@ -10,7 +10,7 @@ require (
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
-	github.com/mattn/go-colorable v0.1.11
+	github.com/mattn/go-colorable v0.1.12
 	github.com/prometheus/client_golang v1.11.0
 	go.uber.org/zap v1.19.1
 	golang.org/x/text v0.3.7

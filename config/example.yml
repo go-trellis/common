@@ -30,3 +30,8 @@ b:
 h: 1.01
 "n":
   a: "test"
+"s":
+  - name: "slice_user_right"
+    value: "${PRE_USER}"
+  - name: "slice_user_wrong"
+    value: "${USER}"

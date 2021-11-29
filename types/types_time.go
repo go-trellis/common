@@ -25,11 +25,14 @@ import (
 type Time time.Time
 
 // String implements flag.Value
-func (p Time) String() string {
-	if time.Time(p).IsZero() {
+func (p *Time) String() string {
+	if p == nil {
 		return "0"
 	}
-	return time.Time(p).Format(time.RFC3339)
+	if time.Time(*p).IsZero() {
+		return "0"
+	}
+	return time.Time(*p).Format(time.RFC3339)
 }
 
 // Set implements flag.Value
@@ -52,6 +55,6 @@ func (p *Time) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML implements yaml.Marshaler.
-func (p *Time) MarshalYAML() (interface{}, error) {
+func (p Time) MarshalYAML() (interface{}, error) {
 	return p.String(), nil
 }

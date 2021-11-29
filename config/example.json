@@ -42,5 +42,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
   "n": {
     "a": "test"//Test 7
   },
-  "x": "http://www.example.com"
+  "x": "http://www.example.com",
+  "s": [
+    {
+      "name": "slice_user_right",
+      "value": "${PRE_USER}"
+    },
+    {
+      "name": "slice_user_wrong",
+      "value": "${USER}"
+    }
+  ]
 }

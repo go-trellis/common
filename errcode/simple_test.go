@@ -29,7 +29,7 @@ func TestNew(t *testing.T) {
 
 	testutils.Equals(t, sErr.FullError(), fmt.Sprintf("%s#%s:%s", sErr.Namespace(), sErr.ID(), sErr.Message()))
 	testutils.Equals(t, sErr.Error(), sErr.Message())
-	testutils.Equals(t, sErr.Namespace(), "T:E")
+	testutils.Equals(t, sErr.Namespace(), "ERR")
 	testutils.Equals(t, sErr.Message(), "new_test")
 	testutils.Assert(t, sErr.ID() != "", "error id should not be nil")
 
@@ -37,7 +37,7 @@ func TestNew(t *testing.T) {
 
 	testutils.Equals(t, fErr.Error(), "format_err_test: 1, test")
 	testutils.Equals(t, fErr.FullError(), fmt.Sprintf("%s#%s:format_err_test: 1, test", fErr.Namespace(), fErr.ID()))
-	testutils.Equals(t, fErr.Namespace(), "T:E")
+	testutils.Equals(t, fErr.Namespace(), "ERR")
 	testutils.Equals(t, fErr.Message(), "format_err_test: 1, test")
 	testutils.Assert(t, fErr.ID() != "", "error id should not be nil")
 }

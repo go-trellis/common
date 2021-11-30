@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 {
   "a": "Easy!", /* Test 1*/
+  "y": true,
   /* Test 2 */
   "b": { // Test 3
     "c": {

@@ -47,6 +47,10 @@ func (p *AdapterConfig) checkValue(value interface{}) interface{} {
 
 	t := reflect.TypeOf(value)
 	switch t.Kind() {
+	case reflect.Int, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
+		return value
+	case reflect.Bool:
+		return value
 	case reflect.String:
 		s, ok := value.(string)
 		if !ok {
@@ -70,8 +74,6 @@ func (p *AdapterConfig) checkValue(value interface{}) interface{} {
 		}
 
 		return v
-	case reflect.Int, reflect.Int32, reflect.Int64, reflect.Float64, reflect.Float32:
-		return value
 	case reflect.Slice:
 		vs := value.([]interface{})
 		for i, v := range vs {

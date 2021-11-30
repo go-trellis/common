@@ -27,6 +27,7 @@ b:
   d: [3, 4]
   u: ${USER}
   pre: "${PRE_USER}"
+  "y": true
 h: 1.01
 "n":
   a: "test"

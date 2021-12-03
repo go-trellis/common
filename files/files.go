@@ -31,6 +31,7 @@ const (
 	FileModeOnlyRead  os.FileMode = 0444
 	FileModeReadWrite os.FileMode = 0666
 )
+const fileOpenMode = os.O_RDWR | os.O_APPEND
 
 var (
 	once        sync.Once
@@ -161,7 +162,7 @@ func (p *fileGem) FileOpened(name string) bool {
 }
 
 func (p *fileGem) tryOpen(name string) (*FileInfo, error) {
-	return p.tryOpenFile(name, os.O_RDONLY, 0)
+	return p.tryOpenFile(name, fileOpenMode, 0)
 }
 
 func (p *fileGem) tryOpenFile(name string, flag int, perm os.FileMode) (*FileInfo, error) {
@@ -189,10 +190,7 @@ func (p *fileGem) Write(name, s string, opts ...WriteOption) (int, error) {
 }
 
 func (p *fileGem) WriteBytes(name string, b []byte, opts ...WriteOption) (int, error) {
-	if len(opts) == 0 {
-		opts = append(opts, WriteFlag(os.O_WRONLY))
-	}
-	return p.write(name, b, append(opts, WriteFlag(os.O_TRUNC|os.O_CREATE))...)
+	return p.write(name, b, opts...)
 }
 
 func (p *fileGem) WriteAppend(name, s string, opts ...WriteOption) (int, error) {
@@ -200,10 +198,7 @@ func (p *fileGem) WriteAppend(name, s string, opts ...WriteOption) (int, error) 
 }
 
 func (p *fileGem) WriteAppendBytes(name string, b []byte, opts ...WriteOption) (int, error) {
-	if len(opts) == 0 {
-		opts = append(opts, WriteFlag(os.O_WRONLY))
-	}
-	return p.write(name, b, append(opts, WriteFlag(os.O_APPEND|os.O_CREATE))...)
+	return p.write(name, b, opts...)
 }
 
 func (p *fileGem) Rename(oldPath, newPath string) error {
@@ -233,7 +228,7 @@ func (p *fileGem) write(name string, b []byte, opts ...WriteOption) (n int, err 
 		o(options)
 	}
 
-	flag := 0
+	flag := fileOpenMode | os.O_CREATE
 	if options.Flag != nil {
 		flag = flag | *options.Flag
 	}

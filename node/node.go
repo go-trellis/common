@@ -48,7 +48,7 @@ type Node struct {
 	number uint32
 }
 
-// Get get value from metadata
+// Get value from metadata
 func (p *Node) Get(key string) (interface{}, bool) {
 	if p.Metadata == nil {
 		return nil, false
@@ -57,7 +57,7 @@ func (p *Node) Get(key string) (interface{}, bool) {
 	return value, ok
 }
 
-// Set set kv pair from metadata
+// Set kv pair from metadata
 func (p *Node) Set(key string, value interface{}) {
 	if p.Metadata == nil {
 		p.Metadata = config.Options{}
@@ -67,17 +67,17 @@ func (p *Node) Set(key string, value interface{}) {
 
 // Manager node manager functions defines.
 type Manager interface {
-	// adds a node to the node ring.
+	// Add adds a node to the node ring.
 	Add(node *Node)
-	// get the node responsible for the data key.
+	// NodeFor get the node responsible for the data key.
 	NodeFor(keys ...string) (*Node, bool)
-	// removes all nodes from the node ring.
+	// Remove removes all nodes from the node ring.
 	Remove()
-	// removes a node from the node ring.
+	// RemoveByID removes a node from the node ring.
 	RemoveByID(id string)
-	// print all nodes
+	// PrintNodes print all nodes
 	PrintNodes()
-	// is the node ring empty
+	// IsEmpty is the node ring empty
 	IsEmpty() bool
 }
 

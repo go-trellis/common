@@ -3,10 +3,10 @@ package etcd
 import (
 	"crypto/tls"
 	"flag"
+	"net"
 	"time"
 
 	commonTls "trellis.tech/trellis/common.v0/crypto/tls"
-	"trellis.tech/trellis/common.v0/errcode"
 	"trellis.tech/trellis/common.v0/flagext"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
@@ -20,7 +20,7 @@ type Config struct {
 	MaxRetries  int                    `yaml:"max_retries"`
 	EnableTLS   bool                   `yaml:"tls_enabled"`
 	TLS         commonTls.ClientConfig `yaml:",inline"`
-	UserName    string                 `yaml:"username"`
+	Username    string                 `yaml:"username"`
 	Password    string                 `yaml:"password"`
 }
 
@@ -42,7 +42,7 @@ func (cfg *Config) ParseFlagsWithPrefix(f *flag.FlagSet, prefix string) {
 	f.DurationVar(&cfg.DialTimeout, prefix+"etcd.dial-timeout", 10*time.Second, "The dial timeout for the etcd connection.")
 	f.IntVar(&cfg.MaxRetries, prefix+"etcd.max-retries", 10, "The maximum number of retries to do for failed ops.")
 	f.BoolVar(&cfg.EnableTLS, prefix+"etcd.tls-enabled", false, "Enable TLS.")
-	f.StringVar(&cfg.UserName, prefix+"etcd.username", "", "Etcd username.")
+	f.StringVar(&cfg.Username, prefix+"etcd.username", "", "Etcd username.")
 	f.StringVar(&cfg.Password, prefix+"etcd.password", "", "Etcd password.")
 	cfg.TLS.ParseFlagsWithPrefix(prefix+"etcd", f)
 }
@@ -64,37 +64,43 @@ func (cfg *Config) GetTLS() (*tls.Config, error) {
 
 // NewClient makes a new Client.
 func NewClient(cfg Config) (Clientv3Facade, error) {
-	tlsConfig, err := cfg.GetTLS()
-	if err != nil {
-		return nil, errcode.NewErrors(err, errcode.New("unable to initialise TLS configuration for etcd"))
+	config := clientv3.Config{
+		Endpoints:   []string{"127.0.0.1:2379"},
+		DialTimeout: 5 * time.Second,
 	}
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   cfg.Endpoints,
-		DialTimeout: cfg.DialTimeout,
-		// Configure the keepalive to make sure that the client reconnects
-		// to the etcd service endpoint(s) in case the current connection is
-		// dead (ie. the node where etcd is running is dead or a network
-		// partition occurs).
-		//
-		// The settings:
-		// - DialKeepAliveTime: time before the client pings the server to
-		//   see if transport is alive (10s hardcoded)
-		// - DialKeepAliveTimeout: time the client waits for a response for
-		//   the keep-alive probe (set to 2x dial timeout, in order to avoid
-		//   exposing another config option which is likely to be a factor of
-		//   the dial timeout anyway)
-		// - PermitWithoutStream: whether the client should send keepalive pings
-		//   to server without any active streams (enabled)
-		DialKeepAliveTime:    10 * time.Second,
-		DialKeepAliveTimeout: 2 * cfg.DialTimeout,
-		PermitWithoutStream:  true,
-		TLS:                  tlsConfig,
-		Username:             cfg.UserName,
-		Password:             cfg.Password,
-	})
+
+	tlsConfig, err := cfg.GetTLS()
 	if err != nil {
 		return nil, err
 	}
+	config.TLS = tlsConfig
 
-	return cli, nil
+	var endpoints []string
+	for _, endpoint := range cfg.Endpoints {
+		if len(endpoint) == 0 {
+			continue
+		}
+		host, port, err := net.SplitHostPort(endpoint)
+		if ae, ok := err.(*net.AddrError); ok && ae.Err == "missing port in address" {
+			port = "2379"
+			host = endpoint
+			endpoints = append(endpoints, net.JoinHostPort(host, port))
+		} else if err == nil {
+			endpoints = append(endpoints, net.JoinHostPort(host, port))
+		}
+	}
+
+	// if we got endpoints then we'll update
+	if len(endpoints) > 0 {
+		config.Endpoints = endpoints
+	}
+
+	if cfg.DialTimeout != 0 {
+		config.DialTimeout = cfg.DialTimeout
+	}
+
+	config.Username = cfg.Username
+	config.Password = cfg.Password
+
+	return clientv3.New(config)
 }

@@ -31,14 +31,6 @@ type Clientv3Facade interface {
 	clientv3.Watcher
 }
 
-//// Client implements kv.Client for etcd.
-//type Client struct {
-//	cfg Config
-//	//codec  codec.Codec
-//	cli    Clientv3Facade
-//	logger logger.Logger
-//}
-
 func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
 	cfg.ParseFlagsWithPrefix(f, "")
 }

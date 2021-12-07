@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package node
 
 import (
+	"fmt"
+
 	"trellis.tech/trellis/common.v0/config"
 )
 
@@ -36,7 +38,7 @@ func NewNodes(cfg config.Config) (ms map[string]Manager, err error) {
 
 	valConfigs := cfg.GetValuesConfig("node")
 	for _, key := range valConfigs.GetKeys() {
-		m, err := New(Type(valConfigs.GetInt(key+".type")), key)
+		m, err := New(NodeType(valConfigs.GetInt(key+".type")), key)
 		if err != nil {
 			return nil, err
 		}
@@ -44,10 +46,24 @@ func NewNodes(cfg config.Config) (ms map[string]Manager, err error) {
 
 		for _, nKey := range nodesCfg.GetKeys() {
 			item := &Node{
-				ID:       nKey,
-				Value:    nodesCfg.GetString(nKey + ".value"),
-				Weight:   uint32(nodesCfg.GetInt(nKey + ".weight")),
-				Metadata: nodesCfg.GetMap(nKey + ".metadata"),
+				ID:     nKey,
+				Value:  nodesCfg.GetString(nKey + ".value"),
+				Weight: uint32(nodesCfg.GetInt(nKey + ".weight")),
+			}
+			for k, v := range nodesCfg.GetMap(nKey + ".metadata") {
+				if v == nil {
+					continue
+				}
+				switch t := v.(type) {
+				case int:
+					item.Metadata[k] = fmt.Sprintf("%d", t)
+				case float64:
+					item.Metadata[k] = fmt.Sprintf("%f", t)
+				case string:
+					item.Metadata[k] = t
+				default:
+					continue
+				}
 			}
 			m.Add(item)
 		}

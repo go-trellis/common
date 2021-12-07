@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-type radmon struct {
+type random struct {
 	Name string
 
 	nodes map[string]*Node
@@ -37,19 +37,19 @@ type radmon struct {
 	sync.RWMutex
 }
 
-// NewRadmon get random node manager
-func NewRadmon(name string) (Manager, error) {
+// NewRandom get random node manager
+func NewRandom(name string) (Manager, error) {
 	if name = strings.TrimSpace(name); name == "" {
 		return nil, fmt.Errorf("name should not be nil")
 	}
-	return &radmon{Name: name}, nil
+	return &random{Name: name}, nil
 }
 
-func (p *radmon) IsEmpty() bool {
+func (p *random) IsEmpty() bool {
 	return atomic.LoadInt64(&p.count) == 0
 }
 
-func (p *radmon) Add(node *Node) {
+func (p *random) Add(node *Node) {
 	if node == nil {
 		return
 	}
@@ -58,7 +58,7 @@ func (p *radmon) Add(node *Node) {
 	p.add(node)
 }
 
-func (p *radmon) add(pNode *Node) {
+func (p *random) add(pNode *Node) {
 	if p.nodes == nil {
 		p.nodes = make(map[string]*Node)
 	}
@@ -68,25 +68,25 @@ func (p *radmon) add(pNode *Node) {
 	p.updateRings()
 }
 
-func (p *radmon) Remove() {
+func (p *random) Remove() {
 	p.Lock()
 	defer p.Unlock()
 	p.remove()
 }
 
-func (p *radmon) remove() {
+func (p *random) remove() {
 	p.nodes = nil
 	p.rings = nil
 	p.count = 0
 }
 
-func (p *radmon) RemoveByID(id string) {
+func (p *random) RemoveByID(id string) {
 	p.Lock()
 	defer p.Unlock()
 	p.removeByID(id)
 }
 
-func (p *radmon) removeByID(id string) {
+func (p *random) removeByID(id string) {
 	if p.nodes == nil {
 		return
 	} else if p.IsEmpty() {
@@ -103,7 +103,7 @@ func (p *radmon) removeByID(id string) {
 	p.updateRings()
 }
 
-func (p *radmon) NodeFor(...string) (*Node, bool) {
+func (p *random) NodeFor(...string) (*Node, bool) {
 	p.RLock()
 	defer p.RUnlock()
 	if p.IsEmpty() {
@@ -115,7 +115,7 @@ func (p *radmon) NodeFor(...string) (*Node, bool) {
 	return p.rings[rand.Int63n(p.count)], true
 }
 
-func (p *radmon) updateRings() {
+func (p *random) updateRings() {
 	p.rings = make(map[int64]*Node)
 
 	p.count = 0
@@ -123,7 +123,7 @@ func (p *radmon) updateRings() {
 
 		for i := 0; i < int(v.Weight); i++ {
 			ring := *v
-			ring.number = uint32(i + 1)
+			ring.Number = uint32(i + 1)
 			p.rings[p.count] = &ring
 
 			p.count++
@@ -131,7 +131,7 @@ func (p *radmon) updateRings() {
 	}
 }
 
-func (p *radmon) PrintNodes() {
+func (p *random) PrintNodes() {
 	p.RLock()
 	defer p.RUnlock()
 

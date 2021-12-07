@@ -81,7 +81,7 @@ func (p *consistent) add(pNode *Node) {
 		crc32Hash := p.genKey(pNode.ID, int(i+1))
 		if p.hashes[crc32Hash] == nil {
 			vnode := *pNode
-			vnode.number = i + 1
+			vnode.Number = i + 1
 			p.hashes[crc32Hash] = &vnode
 		}
 	}

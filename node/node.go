@@ -19,34 +19,7 @@ package node
 
 import (
 	"fmt"
-
-	"trellis.tech/trellis/common.v0/config"
 )
-
-// Type define node type
-type Type uint8
-
-// NodeType
-const (
-	NodeTypeDirect Type = iota
-	NodeTypeRandom
-	NodeTypeConsistent
-	NodeTypeRoundRobin
-)
-
-// Node params for a node
-type Node struct {
-	// for recognize node with input id
-	ID string `yaml:"id" json:"id"`
-	// node's probability weight, roundrobin does not support
-	Weight uint32 `yaml:"weight" json:"weight"`
-	// node's value
-	Value string `yaml:"value" json:"value"`
-	// kvs for meta data
-	Metadata config.Options `yaml:"options" json:"options"`
-
-	number uint32
-}
 
 // Get value from metadata
 func (p *Node) Get(key string) (interface{}, bool) {
@@ -58,9 +31,9 @@ func (p *Node) Get(key string) (interface{}, bool) {
 }
 
 // Set kv pair from metadata
-func (p *Node) Set(key string, value interface{}) {
+func (p *Node) Set(key string, value string) {
 	if p.Metadata == nil {
-		p.Metadata = config.Options{}
+		p.Metadata = make(map[string]string)
 	}
 	p.Metadata[key] = value
 }
@@ -81,16 +54,16 @@ type Manager interface {
 	IsEmpty() bool
 }
 
-// New new node manager by node type, it has no nodes
-func New(nt Type, name string) (Manager, error) {
+// New node manager with node type, it has no nodes
+func New(nt NodeType, name string) (Manager, error) {
 	switch nt {
-	case NodeTypeDirect:
+	case NodeType_Direct:
 		return NewDirect(name)
-	case NodeTypeRandom:
-		return NewRadmon(name)
-	case NodeTypeConsistent:
+	case NodeType_Random:
+		return NewRandom(name)
+	case NodeType_Consistent:
 		return NewConsistent(name)
-	case NodeTypeRoundRobin:
+	case NodeType_RoundRobin:
 		return NewRoundRobin(name)
 	default:
 		return nil, fmt.Errorf("not supperted type: %d", nt)
@@ -98,7 +71,7 @@ func New(nt Type, name string) (Manager, error) {
 }
 
 // NewWithNodes new node manager by node type with nodes
-func NewWithNodes(nt Type, name string, nodes []*Node) (Manager, error) {
+func NewWithNodes(nt NodeType, name string, nodes []*Node) (Manager, error) {
 	if len(nodes) == 0 {
 		return nil, fmt.Errorf("nodes should at least one")
 	}

@@ -18,6 +18,11 @@ a nodes ring for a key to get node
 > to get the node by random
 
 
+### RoundRobin
+
+> to get the node by RoundRobin
+
+
 ## Usage
 
 ```go
@@ -31,9 +36,11 @@ type Node struct {
 	// node's value
 	Value string
 	// kvs for meta data
-	Metadata config.Options
+	Metadata map[string]string
+	
+	Protocol Protocol
 
-	number uint32
+	Number uint32
 }
 
 // Manager node manager functions defines.
@@ -56,10 +63,10 @@ type Manager interface {
 ### New a node manager
 
 ```go
-	directNode, _ := node.New(node.NodeTypeDirect, "direct")
-	randomNode, _ := node.New(node.NodeTypeRandom, "random")
-	consistentNode, _ := node.New(node.NodeTypeConsistent, "consistent")
-	roundrobinNode, _ := node.New(node.NodeTypeRoundRobin, "roundrobin")
+	directNode, _ := node.New(node.NodeType_Direct, "direct")
+	randomNode, _ := node.New(node.NodeType_Random, "random")
+	consistentNode, _ := node.New(node.NodeType_Consistent, "consistent")
+	roundrobinNode, _ := node.New(node.NodeType_RoundRobin, "roundrobin")
 ```
 
 Or 

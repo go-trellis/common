@@ -17,6 +17,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
+import "flag"
+
+var _ flag.Value = (*Secret)(nil)
+
 const Hidden = "<hidden>"
 
 type Secret string
@@ -46,6 +50,5 @@ func (p *Secret) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&v); err != nil {
 		return err
 	}
-
 	return p.Set(v)
 }

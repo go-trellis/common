@@ -8,20 +8,23 @@ import (
 
 	commonTls "trellis.tech/trellis/common.v0/crypto/tls"
 	"trellis.tech/trellis/common.v0/flagext"
+	"trellis.tech/trellis/common.v0/types"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
+var _ flagext.Parser = (*Config)(nil)
+
 // Config for a new etcd.Client.
 type Config struct {
-	Endpoints   []string               `yaml:"endpoints"`
-	DialTimeout time.Duration          `yaml:"dial_timeout"`
-	MaxRetries  int                    `yaml:"max_retries"`
-	EnableTLS   bool                   `yaml:"tls_enabled"`
-	TLS         commonTls.ClientConfig `yaml:",inline"`
-	Username    string                 `yaml:"username"`
-	Password    string                 `yaml:"password"`
+	Endpoints   types.Strings    `yaml:"endpoints" json:"endpoints"`
+	DialTimeout types.Duration   `yaml:"dial_timeout" json:"dial_timeout"`
+	MaxRetries  int              `yaml:"max_retries" json:"max_retries"`
+	EnableTLS   bool             `yaml:"tls_enabled" json:"enable_tls"`
+	TLS         commonTls.Config `yaml:",inline"`
+	Username    string           `yaml:"username" json:"username"`
+	Password    types.Secret     `yaml:"password" json:"password"`
 }
 
 // Clientv3Facade is a subset of all Etcd client operations that are required
@@ -31,19 +34,19 @@ type Clientv3Facade interface {
 	clientv3.Watcher
 }
 
-func (cfg *Config) RegisterFlags(f *flag.FlagSet) {
-	cfg.ParseFlagsWithPrefix(f, "")
+func (cfg *Config) ParseFlags(f *flag.FlagSet) {
+	cfg.ParseFlagsWithPrefix("", f)
 }
 
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
-func (cfg *Config) ParseFlagsWithPrefix(f *flag.FlagSet, prefix string) {
+func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	cfg.Endpoints = []string{}
-	f.Var((*flagext.StringSlice)(&cfg.Endpoints), prefix+"etcd.endpoints", "The etcd endpoints to connect to.")
-	f.DurationVar(&cfg.DialTimeout, prefix+"etcd.dial-timeout", 10*time.Second, "The dial timeout for the etcd connection.")
+	f.Var(&cfg.Endpoints, prefix+"etcd.endpoints", "The etcd endpoints to connect to.")
+	f.Var(&cfg.DialTimeout, prefix+"etcd.dial-timeout", "The dial timeout for the etcd connection.")
 	f.IntVar(&cfg.MaxRetries, prefix+"etcd.max-retries", 10, "The maximum number of retries to do for failed ops.")
 	f.BoolVar(&cfg.EnableTLS, prefix+"etcd.tls-enabled", false, "Enable TLS.")
 	f.StringVar(&cfg.Username, prefix+"etcd.username", "", "Etcd username.")
-	f.StringVar(&cfg.Password, prefix+"etcd.password", "", "Etcd password.")
+	f.Var(&cfg.Password, prefix+"etcd.password", "Etcd password.")
 	cfg.TLS.ParseFlagsWithPrefix(prefix+"etcd", f)
 }
 
@@ -96,11 +99,11 @@ func NewClient(cfg Config) (Clientv3Facade, error) {
 	}
 
 	if cfg.DialTimeout != 0 {
-		config.DialTimeout = cfg.DialTimeout
+		config.DialTimeout = time.Duration(cfg.DialTimeout)
 	}
 
 	config.Username = cfg.Username
-	config.Password = cfg.Password
+	config.Password = string(cfg.Password)
 
 	return clientv3.New(config)
 }

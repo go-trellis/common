@@ -18,31 +18,34 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	"flag"
 	"fmt"
 	"time"
 )
 
+var _ flag.Value = (*Duration)(nil)
+
 type Duration time.Duration
 
 // MarshalYAML implements the yaml.Marshaler interface.
-func (d Duration) MarshalYAML() (interface{}, error) {
-	return d.String(), nil
+func (p Duration) MarshalYAML() (interface{}, error) {
+	return p.String(), nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err
 	}
 	dur := ParseStringTime(s)
-	*d = Duration(dur)
+	*p = Duration(dur)
 	return nil
 }
 
-func (d Duration) String() string {
+func (p Duration) String() string {
 	var (
-		ds   = int64(d)
+		ds   = int64(p)
 		unit = "ms"
 	)
 	if ds == 0 {
@@ -85,6 +88,12 @@ func (d Duration) String() string {
 	return fmt.Sprintf("%v%v", ds/factors[unit], unit)
 }
 
-func (d Duration) Seconds() int64 {
-	return int64(time.Duration(d) / time.Second)
+func (p Duration) Seconds() int64 {
+	return int64(time.Duration(p) / time.Second)
+}
+
+// Set implements flag.Value
+func (p *Duration) Set(s string) error {
+	*p = Duration(ParseStringTime(s))
+	return nil
 }

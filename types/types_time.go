@@ -18,8 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package types
 
 import (
+	"flag"
 	"time"
 )
+
+var _ flag.Value = (*Time)(nil)
 
 // Time usable as flag or in YAML config.
 type Time time.Time

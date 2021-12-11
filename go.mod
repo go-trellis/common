@@ -7,7 +7,6 @@ require (
 	github.com/dimiro1/banner v1.1.0
 	github.com/go-kit/log v0.2.0
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/golang/protobuf v1.5.2
 	github.com/golang/snappy v0.0.4
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12

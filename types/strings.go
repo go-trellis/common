@@ -24,15 +24,6 @@ import (
 	"strings"
 )
 
-// Strings array string
-type Strings []string
-
-func (x Strings) Len() int { return len(x) }
-
-func (x Strings) Less(i, j int) bool { return x[i] < x[j] }
-
-func (x Strings) Swap(i, j int) { x[i], x[j] = x[j], x[i] }
-
 // IntToString parse int to string
 func IntToString(value interface{}) (string, error) {
 	if value == nil {

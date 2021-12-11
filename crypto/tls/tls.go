@@ -23,18 +23,22 @@ import (
 	"flag"
 	"io/ioutil"
 
+	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0/flagext"
+
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"trellis.tech/trellis/common.v0/errcode"
 )
 
-// ClientConfig is the config for client TLS.
-type ClientConfig struct {
-	CertPath           string `yaml:"tls_cert_path"`
-	KeyPath            string `yaml:"tls_key_path"`
-	CAPath             string `yaml:"tls_ca_path"`
-	ServerName         string `yaml:"tls_server_name"`
-	InsecureSkipVerify bool   `yaml:"tls_insecure_skip_verify"`
+var _ flagext.Parser = (*Config)(nil)
+
+// Config is the config for client TLS.
+type Config struct {
+	CertPath           string `yaml:"cert_path" json:"cert_path"`
+	KeyPath            string `yaml:"key_path" json:"key_path"`
+	CAPath             string `yaml:"ca_path" json:"ca_path"`
+	ServerName         string `yaml:"server_name" json:"server_name"`
+	InsecureSkipVerify bool   `yaml:"insecure_skip_verify" json:"insecure_skip_verify"`
 }
 
 var (
@@ -42,17 +46,22 @@ var (
 	errCertMissing = errcode.New("key given but no certificate configured")
 )
 
+// ParseFlags parse flags with prefix.
+func (cfg *Config) ParseFlags(f *flag.FlagSet) {
+	cfg.ParseFlagsWithPrefix("", f)
+}
+
 // ParseFlagsWithPrefix registers flags with prefix.
-func (cfg *ClientConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
-	f.StringVar(&cfg.CertPath, prefix+".tls-cert-path", "", "Path to the client certificate file, which will be used for authenticating with the server. Also requires the key path to be configured.")
-	f.StringVar(&cfg.KeyPath, prefix+".tls-key-path", "", "Path to the key file for the client certificate. Also requires the client certificate to be configured.")
-	f.StringVar(&cfg.CAPath, prefix+".tls-ca-path", "", "Path to the CA certificates file to validate server certificate against. If not set, the host's root CA certificates are used.")
-	f.StringVar(&cfg.ServerName, prefix+".tls-server-name", "", "Override the expected name on the server certificate.")
-	f.BoolVar(&cfg.InsecureSkipVerify, prefix+".tls-insecure-skip-verify", false, "Skip validating server certificate.")
+func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
+	f.StringVar(&cfg.CertPath, prefix+"tls-cert-path", "", "Path to the client certificate file, which will be used for authenticating with the server. Also requires the key path to be configured.")
+	f.StringVar(&cfg.KeyPath, prefix+"tls-key-path", "", "Path to the key file for the client certificate. Also requires the client certificate to be configured.")
+	f.StringVar(&cfg.CAPath, prefix+"tls-ca-path", "", "Path to the CA certificates file to validate server certificate against. If not set, the host's root CA certificates are used.")
+	f.StringVar(&cfg.ServerName, prefix+"tls-server-name", "", "Override the expected name on the server certificate.")
+	f.BoolVar(&cfg.InsecureSkipVerify, prefix+"tls-insecure-skip-verify", false, "Skip validating server certificate.")
 }
 
 // GetTLSConfig initialises tls.Config from config options
-func (cfg *ClientConfig) GetTLSConfig() (*tls.Config, error) {
+func (cfg *Config) GetTLSConfig() (*tls.Config, error) {
 	config := &tls.Config{
 		InsecureSkipVerify: cfg.InsecureSkipVerify,
 		ServerName:         cfg.ServerName,
@@ -91,7 +100,7 @@ func (cfg *ClientConfig) GetTLSConfig() (*tls.Config, error) {
 }
 
 // GetGRPCDialOptions creates GRPC DialOptions for TLS
-func (cfg *ClientConfig) GetGRPCDialOptions(enabled bool) ([]grpc.DialOption, error) {
+func (cfg *Config) GetGRPCDialOptions(enabled bool) ([]grpc.DialOption, error) {
 	if !enabled {
 		return []grpc.DialOption{grpc.WithInsecure()}, nil
 	}

@@ -19,18 +19,25 @@ package flagext
 
 import (
 	"flag"
-	"fmt"
 )
 
 // Parser is a thing that can ParseFlags
 type Parser interface {
 	ParseFlags(*flag.FlagSet)
+	ParseFlagsWithPrefix(prefix string, f *flag.FlagSet)
 }
 
-// ParseFlags registers flags with the provided Parsers
+// ParseFlags parse flags with the provided Parsers
 func ParseFlags(rs ...Parser) {
 	for _, r := range rs {
 		r.ParseFlags(flag.CommandLine)
+	}
+}
+
+// ParseFlagsWithPrefix registers flags with the provided Parsers with prefix
+func ParseFlagsWithPrefix(prefix string, rs ...Parser) {
+	for _, r := range rs {
+		r.ParseFlagsWithPrefix(prefix, flag.CommandLine)
 	}
 }
 
@@ -41,18 +48,4 @@ func DefaultValues(rs ...Parser) {
 		r.ParseFlags(fs)
 	}
 	_ = fs.Parse([]string{})
-}
-
-// StringSlice is a slice of strings that implements flag.Value
-type StringSlice []string
-
-// String implements flag.Value
-func (v StringSlice) String() string {
-	return fmt.Sprintf("%s", []string(v))
-}
-
-// Set implements flag.Value
-func (v *StringSlice) Set(s string) error {
-	*v = append(*v, s)
-	return nil
 }

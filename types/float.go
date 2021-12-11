@@ -19,11 +19,14 @@ package types
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math"
 	"reflect"
 	"strconv"
 )
+
+var _ flag.Value = (*Found)(nil)
 
 type Found float64
 
@@ -33,8 +36,12 @@ func (p Found) String() string {
 }
 
 // Set implements flag.Value
-func (p *Found) Set(f float64) error {
-	*p = Found(f)
+func (p *Found) Set(f string) error {
+	d, err := strconv.ParseFloat(f, 64)
+	if err != nil {
+		return err
+	}
+	*p = Found(d)
 	return nil
 }
 
@@ -44,7 +51,7 @@ func (p *Found) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	if err := unmarshal(&f); err != nil {
 		return err
 	}
-	return p.Set(f)
+	return p.Set(strconv.FormatFloat(f, 'f', 2, 64))
 }
 
 // MarshalYAML implements yaml.Marshaler.
@@ -57,33 +64,35 @@ func (p *Found) MarshalYAML() (interface{}, error) {
 
 // ToFloat64 covert any type to float64
 func ToFloat64(value interface{}) (float64, error) {
-
 	if value == nil {
 		return 0, nil
 	}
 
 	var val string
-	switch reflect.TypeOf(value).Kind() {
-	case reflect.Float64:
-		f := value.(float64)
-		return f, nil
-	case reflect.Float32:
-		f := value.(float32)
-		return float64(f), nil
-	case reflect.Int8, reflect.Int16, reflect.Int, reflect.Int32, reflect.Int64:
-		val = fmt.Sprintf("%d", value)
-	case reflect.String:
-		switch reflect.TypeOf(value).String() {
-		case "json.Number":
-			return value.(json.Number).Float64()
-		default:
-			val = value.(string)
-		}
+	switch t := value.(type) {
+	case float64:
+		return t, nil
+	case float32:
+		return float64(t), nil
+	case int:
+		return float64(t), nil
+	case int32:
+		return float64(t), nil
+	case int64:
+		return float64(t), nil
+	case int8:
+		return float64(t), nil
+	case int16:
+		return float64(t), nil
+	case string:
+		return strconv.ParseFloat(val, 64)
+	case json.Number:
+		return t.Float64()
+	case Found:
+		return float64(t), nil
 	default:
 		return 0, fmt.Errorf("type is valid: %s", reflect.TypeOf(value).String())
 	}
-
-	return strconv.ParseFloat(val, 64)
 }
 
 // RoundFund round fund to int64

@@ -1,0 +1,5 @@
+users:
+  - name: "Peter"
+    age: 20
+  - name: "Kitti"
+    age: 18

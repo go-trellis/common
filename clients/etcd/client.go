@@ -30,8 +30,10 @@ type Config struct {
 // Clientv3Facade is a subset of all Etcd client operations that are required
 // to implement an Etcd version of kv.Client
 type Clientv3Facade interface {
+	clientv3.Cluster
 	clientv3.KV
 	clientv3.Watcher
+	clientv3.Lease
 }
 
 func (cfg *Config) ParseFlags(f *flag.FlagSet) {

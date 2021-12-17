@@ -26,6 +26,8 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
+var _ Logger = (*ZapLogger)(nil)
+
 func NewWithZapLogger(l *zap.Logger) Logger {
 	if l == nil {
 		return &noop{}
@@ -38,18 +40,33 @@ type ZapLogger struct {
 	logger  *zap.Logger
 }
 
-var _ Logger = (*ZapLogger)(nil)
-
 func NewLogger(opts ...Option) (*ZapLogger, error) {
-	zl := &ZapLogger{
-		options: &LogConfig{},
-	}
+	options := &LogConfig{}
+
 	for _, o := range opts {
-		o(zl.options)
+		o(options)
 	}
 
-	if zl.options.EncoderConfig == nil {
-		zl.options.EncoderConfig = &zapcore.EncoderConfig{
+	return NewLoggerWithConfig(options)
+}
+
+func NewLoggerWithConfig(c *LogConfig) (*ZapLogger, error) {
+	if c == nil || (c.FileOptions.Filename == "" && len(c.FileOptions.StdPrinters) == 0) {
+		return &ZapLogger{logger: zap.NewNop()}, nil
+	}
+	zl := &ZapLogger{
+		options: c,
+	}
+
+	if err := zl.initLogger(); err != nil {
+		return nil, err
+	}
+	return zl, nil
+}
+
+func (p *ZapLogger) initLogger() error {
+	if p.options.EncoderConfig == nil {
+		p.options.EncoderConfig = &zapcore.EncoderConfig{
 			TimeKey:          "ts",
 			LevelKey:         "level",
 			NameKey:          "log",
@@ -61,42 +78,42 @@ func NewLogger(opts ...Option) (*ZapLogger, error) {
 			EncodeTime:       zapcore.RFC3339NanoTimeEncoder,
 			EncodeDuration:   zapcore.SecondsDurationEncoder,
 			EncodeCaller:     zapcore.ShortCallerEncoder,
-			ConsoleSeparator: zl.options.FileOptions.Separator,
+			ConsoleSeparator: p.options.FileOptions.Separator,
 		}
 	}
 
-	level := zap.NewAtomicLevelAt(zl.options.Level.ToZapLevel())
+	level := zap.NewAtomicLevelAt(p.options.Level.ToZapLevel())
 
 	var encoder zapcore.Encoder
-	switch zl.options.Encoding {
+	switch p.options.Encoding {
 	case "", "console":
-		encoder = zapcore.NewConsoleEncoder(*zl.options.EncoderConfig)
+		encoder = zapcore.NewConsoleEncoder(*p.options.EncoderConfig)
 	case "json":
-		encoder = zapcore.NewJSONEncoder(*zl.options.EncoderConfig)
+		encoder = zapcore.NewJSONEncoder(*p.options.EncoderConfig)
 	default:
-		return nil, errors.New("unknown encoding")
+		return errors.New("unknown encoding")
 	}
 
 	var ws []zapcore.WriteSyncer
-	for _, op := range zl.options.FileOptions.StdPrinters {
+	for _, op := range p.options.FileOptions.StdPrinters {
 		switch op {
 		case "stderr":
 			ws = append(ws, zapcore.AddSync(os.Stderr))
 		case "stdout":
 			ws = append(ws, zapcore.AddSync(os.Stdout))
 		default:
-			return nil, errors.New("unknown std printers")
+			return errors.New("unknown std printers")
 		}
 	}
 
-	if zl.options.FileOptions.Filename != "" {
-		if err := zl.options.FileOptions.Check(); err != nil {
-			return nil, err
+	if p.options.FileOptions.Filename != "" {
+		if err := p.options.FileOptions.Check(); err != nil {
+			return err
 		}
 
-		w, err := NewFileLoggerWithOptions(zl.options.FileOptions)
+		w, err := NewFileLoggerWithOptions(p.options.FileOptions)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		ws = append(ws, w)
 	}
@@ -104,20 +121,20 @@ func NewLogger(opts ...Option) (*ZapLogger, error) {
 	core := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(ws...), level)
 
 	var options []zap.Option
-	if zl.options.CallerSkip != 0 {
-		options = append(options, zap.AddCallerSkip(zl.options.CallerSkip))
+	if p.options.CallerSkip != 0 {
+		options = append(options, zap.AddCallerSkip(p.options.CallerSkip))
 	}
 
-	if zl.options.StackTrace {
+	if p.options.StackTrace {
 		options = append(options, zap.AddStacktrace(level))
 	}
 
-	if zl.options.Caller {
+	if p.options.Caller {
 		options = append(options, zap.AddCaller())
 	}
 
-	zl.logger = zap.New(core, options...)
-	return zl, nil
+	p.logger = zap.New(core, options...)
+	return nil
 }
 
 func (p *ZapLogger) GetZapLogger() *zap.Logger {

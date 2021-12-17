@@ -91,15 +91,30 @@ func (p *FileOptions) Check() error {
 
 type Option func(*LogConfig)
 type LogConfig struct {
-	Level      Level  `yaml:"level"`
-	Encoding   string `yaml:"encoding,omitempty"` // json | console, default console
-	CallerSkip int    `yaml:"caller_skip"`
-	StackTrace bool   `yaml:"stack_trace"`
-	Caller     bool   `yaml:"caller"`
+	Level       Level       `yaml:"level" json:"level"`
+	Encoding    string      `yaml:"encoding" json:"encoding"` // json | console, default console
+	CallerSkip  int         `yaml:"caller_skip" json:"caller_skip"`
+	Caller      bool        `yaml:"caller" json:"caller"`
+	StackTrace  bool        `yaml:"stack_trace" json:"stack_trace"`
+	FileOptions FileOptions `yaml:",inline" json:",inline"`
 
-	EncoderConfig *zapcore.EncoderConfig `yaml:",inline,omitempty"`
+	EncoderConfig *zapcore.EncoderConfig `yaml:",inline,omitempty" json:",inline,omitempty"`
+}
 
-	FileOptions FileOptions `yaml:",inline"`
+func (p *LogConfig) ParseFlags(f *flag.FlagSet) {
+	p.ParseFlagsWithPrefix("", f)
+}
+
+// ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
+func (p *LogConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
+	logLevel := f.Int("log.level", 0, "")
+	p.Level = Level(*logLevel)
+
+	f.StringVar(&p.Encoding, prefix+"log.encoding", "", "logger encoding, default: console")
+	f.IntVar(&p.CallerSkip, prefix+"log.caller_skip", 0, "caller skip")
+	f.BoolVar(&p.Caller, prefix+"log.caller", false, "open the caller")
+	f.BoolVar(&p.StackTrace, prefix+"log.stack_trace", false, "log trace")
+	p.FileOptions.ParseFlagsWithPrefix(prefix, f)
 }
 
 // Encoding 设置移动文件的类型

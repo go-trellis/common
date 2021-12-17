@@ -19,7 +19,11 @@ package logger
 
 import (
 	"errors"
+	"flag"
 	"time"
+
+	"trellis.tech/trellis/common.v0/flagext"
+	"trellis.tech/trellis/common.v0/types"
 
 	"go.uber.org/zap/zapcore"
 )
@@ -48,24 +52,40 @@ const (
 	MoveFileTypeDaily                         // 按天移动
 )
 
+var _ flagext.Parser = (*FileOptions)(nil)
+
 // FileOptions file options
 type FileOptions struct {
-	Filename    string   `yaml:"filename"`
-	StdPrinters []string `yaml:"std_printers"`
+	Filename    string        `yaml:"filename" json:"filename"`
+	StdPrinters types.Strings `yaml:"std_printers" json:"std_printers"`
 
-	Separator string `yaml:"separator"`
-	MaxLength int64  `yaml:"max_length"`
+	Separator string `yaml:"separator" json:"separator"`
+	MaxLength int64  `yaml:"max_length" json:"max_length"`
 
-	MoveFileType MoveFileType `yaml:"move_file_type"`
+	MoveFileType MoveFileType `yaml:"move_file_type" json:"move_file_type"`
 	// 最大保留日志个数，如果为0则全部保留
-	MaxBackups int `yaml:"max_backups"`
+	MaxBackups int `yaml:"max_backups" json:"max_backups"`
+}
+
+func (p *FileOptions) ParseFlags(f *flag.FlagSet) {
+	p.ParseFlagsWithPrefix("", f)
+}
+
+// ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
+func (p *FileOptions) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
+	f.StringVar(&p.Filename, prefix+"log.filename", "", "logger file")
+	f.Var(&p.StdPrinters, prefix+"log.std_printers", "std printers")
+	f.StringVar(&p.Separator, prefix+"log.separator", "", "log separator")
+	f.Int64Var(&p.MaxLength, prefix+"log.max_length", 0, "the max bytes of data, default: no limited")
+	f.IntVar(&p.MaxBackups, prefix+"log.max_backups", 0, "the max number of logged files, default: no limited")
+	moveType := f.Int(prefix+"log.move_file_type", 0, "move log file type")
+	p.MoveFileType = MoveFileType(*moveType)
 }
 
 func (p *FileOptions) Check() error {
 	if p == nil || p.Filename == "" {
 		return errors.New("file name not exist")
 	}
-
 	return nil
 }
 

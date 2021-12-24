@@ -1,4 +1,4 @@
-module trellis.tech/trellis/common.v0.1
+module trellis.tech/trellis/common.v0
 
 go 1.15
 

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package cache
 
 import (
-	"trellis.tech/trellis/common.v0.1/errcode"
+	"trellis.tech/trellis/common.v0/errcode"
 )
 
 var (

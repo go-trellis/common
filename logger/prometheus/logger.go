@@ -23,7 +23,7 @@ import (
 	"github.com/go-kit/kit/log"
 	"github.com/go-kit/kit/log/level"
 	"go.uber.org/zap/zapcore"
-	"trellis.tech/trellis/common.v0.1/logger"
+	"trellis.tech/trellis/common.v0/logger"
 )
 
 type Config struct {

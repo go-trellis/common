@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"strings"
 
-	"trellis.tech/trellis/common.v0.1/errcode"
-	"trellis.tech/trellis/common.v0.1/types"
+	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0/types"
 )
 
 func (p *AdapterConfig) copyDollarSymbol(key string, maps *map[string]interface{}) error {

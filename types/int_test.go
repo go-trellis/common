@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"trellis.tech/trellis/common.v0.1/testutils"
-	"trellis.tech/trellis/common.v0.1/types"
+	"trellis.tech/trellis/common.v0/testutils"
+	"trellis.tech/trellis/common.v0/types"
 )
 
 func Test_ToInt64(t *testing.T) {

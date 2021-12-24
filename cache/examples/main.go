@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"trellis.tech/trellis/common.v0.1/cache"
+	"trellis.tech/trellis/common.v0/cache"
 )
 
 var table1 = "tab1"

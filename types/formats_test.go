@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v0.1/testutils"
-	"trellis.tech/trellis/common.v0.1/types"
+	"trellis.tech/trellis/common.v0/testutils"
+	"trellis.tech/trellis/common.v0/types"
 )
 
 func Test_ParseStringByteSize(t *testing.T) {

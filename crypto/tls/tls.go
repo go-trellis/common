@@ -23,8 +23,8 @@ import (
 	"flag"
 	"io/ioutil"
 
-	"trellis.tech/trellis/common.v0.1/errcode"
-	"trellis.tech/trellis/common.v0.1/flagext"
+	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0/flagext"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"

@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0.1/errcode"
 )
 
 // Datas

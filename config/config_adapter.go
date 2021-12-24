@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v0/json"
-	"trellis.tech/trellis/common.v0/types"
+	"trellis.tech/trellis/common.v0.1/json"
+	"trellis.tech/trellis/common.v0.1/types"
 )
 
 const (

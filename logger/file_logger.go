@@ -28,8 +28,8 @@ import (
 	"time"
 
 	"go.uber.org/zap/zapcore"
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/files"
+	"trellis.tech/trellis/common.v0.1/errcode"
+	"trellis.tech/trellis/common.v0.1/files"
 )
 
 var (

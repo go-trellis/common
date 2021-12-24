@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 import (
-	"trellis.tech/trellis/common.v0/files"
+	"trellis.tech/trellis/common.v0.1/files"
 )
 
 // ReaderType define reader type

@@ -21,8 +21,8 @@ import (
 	"flag"
 	"os"
 
-	"trellis.tech/trellis/common.v0/config"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v0.1/config"
+	"trellis.tech/trellis/common.v0.1/errcode"
 )
 
 var defPlugins Repo

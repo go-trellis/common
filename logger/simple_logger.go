@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
-	"github.com/go-kit/log"
+	"github.com/go-kit/kit/log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

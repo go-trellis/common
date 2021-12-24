@@ -22,7 +22,7 @@ import (
 	"reflect"
 
 	"go.uber.org/zap/zapcore"
-	"trellis.tech/trellis/common.v0/json"
+	"trellis.tech/trellis/common.v0.1/json"
 )
 
 type SimpleLogger interface {

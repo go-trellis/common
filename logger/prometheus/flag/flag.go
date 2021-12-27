@@ -19,7 +19,7 @@ package flag
 
 import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"trellis.tech/trellis/common.v0/logger/prometheus"
+	"trellis.tech/trellis/common.v1/logger/prometheus"
 )
 
 // AddFlags adds the flags used by this package to the Kingpin application.

@@ -21,8 +21,8 @@ import (
 	"os"
 	"time"
 
-	"trellis.tech/trellis/common.v0/errcode"
-	"trellis.tech/trellis/common.v0/shell"
+	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/shell"
 )
 
 type Plugin struct {

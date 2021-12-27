@@ -22,8 +22,8 @@ import (
 	"flag"
 	"time"
 
-	"trellis.tech/trellis/common.v0/flagext"
-	"trellis.tech/trellis/common.v0/types"
+	"trellis.tech/trellis/common.v1/flagext"
+	"trellis.tech/trellis/common.v1/types"
 
 	"go.uber.org/zap/zapcore"
 )

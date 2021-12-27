@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"sync"
 
-	"trellis.tech/trellis/common.v0/config"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1/config"
+	"trellis.tech/trellis/common.v1/errcode"
 
 	"xorm.io/xorm"
 	"xorm.io/xorm/log"

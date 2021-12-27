@@ -19,7 +19,7 @@ package plugin
 
 import (
 	"github.com/prometheus/client_golang/prometheus"
-	"trellis.tech/trellis/common.v0/types"
+	"trellis.tech/trellis/common.v1/types"
 )
 
 type Repo interface {

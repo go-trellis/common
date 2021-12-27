@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/go-sql-driver/mysql"
-	"trellis.tech/trellis/common.v0"
-	"trellis.tech/trellis/common.v0/config"
+	"trellis.tech/trellis/common.v1"
+	"trellis.tech/trellis/common.v1/config"
 )
 
 // DefaultDatabase default database key

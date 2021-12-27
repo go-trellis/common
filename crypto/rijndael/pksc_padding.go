@@ -20,8 +20,8 @@ package rijndael
 import (
 	"bytes"
 
-	"trellis.tech/trellis/common.v0"
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1"
+	"trellis.tech/trellis/common.v1/errcode"
 )
 
 // Errors padding & unpadding can return

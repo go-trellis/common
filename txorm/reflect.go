@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"trellis.tech/trellis/common.v0/errcode"
+	"trellis.tech/trellis/common.v1/errcode"
 )
 
 // MapErrorTypes 可以支持的返回的错误类型

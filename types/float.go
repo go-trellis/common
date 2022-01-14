@@ -68,7 +68,6 @@ func ToFloat64(value interface{}) (float64, error) {
 		return 0, nil
 	}
 
-	var val string
 	switch t := value.(type) {
 	case float64:
 		return t, nil
@@ -85,7 +84,7 @@ func ToFloat64(value interface{}) (float64, error) {
 	case int16:
 		return float64(t), nil
 	case string:
-		return strconv.ParseFloat(val, 64)
+		return strconv.ParseFloat(t, 64)
 	case json.Number:
 		return t.Float64()
 	case Found:

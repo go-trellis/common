@@ -22,25 +22,32 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
-	"go.uber.org/zap/zapcore"
-	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/files"
+
+	"go.uber.org/zap/zapcore"
 )
 
 var (
 	_ zapcore.WriteSyncer = (*fileLogger)(nil)
 )
 
+const (
+	FileWriteOptionModel = os.O_CREATE | os.O_RDWR | os.O_APPEND
+	FileModeReadWrite    = 0666
+)
+
 type fileLogger struct {
 	options FileOptions
 
-	mutex    sync.Mutex
-	fileRepo files.FileRepo
+	mutex  sync.Mutex
+	osFile *os.File
+
+	fileReg *regexp.Regexp
 }
 
 // NewFileLogger 标准窗体的输出对象
@@ -50,16 +57,16 @@ func NewFileLogger(opts ...FileOption) (*fileLogger, error) {
 		o(&options)
 	}
 
-	fw, err := NewFileLoggerWithOptions(options)
-	if err != nil {
-		return nil, err
-	}
-
-	return fw, err
+	return NewFileLoggerWithOptions(options)
 }
 
 // NewFileLoggerWithOptions 标准窗体的输出对象
 func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
+
+	if err := opts.Check(); err != nil {
+		return nil, err
+	}
+
 	fw := &fileLogger{
 		options: opts,
 	}
@@ -71,17 +78,21 @@ func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
 	return fw, nil
 }
 
-func (p *fileLogger) init() error {
-	if p == nil || p.options.Filename == "" {
-		return errcode.New("file name not exist")
-	}
+func (p *fileLogger) init() (err error) {
 
-	p.fileRepo = files.NewFileRepo(files.ConcurrencyRead())
+	fmt.Println(p.options.Filename, fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
+
+	p.fileReg = regexp.MustCompile(fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
+
+	err = p.openFile()
+	if err != nil {
+		return
+	}
 	if p.options.Separator == "" {
 		p.options.Separator = "\t"
 	}
 
-	if err := p.checkFile(); err != nil {
+	if err = p.checkFile(0); err != nil {
 		return err
 	}
 
@@ -91,38 +102,54 @@ func (p *fileLogger) init() error {
 func (p *fileLogger) Write(bs []byte) (int, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
-	if err := p.checkFile(); err != nil {
+	if err := p.checkFile(int64(len(bs))); err != nil {
 		return 0, err
 	}
-	return p.fileRepo.WriteAppendBytes(p.options.Filename, bs)
+	return p.osFile.Write(bs)
+
 }
 
 func (p *fileLogger) Sync() error { return nil }
 
-func (p *fileLogger) checkFile() (err error) {
+func (p *fileLogger) checkFile(dataLen int64) (err error) {
 
-	fi, err := p.fileRepo.FileInfo(p.options.Filename)
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return err
+	if p.osFile == nil {
+		err = p.openFile()
+		if err != nil {
+			if !os.IsNotExist(err) {
+				return err
+			}
+			return nil
 		}
-		return nil
+	}
+
+	fi, err := p.osFile.Stat()
+	if err != nil {
+		return err
 	}
 
 	t := time.Now()
 
 	if p.options.MoveFileType.getMoveFileFlag(t) == p.options.MoveFileType.getMoveFileFlag(fi.ModTime()) &&
-		(p.options.MaxLength == 0 || (p.options.MaxLength > 0 && fi.Size() < p.options.MaxLength)) {
+		(p.options.MaxLength == 0 || (p.options.MaxLength > 0 && fi.Size()+dataLen < p.options.MaxLength)) {
 		return nil
 	}
 
 	return p.moveFile(t)
 }
 
+func (p *fileLogger) openFile() (err error) {
+	p.osFile, err = files.OpenWriteFile(p.options.Filename)
+	return
+}
+
 func (p *fileLogger) moveFile(t time.Time) error {
 
-	err := p.fileRepo.Rename(
-		p.options.Filename, fmt.Sprintf("%s_%s", p.options.Filename, t.Format("20060102150405.999999999")))
+	p.osFile = nil
+
+	err := os.Rename(p.options.Filename,
+		fmt.Sprintf("%s_%s%s",
+			p.options.FileBasename, t.Format("20060102150405.999"), p.options.FileExt))
 	if err != nil {
 		return err
 	}
@@ -131,9 +158,7 @@ func (p *fileLogger) moveFile(t time.Time) error {
 		return err
 	}
 
-	_, err = p.fileRepo.Write(p.options.Filename, "")
-
-	return err
+	return p.openFile()
 }
 
 func (p *fileLogger) removeOldFiles() error {
@@ -142,16 +167,16 @@ func (p *fileLogger) removeOldFiles() error {
 	}
 
 	// 获取日志文件列表
-	dirLis, err := ioutil.ReadDir(p.dir())
+	dirLis, err := ioutil.ReadDir(p.options.FileDir)
 	if err != nil {
 		return err
 	}
 
 	// 根据文件名过滤日志文件
 	fileSort := FileSort{}
-	filePrefix := fmt.Sprintf("%s_", p.basename())
+	//filePrefix := fmt.Sprintf("%s_", p.basename())
 	for _, f := range dirLis {
-		if strings.Contains(f.Name(), filePrefix) {
+		if p.fileReg.FindString(f.Name()) != "" {
 			fileSort = append(fileSort, f)
 		}
 	}
@@ -163,23 +188,13 @@ func (p *fileLogger) removeOldFiles() error {
 	// 根据文件修改日期排序，保留最近的N个文件
 	sort.Sort(fileSort)
 	for _, f := range fileSort[p.options.MaxBackups:] {
-		err := os.Remove(filepath.Join(p.dir(), f.Name()))
+		err := os.Remove(filepath.Join(p.options.FileDir, f.Name()))
 		if err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-// dir returns the directory for the current filename.
-func (p *fileLogger) dir() string {
-	return filepath.Dir(p.options.Filename)
-}
-
-// filename generates the name of the logfile from the current time.
-func (p *fileLogger) basename() string {
-	return filepath.Base(p.options.Filename)
 }
 
 // FileSort 文件排序

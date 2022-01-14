@@ -20,6 +20,9 @@ package logger
 import (
 	"errors"
 	"flag"
+	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"trellis.tech/trellis/common.v0/flagext"
@@ -56,7 +59,12 @@ var _ flagext.Parser = (*FileOptions)(nil)
 
 // FileOptions file options
 type FileOptions struct {
-	Filename    string        `yaml:"filename" json:"filename"`
+	Filename string `yaml:"filename" json:"filename"`
+	FileExt  string `yaml:"file_ext" json:"file_ext"`
+
+	FileBasename string `yaml:"-" json:"-"`
+	FileDir      string `yaml:"-" json:"-"`
+
 	StdPrinters types.Strings `yaml:"std_printers" json:"std_printers"`
 
 	Separator string `yaml:"separator" json:"separator"`
@@ -74,6 +82,7 @@ func (p *FileOptions) ParseFlags(f *flag.FlagSet) {
 // ParseFlagsWithPrefix adds the flags required to config this to the given FlagSet.
 func (p *FileOptions) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.StringVar(&p.Filename, prefix+"log.filename", "", "logger file")
+	f.StringVar(&p.FileExt, prefix+"log.file_ext", ".log", "logger file ext, default filename ext, but .log")
 	f.Var(&p.StdPrinters, prefix+"log.std_printers", "std printers")
 	f.StringVar(&p.Separator, prefix+"log.separator", "", "log separator")
 	f.Int64Var(&p.MaxLength, prefix+"log.max_length", 0, "the max bytes of data, default: no limited")
@@ -86,6 +95,21 @@ func (p *FileOptions) Check() error {
 	if p == nil || p.Filename == "" {
 		return errors.New("file name not exist")
 	}
+
+	p.FileDir = filepath.Dir(p.Filename)
+	p.Filename = filepath.Base(p.Filename)
+
+	if ext := filepath.Ext(p.Filename); ext != "" {
+		p.FileExt = ext
+		p.FileBasename = strings.TrimRight(p.Filename, ext)
+	} else {
+		if p.FileExt == "" {
+			p.FileExt = ".log"
+		}
+		p.FileBasename = p.Filename
+		p.Filename = fmt.Sprintf("%s%s", p.Filename, p.FileExt)
+	}
+
 	return nil
 }
 

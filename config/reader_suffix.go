@@ -19,6 +19,8 @@ package config
 
 import (
 	"strings"
+
+	"trellis.tech/trellis/common.v0/files"
 )
 
 type defSuffixReader struct {
@@ -87,7 +89,7 @@ func fileToReaderType(name string) ReaderType {
 }
 
 func ReadFile(name string) ([]byte, error) {
-	data, _, err := filesRepo.Read(name)
+	data, _, err := files.Read(name)
 	if err != nil {
 		return nil, err
 	}

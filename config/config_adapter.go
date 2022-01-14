@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
+	"trellis.tech/trellis/common.v0/files"
 	"trellis.tech/trellis/common.v0/json"
 	"trellis.tech/trellis/common.v0/types"
 )
@@ -79,7 +80,7 @@ func (p *AdapterConfig) init(opts ...OptionFunc) (err error) {
 
 		p.readerType = fileToReaderType(p.ConfigFile)
 
-		p.data, _, err = filesRepo.Read(p.ConfigFile)
+		p.data, _, err = files.Read(p.ConfigFile)
 		if err != nil {
 			return
 		}

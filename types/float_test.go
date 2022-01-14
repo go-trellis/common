@@ -35,15 +35,15 @@ func Test_ToFloat64(t *testing.T) {
 	testutils.Equals(t, 2.0, f)
 	testutils.Ok(t, err)
 
-	var i int = 10
+	var i = 10
 	f, err = types.ToFloat64(i)
-	testutils.Equals(t, 10.0, f)
 	testutils.Ok(t, err)
+	testutils.Equals(t, 10.0, f)
 
-	var s string = "10.0"
+	var s = "10.0"
 	f, err = types.ToFloat64(s)
-	testutils.Equals(t, 10.0, f)
 	testutils.Ok(t, err)
+	testutils.Equals(t, 10.0, f)
 
 	var js json.Number = "20.0"
 	f, err = types.ToFloat64(js)

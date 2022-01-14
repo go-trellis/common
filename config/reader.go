@@ -17,14 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package config
 
-import (
-	"trellis.tech/trellis/common.v0/files"
-)
-
 // ReaderType define reader type
 type ReaderType int
-
-var filesRepo = files.New()
 
 const (
 	// ReaderTypeSuffix judge by file suffix

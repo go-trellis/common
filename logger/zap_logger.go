@@ -107,10 +107,6 @@ func (p *ZapLogger) initLogger() error {
 	}
 
 	if p.options.FileOptions.Filename != "" {
-		if err := p.options.FileOptions.Check(); err != nil {
-			return err
-		}
-
 		w, err := NewFileLoggerWithOptions(p.options.FileOptions)
 		if err != nil {
 			return err

@@ -36,18 +36,13 @@ var (
 	_ zapcore.WriteSyncer = (*fileLogger)(nil)
 )
 
-const (
-	FileWriteOptionModel = os.O_CREATE | os.O_RDWR | os.O_APPEND
-	FileModeReadWrite    = 0666
-)
-
 type fileLogger struct {
 	options FileOptions
 
 	mutex  sync.Mutex
 	osFile *os.File
 
-	fileReg *regexp.Regexp
+	backupFileReg *regexp.Regexp
 }
 
 // NewFileLogger 标准窗体的输出对象
@@ -80,9 +75,7 @@ func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
 
 func (p *fileLogger) init() (err error) {
 
-	fmt.Println(p.options.Filename, fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
-
-	p.fileReg = regexp.MustCompile(fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
+	p.backupFileReg = regexp.MustCompile(fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
 
 	err = p.openFile()
 	if err != nil {
@@ -139,7 +132,7 @@ func (p *fileLogger) checkFile(dataLen int64) (err error) {
 }
 
 func (p *fileLogger) openFile() (err error) {
-	p.osFile, err = files.OpenWriteFile(p.options.Filename)
+	p.osFile, err = files.OpenWriteFile(filepath.Join(p.options.FileDir, p.options.Filename))
 	return
 }
 
@@ -147,9 +140,9 @@ func (p *fileLogger) moveFile(t time.Time) error {
 
 	p.osFile = nil
 
-	err := os.Rename(p.options.Filename,
-		fmt.Sprintf("%s_%s%s",
-			p.options.FileBasename, t.Format("20060102150405.999"), p.options.FileExt))
+	err := os.Rename(filepath.Join(p.options.FileDir, p.options.Filename),
+		filepath.Join(p.options.FileDir, fmt.Sprintf("%s_%s%s",
+			p.options.FileBasename, t.Format("20060102150405.999999"), p.options.FileExt)))
 	if err != nil {
 		return err
 	}
@@ -176,7 +169,7 @@ func (p *fileLogger) removeOldFiles() error {
 	fileSort := FileSort{}
 	//filePrefix := fmt.Sprintf("%s_", p.basename())
 	for _, f := range dirLis {
-		if p.fileReg.FindString(f.Name()) != "" {
+		if p.backupFileReg.FindString(f.Name()) != "" {
 			fileSort = append(fileSort, f)
 		}
 	}

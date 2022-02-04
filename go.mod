@@ -10,12 +10,12 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-colorable v0.1.12
-	github.com/prometheus/client_golang v1.11.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.1
-	go.etcd.io/etcd/client/v3 v3.5.1
-	go.uber.org/zap v1.19.1
+	github.com/prometheus/client_golang v1.12.1
+	go.etcd.io/etcd/client/pkg/v3 v3.5.2
+	go.etcd.io/etcd/client/v3 v3.5.2
+	go.uber.org/zap v1.20.0
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.43.0
+	google.golang.org/grpc v1.44.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 	xorm.io/xorm v1.2.5

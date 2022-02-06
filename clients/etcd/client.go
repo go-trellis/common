@@ -49,7 +49,7 @@ func (cfg *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.BoolVar(&cfg.EnableTLS, prefix+"etcd.tls-enabled", false, "Enable TLS.")
 	f.StringVar(&cfg.Username, prefix+"etcd.username", "", "Etcd username.")
 	f.Var(&cfg.Password, prefix+"etcd.password", "Etcd password.")
-	cfg.TLS.ParseFlagsWithPrefix(prefix+"etcd", f)
+	cfg.TLS.ParseFlagsWithPrefix(prefix+"etcd.", f)
 }
 
 // GetTLS sets the TLS config field with certs

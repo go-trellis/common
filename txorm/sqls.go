@@ -1,20 +1,3 @@
-/*
-Copyright © 2019 Henry Huang <hhh@rutcode.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
 package txorm
 
 import (
@@ -25,8 +8,12 @@ import (
 )
 
 // TransactionDo to do transaction with customer function
-func TransactionDo(engine xorm.Engine, fn func(*xorm.Session) error) (err error) {
-	s := engine.NewSession()
+func TransactionDo(engine xorm.Engine, fn func(*xorm.Session) error) error {
+	return TransactionDoWithSession(engine.NewSession(), fn)
+}
+
+// TransactionDoWithSession to do transaction with customer function
+func TransactionDoWithSession(s *xorm.Session, fn func(*xorm.Session) error) (err error) {
 	if err = s.Begin(); err != nil {
 		return
 	}
@@ -41,34 +28,9 @@ func TransactionDo(engine xorm.Engine, fn func(*xorm.Session) error) (err error)
 	return
 }
 
-type UpdateOption func(*UpdateOptions)
-
-func UpdateWheres(wheres interface{}) UpdateOption {
-	return func(options *UpdateOptions) {
-		options.Wheres = wheres
-	}
-}
-
-func UpdateArgs(args ...interface{}) UpdateOption {
-	return func(options *UpdateOptions) {
-		options.Args = args
-	}
-}
-
-func UpdateCols(cols ...string) UpdateOption {
-	return func(options *UpdateOptions) {
-		options.Cols = cols
-	}
-}
-
-type UpdateOptions struct {
-	Wheres interface{}
-	Args   []interface{}
-	Cols   []string
-}
+/// Get Execute
 
 type GetOption func(*GetOptions)
-
 type GetOptions struct {
 	Wheres interface{}
 	Args   []interface{}
@@ -118,6 +80,33 @@ func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (bool, erro
 	return session.Get(bean)
 }
 
+/// Update Execute
+
+type UpdateOption func(*UpdateOptions)
+type UpdateOptions struct {
+	Wheres interface{}
+	Args   []interface{}
+	Cols   []string
+}
+
+func UpdateWheres(wheres interface{}) UpdateOption {
+	return func(options *UpdateOptions) {
+		options.Wheres = wheres
+	}
+}
+
+func UpdateArgs(args ...interface{}) UpdateOption {
+	return func(options *UpdateOptions) {
+		options.Args = args
+	}
+}
+
+func UpdateCols(cols ...string) UpdateOption {
+	return func(options *UpdateOptions) {
+		options.Cols = cols
+	}
+}
+
 func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int64, error) {
 	updateOptions := &UpdateOptions{}
 	for _, opt := range opts {
@@ -132,14 +121,32 @@ func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int6
 	return session.Update(bean)
 }
 
-// InsertMulti insert multi seperated data in a big data for every step
-func InsertMulti(session *xorm.Session, ones interface{}, stepNum int) (int64, error) {
-	if stepNum <= 0 {
+/// InsertMulti Execute
+
+type InsertMultiOption func(*InsertMultiOptions)
+type InsertMultiOptions struct {
+	StepNumber int
+}
+
+func InsertMultiStepNumber(number int) InsertMultiOption {
+	return func(options *InsertMultiOptions) {
+		options.StepNumber = number
+	}
+}
+
+// InsertMulti insert multi seperated slice data in a big slice with every step number
+// default to insert the slice with no seperated.
+func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (int64, error) {
+	options := &InsertMultiOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+	if options.StepNumber <= 0 {
 		return session.InsertMulti(ones)
 	}
 	sliceOnes := reflect.Indirect(reflect.ValueOf(ones))
 	switch sliceOnes.Kind() {
-	case reflect.Slice:
+	case reflect.Slice, reflect.Array:
 		onesLen := sliceOnes.Len()
 		if onesLen == 0 {
 			return 0, nil
@@ -150,16 +157,15 @@ func InsertMulti(session *xorm.Session, ones interface{}, stepNum int) (int64, e
 			session = session.NoAutoTime()
 		}
 
-		if onesLen <= stepNum {
-			_, err := session.InsertMulti(ones)
-			return 0, err
+		if onesLen <= options.StepNumber {
+			return session.InsertMulti(ones)
 		}
 
 		loop, count, processNum := 0, 0, onesLen
 
-		for i := 0; i < onesLen; i += stepNum {
-			if processNum > stepNum {
-				loop = i + stepNum
+		for i := 0; i < onesLen; i += options.StepNumber {
+			if processNum > options.StepNumber {
+				loop = i + options.StepNumber
 			} else {
 				loop = onesLen
 			}
@@ -170,16 +176,46 @@ func InsertMulti(session *xorm.Session, ones interface{}, stepNum int) (int64, e
 			session = session.NoAutoTime()
 			n, err := session.InsertMulti(multi)
 			if err != nil {
-				return 0, err
+				return int64(count) + n, err
 			}
 			count += int(n)
-			processNum -= stepNum
+			processNum -= options.StepNumber
 		}
 
 		if count != onesLen {
 			return 0, fmt.Errorf("insert number not %d, but %d", onesLen, count)
 		}
 		return int64(count), nil
+	default:
+		return session.InsertMulti(ones)
 	}
-	return session.InsertMulti(ones)
+}
+
+/// Delete Execute
+
+type DeleteOption func(*DeleteOptions)
+type DeleteOptions struct {
+	Wheres interface{}
+	Args   []interface{}
+}
+
+func DeleteWheres(wheres interface{}) DeleteOption {
+	return func(options *DeleteOptions) {
+		options.Wheres = wheres
+	}
+}
+
+func DeleteArgs(args ...interface{}) DeleteOption {
+	return func(options *DeleteOptions) {
+		options.Args = args
+	}
+}
+
+func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (int64, error) {
+	deleteOptions := &DeleteOptions{}
+	for _, opt := range opts {
+		opt(deleteOptions)
+	}
+
+	return session.Where(deleteOptions.Wheres, deleteOptions.Args...).Delete(bean)
 }

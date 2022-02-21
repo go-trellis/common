@@ -18,7 +18,6 @@
 ## dsn info
 test:
   # [user[:password]@][net[(addr)]]/dbname[?param1=value1&paramN=valueN]
-  database: test
   dsn: "root:root@localhost:3306/test?allowNativePasswords=true&parseTime=True"
   show_sql: true                  ## default false
   max_idle_conns: 10              ## default 10

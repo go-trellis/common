@@ -1,27 +1,31 @@
-/*
-Copyright © 2019 Henry Huang <hhh@rutcode.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program. If not, see <http://www.gnu.org/licenses/>.
-*/
-
-package txorm
+package transaction
 
 import (
 	"fmt"
 	"reflect"
 
 	"trellis.tech/trellis/common.v1/errcode"
+)
+
+// LogicFunc logic functions
+type LogicFunc struct {
+	BeforeLogic interface{}
+	AfterLogic  interface{}
+	OnError     interface{}
+	Logic       interface{}
+	AfterCommit interface{}
+}
+
+// TXFunc Transaction function
+type TXFunc func(repos ...interface{}) error
+
+// Function Flags
+const (
+	Logic = iota
+	BeforeLogic
+	AfterLogic
+	OnError
+	AfterCommit
 )
 
 // MapErrorTypes 可以支持的返回的错误类型
@@ -39,54 +43,24 @@ func AddErrorTypes(errType reflect.Type) {
 	mapErrorTypes[errType] = true
 }
 
-// Function Flags
-const (
-	Logic = iota
-	BeforeLogic
-	AfterLogic
-	OnError
-	AfterCommit
-)
-
-// LogicFunc logic functions
-type LogicFunc struct {
-	BeforeLogic interface{}
-	AfterLogic  interface{}
-	OnError     interface{}
-	Logic       interface{}
-	AfterCommit interface{}
-}
-
-// DeepFields reflect interface deep fields
-func DeepFields(iface interface{}, vType reflect.Type, fields []reflect.Value) interface{} {
-
-	ift := reflect.TypeOf(iface)
-	if ift == vType {
-		return iface
-	}
-	ifv := reflect.ValueOf(iface)
-	if ifv.Kind() == reflect.Ptr {
-		ifv = ifv.Elem()
-		ift = ifv.Type()
+// CallFunc execute transaction function with logic functions and args
+func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
+	if input == nil {
+		return nil, nil
 	}
 
-	for i := 0; i < ift.NumField(); i++ {
-		v := ifv.Field(i)
-		switch v.Kind() {
-		case reflect.Struct:
-			var deepIns interface{}
-			if v.CanAddr() {
-				deepIns = DeepFields(v.Addr().Interface(), vType, fields)
-			} else {
-				deepIns = DeepFields(v.Interface(), vType, fields)
-			}
-
-			if deepIns != nil {
-				return deepIns
-			}
+	switch _logicFunc := input.(type) {
+	case TXFunc:
+		{
+			return nil, _logicFunc(args...)
 		}
+	case func(repos ...interface{}) (err error):
+		{
+			return nil, _logicFunc(args...)
+		}
+	default:
+		return call(input, args...)
 	}
-	return nil
 }
 
 // GetLogicFunc reflect logic function
@@ -121,26 +95,6 @@ func GetLogicFunc(input interface{}) *LogicFunc {
 	}
 
 	return lFunc
-}
-
-// CallFunc execute transaction function with logic functions and args
-func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
-	if input == nil {
-		return nil, nil
-	}
-
-	switch _logicFunc := input.(type) {
-	case TXFunc:
-		{
-			return nil, _logicFunc(args...)
-		}
-	case func(repos ...interface{}) (err error):
-		{
-			return nil, _logicFunc(args...)
-		}
-	default:
-		return call(input, args...)
-	}
 }
 
 func call(fn interface{}, args ...interface{}) ([]interface{}, error) {

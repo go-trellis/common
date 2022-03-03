@@ -17,7 +17,7 @@ func GetMysqlDSNFromConfig(conf config.Config) (string, error) {
 	}
 
 	name := conf.GetString("database")
-	if name != "" {
+	if name == "" {
 		return "", errcode.New("database's name not exist, set param database")
 	}
 

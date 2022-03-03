@@ -25,11 +25,12 @@ func NewEngine(driver string, dsn string) (*xEngine, error) {
 	return x, nil
 }
 
-func (p *xEngine) NewSession() interface{} {
-	return p.Engine.NewSession()
+func (p *xEngine) NewSession() (interface{}, error) {
+	return p.Engine.NewSession(), nil
 }
 
-func (p *xEngine) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
+func (p *xEngine) Exec(sql string, args ...interface{}) (sql.Result, error) {
+	sqlOrArgs := append([]interface{}{sql}, args...)
 	return p.Engine.Exec(sqlOrArgs...)
 }
 

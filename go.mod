@@ -13,10 +13,13 @@ require (
 	github.com/prometheus/client_golang v1.12.1
 	go.etcd.io/etcd/client/pkg/v3 v3.5.2
 	go.etcd.io/etcd/client/v3 v3.5.2
-	go.uber.org/zap v1.20.0
+	go.uber.org/zap v1.21.0
 	golang.org/x/text v0.3.7
 	google.golang.org/grpc v1.44.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gorm.io/driver/mysql v1.3.2
+	gorm.io/driver/sqlite v1.3.1
+	gorm.io/gorm v1.23.1
 	xorm.io/xorm v1.2.5
 )

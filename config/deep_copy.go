@@ -32,6 +32,12 @@ func DeepCopy(value interface{}) interface{} {
 			newMap[k] = DeepCopy(v)
 		}
 		return newMap
+	case map[string]string:
+		newMap := make(map[string]string)
+		for k, v := range valueType {
+			newMap[k] = v
+		}
+		return newMap
 	case map[interface{}]interface{}:
 		newMap := make(map[interface{}]interface{})
 		for k, v := range valueType {

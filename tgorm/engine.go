@@ -10,13 +10,13 @@ import (
 	"trellis.tech/trellis/common.v1/transaction"
 )
 
-var _ transaction.Engine = (*xEngine)(nil)
+var _ transaction.Engine = (*XEngine)(nil)
 
-type xEngine struct {
+type XEngine struct {
 	Engine *gorm.DB
 }
 
-func NewEngine(driver string, dsn string, opts ...gorm.Option) (*xEngine, error) {
+func NewEngine(driver string, dsn string, opts ...gorm.Option) (*XEngine, error) {
 
 	var d gorm.Dialector
 	switch driver {
@@ -32,14 +32,14 @@ func NewEngine(driver string, dsn string, opts ...gorm.Option) (*xEngine, error)
 		return nil, err
 	}
 
-	return &xEngine{Engine: engine}, nil
+	return &XEngine{Engine: engine}, nil
 }
 
-func (p *xEngine) NewSession() (interface{}, error) {
+func (p *XEngine) NewSession() (interface{}, error) {
 	return p.Engine, nil
 }
 
-func (p *xEngine) Exec(query string, args ...interface{}) (sql.Result, error) {
+func (p *XEngine) Exec(query string, args ...interface{}) (sql.Result, error) {
 	//return p.DB.(sqlOrArgs...)
 	sql, err := p.Engine.DB()
 	if err != nil {
@@ -48,15 +48,15 @@ func (p *xEngine) Exec(query string, args ...interface{}) (sql.Result, error) {
 	return sql.Exec(query, args...)
 }
 
-func (p *xEngine) BeginTransaction() (transaction.Transaction, error) {
+func (p *XEngine) BeginTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: true, engine: p.Engine, session: nil}, nil
 }
 
-func (p *xEngine) BeginNonTransaction() (transaction.Transaction, error) {
+func (p *XEngine) BeginNonTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: false, engine: p.Engine, session: nil}, nil
 }
 
-func (p *xEngine) Close() error {
+func (p *XEngine) Close() error {
 	db, err := p.Engine.DB()
 	if err != nil {
 		return err

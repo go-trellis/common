@@ -8,36 +8,36 @@ import (
 	"xorm.io/xorm"
 )
 
-var _ transaction.Engine = (*xEngine)(nil)
+var _ transaction.Engine = (*XEngine)(nil)
 
-type xEngine struct {
+type XEngine struct {
 	*xorm.Engine
 }
 
-func NewEngine(driver string, dsn string) (*xEngine, error) {
+func NewEngine(driver string, dsn string) (*XEngine, error) {
 	engine, err := xorm.NewEngine(driver, dsn)
 	if err != nil {
 		return nil, err
 	}
-	x := &xEngine{
+	x := &XEngine{
 		Engine: engine,
 	}
 	return x, nil
 }
 
-func (p *xEngine) NewSession() (interface{}, error) {
+func (p *XEngine) NewSession() (interface{}, error) {
 	return p.Engine.NewSession(), nil
 }
 
-func (p *xEngine) Exec(sql string, args ...interface{}) (sql.Result, error) {
+func (p *XEngine) Exec(sql string, args ...interface{}) (sql.Result, error) {
 	sqlOrArgs := append([]interface{}{sql}, args...)
 	return p.Engine.Exec(sqlOrArgs...)
 }
 
-func (p *xEngine) BeginTransaction() (transaction.Transaction, error) {
+func (p *XEngine) BeginTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: true, engine: p.Engine, session: p.Engine.NewSession()}, nil
 }
 
-func (p *xEngine) BeginNonTransaction() (transaction.Transaction, error) {
+func (p *XEngine) BeginNonTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: false, engine: p.Engine}, nil
 }

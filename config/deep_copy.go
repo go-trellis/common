@@ -20,10 +20,15 @@ package config
 // DeepCopy 深度拷贝
 func DeepCopy(value interface{}) interface{} {
 	switch valueType := value.(type) {
-	case map[string]interface{}, Options:
+	case map[string]interface{}:
 		newMap := make(map[string]interface{})
-		valueMap := valueType.(map[string]interface{})
-		for k, v := range valueMap {
+		for k, v := range valueType {
+			newMap[k] = DeepCopy(v)
+		}
+		return newMap
+	case Options:
+		newMap := Options{}
+		for k, v := range valueType {
 			newMap[k] = DeepCopy(v)
 		}
 		return newMap

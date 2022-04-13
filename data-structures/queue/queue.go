@@ -76,7 +76,9 @@ func (p *defaultQueue) Pop() (v interface{}, exist bool) {
 }
 
 func (p *defaultQueue) PopMany(count int64) (vs []interface{}, exist bool) {
-
+	if count < 1 {
+		return nil, false
+	}
 	if p.IsEmpty() {
 		return
 	}
@@ -89,7 +91,7 @@ func (p *defaultQueue) PopMany(count int64) (vs []interface{}, exist bool) {
 	}
 	p.length -= count
 
-	vs, p.queue, exist = p.queue[:count-1], p.queue[count:], true
+	vs, p.queue, exist = p.queue[:count], p.queue[count:], true
 	return
 }
 

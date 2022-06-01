@@ -1,7 +1,6 @@
 package txorm
 
 import (
-	"fmt"
 	"sync"
 
 	"trellis.tech/trellis/common.v1/config"
@@ -12,25 +11,6 @@ import (
 )
 
 var locker = &sync.Mutex{}
-
-type DSNFactory func(config.Config) (string, error)
-
-var driverDSN = map[string]DSNFactory{
-	"mysql": transaction.GetMysqlDSNFromConfig,
-}
-
-func SetDSNFactory(name string, factory DSNFactory) error {
-	if name == "" {
-		return errcode.New("name must not be empty")
-	}
-	if factory == nil {
-		return errcode.New("nil factory")
-	}
-	locker.Lock()
-	defer locker.Unlock()
-	driverDSN[name] = factory
-	return nil
-}
 
 // NewEnginesFromFile initial xorm engine from file
 func NewEnginesFromFile(file string) (map[string]transaction.Engine, error) {
@@ -45,7 +25,7 @@ func NewEnginesFromFile(file string) (map[string]transaction.Engine, error) {
 func NewEnginesFromConfig(conf config.Config) (engines map[string]transaction.Engine, err error) {
 
 	if conf == nil {
-		return nil, fmt.Errorf("nil config")
+		return nil, errcode.New("nil config")
 	}
 
 	locker.Lock()
@@ -65,9 +45,9 @@ func NewEnginesFromConfig(conf config.Config) (engines map[string]transaction.En
 		databaseConf := conf.GetValuesConfig(key)
 		driver := databaseConf.GetString("driver", "mysql")
 
-		f, ok := driverDSN[driver]
-		if !ok {
-			return nil, fmt.Errorf("unsupported driver: %s", driver)
+		f, err := transaction.GetDSNFactory(driver)
+		if err != nil {
+			return nil, err
 		}
 
 		dsn, err := f(databaseConf)
@@ -75,7 +55,7 @@ func NewEnginesFromConfig(conf config.Config) (engines map[string]transaction.En
 			return nil, err
 		}
 
-		xEngine, err := NewEngine(driver, dsn)
+		xEngine, err := NewXEngine(driver, dsn)
 		if err != nil {
 			return nil, err
 		}

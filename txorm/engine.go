@@ -66,6 +66,7 @@ func NewXORMEngines(cfg config.Config) (engines map[string]*xorm.Engine, err err
 		if _isD := cfg.GetBoolean(key + ".is_default"); _isD {
 			engines[transaction.DefaultDatabase] = engine
 		}
+		engines[key] = engine
 	}
 	return engines, nil
 }

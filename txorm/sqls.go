@@ -88,7 +88,7 @@ func CheckSession(x interface{}) (*xorm.Session, error) {
 }
 
 // TransactionDo to do transaction with customer function
-func TransactionDo(engine xorm.Engine, fn func(*xorm.Session) error) error {
+func TransactionDo(engine *xorm.Engine, fn func(*xorm.Session) error) error {
 	return TransactionDoWithSession(engine.NewSession(), fn)
 }
 

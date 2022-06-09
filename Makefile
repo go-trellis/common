@@ -1,7 +1,4 @@
-.PHONY: proto build
-
-proto:
-	sh ./scripts/proto.sh
+.PHONY: build
 
 build:
 	go build ./...

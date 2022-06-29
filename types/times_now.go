@@ -21,6 +21,37 @@ import (
 	"time"
 )
 
+var _ Times = (*Now)(nil)
+
+/*
+	获取一些日期的函数
+	More Time functions
+*/
+
+// Times 时间处理函数
+type Times interface {
+	Now() time.Time
+	Monday() time.Time
+	Sunday() time.Time
+	BeginOfDay() time.Time
+	EndOfDay() time.Time
+	BeginOfWeek() time.Time
+	EndOfWeek() time.Time
+	BeginOfMonth() time.Time
+	EndOfMonth() time.Time
+	BeginOfYear() time.Time
+	EndOfYear() time.Time
+	BeginOfDuration(d time.Duration) time.Time
+	ParseLayoutTime(layout, timestring string) (time.Time, error)
+	ParseInLocation(layout, timestring string, loc *time.Location) (time.Time, error)
+	WithLocation(loc *time.Location)
+	DayOfWeek() int
+	WeekOfYear() (int, int)
+	Add(time.Duration) Times
+	AddDate(years, months, days int) Times
+	SetTime(t time.Time) Times
+}
+
 // NowOption 执行函数
 type NowOption func(*Now)
 
@@ -68,30 +99,6 @@ func initConfig() Config {
 	return Config{
 		WeekStartDay: WeekStartDay,
 	}
-}
-
-/*
-	获取一些日期的函数
-	More Time functions
-*/
-
-// Times 时间处理函数
-type Times interface {
-	Now() time.Time
-	Monday() time.Time
-	Sunday() time.Time
-	BeginOfDay() time.Time
-	EndOfDay() time.Time
-	BeginOfWeek() time.Time
-	EndOfWeek() time.Time
-	BeginOfMonth() time.Time
-	EndOfMonth() time.Time
-	BeginOfYear() time.Time
-	EndOfYear() time.Time
-	BeginOfDuration(d time.Duration) time.Time
-	ParseLayoutTime(layout, timestring string) (time.Time, error)
-	ParseInLocation(layout, timestring string, loc *time.Location) (time.Time, error)
-	WithLocation(loc *time.Location)
 }
 
 // GetNow initialise by input time
@@ -238,7 +245,7 @@ func (p *Now) EndOfDay() time.Time {
 func (p *Now) BeginOfWeek() time.Time {
 	t := p.BeginOfDay()
 	weekday := int(t.Weekday())
-	if p.WeekStartDay != time.Sunday {
+	if p.WeekStartDay != WeekStartDay {
 		beginInt := int(p.WeekStartDay)
 		if weekday < beginInt {
 			weekday = weekday + 7 - beginInt
@@ -275,4 +282,42 @@ func (p *Now) BeginOfYear() time.Time {
 // EndOfYear begin of year
 func (p *Now) EndOfYear() time.Time {
 	return p.BeginOfYear().AddDate(1, 0, 0).Add(-time.Nanosecond)
+}
+
+// DayOfWeek day of week
+func (p *Now) DayOfWeek() int {
+	day := int(p.Weekday())
+	beginInt := int(p.WeekStartDay)
+	if p.WeekStartDay != WeekStartDay {
+		if day < beginInt {
+			day = day + 7 - beginInt
+		} else {
+			day = day - beginInt
+		}
+	}
+	return day + 1
+}
+
+// WeekOfYear week of year
+// time ISOWeek()
+func (p *Now) WeekOfYear() (int, int) {
+	return p.Time.ISOWeek()
+}
+
+// Add added duration
+func (p *Now) Add(duration time.Duration) Times {
+	*p.Time = p.Time.Add(duration)
+	return p
+}
+
+// AddDate added days
+func (p *Now) AddDate(years, months, days int) Times {
+	*p.Time = p.Time.AddDate(years, months, days)
+	return p
+}
+
+// SetTime set custom time
+func (p *Now) SetTime(t time.Time) Times {
+	*p.Time = t
+	return p
 }

@@ -26,10 +26,14 @@ import (
 )
 
 func TestTimes(t *testing.T) {
+	testMondayTime := time.Date(2016, 11, 30, 1, 33, 0, 0, &time.Location{})
+	testTuesdayTime := time.Date(2016, 11, 30, 1, 33, 0, 0, &time.Location{})
 	testTime := time.Date(2016, 11, 30, 1, 33, 0, 0, &time.Location{})
 
-	tMondayNow := types.GetNow(types.NowTime(&testTime), types.NowWeekStartDay(time.Monday))
+	tMondayNow := types.GetNow(types.NowTime(&testMondayTime), types.NowWeekStartDay(time.Monday))
+	tTuesdayNow := types.GetNow(types.NowTime(&testTuesdayTime), types.NowWeekStartDay(time.Tuesday))
 	tNow := types.GetNow(types.NowTime(&testTime), types.NowWeekStartDay(time.Sunday))
+
 	var expt int64 = 1480291200000000000 // 2016-11-28 Mon
 	testutils.Equals(t, expt, tMondayNow.BeginOfWeek().UnixNano())
 	testutils.Equals(t, expt, tMondayNow.Monday().UnixNano())
@@ -74,4 +78,39 @@ func TestTimes(t *testing.T) {
 	zString, offset := r.Zone()
 	testutils.Equals(t, "PST", zString)
 	testutils.Equals(t, -28800, offset)
+
+	testutils.Equals(t, 3, tMondayNow.DayOfWeek())
+	testutils.Equals(t, 3, int(tMondayNow.Now().Weekday()))
+	testutils.Equals(t, 1, tMondayNow.Add(-time.Hour*24*2).DayOfWeek()) // Monday is 1
+	year, week := tMondayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 48, week)
+	testutils.Equals(t, 7, tMondayNow.Add(time.Hour*24*6).DayOfWeek()) // 1+6 = 7 Sunday is 7
+	year, week = tMondayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 48, week)
+	testutils.Equals(t, 1, tMondayNow.Add(time.Hour*24).DayOfWeek()) // 7+1 = 1 Monday is 1
+	year, week = tMondayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 49, week)
+
+	testutils.Equals(t, 3, int(tTuesdayNow.Now().Weekday()))
+	testutils.Equals(t, 0, int(tTuesdayNow.Sunday().Weekday()))
+	testutils.Equals(t, 2, tTuesdayNow.DayOfWeek()) // Wednesday is 2
+	year, week = tTuesdayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 48, week)
+	testutils.Equals(t, 1, tTuesdayNow.Add(-time.Hour*24).DayOfWeek()) // Tuesday is 1
+	testutils.Equals(t, 7, tTuesdayNow.Add(-time.Hour*24).DayOfWeek()) // Monday is 7
+	year, week = tTuesdayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 48, week)
+	testutils.Equals(t, 6, tTuesdayNow.Add(-time.Hour*24).DayOfWeek()) // Sunday is 6
+	year, week = tTuesdayNow.WeekOfYear()
+	testutils.Equals(t, 2016, year)
+	testutils.Equals(t, 47, week)
+	testutils.Equals(t, 0, int(tMondayNow.Sunday().Weekday()))
+	testutils.Equals(t, 0, int(tNow.Sunday().Weekday()))
+	testutils.Equals(t, 1, int(tNow.Monday().Weekday()))
+	testutils.Equals(t, 4, tNow.DayOfWeek())
 }

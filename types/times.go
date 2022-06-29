@@ -49,7 +49,7 @@ const (
 	MonthFebDays     int = 28
 )
 
-var (
+const (
 	// WeekStartDay 一周的开始时间
 	WeekStartDay = time.Sunday
 )
@@ -154,7 +154,7 @@ func GetMonthDays(year, month int) int {
 ///// 转换字符串到时间 /////
 ///// Parse string to time /////
 
-// StringToDate paser string to date, but is deprecated, use ParseDate
+// StringToDate parse string to date, but is deprecated, use ParseDate
 func StringToDate(t string) (time.Time, error) {
 	return time.Parse(Date, t)
 }

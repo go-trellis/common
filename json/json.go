@@ -20,52 +20,39 @@ package json
 import (
 	eJson "encoding/json"
 	"io"
-	"strconv"
 
-	jsoniter "github.com/json-iterator/go"
+	iter "github.com/json-iterator/go"
 )
 
-type Number eJson.Number
-
-// String returns the literal text of the number.
-func (n Number) String() string { return string(n) }
-
-// Float64 returns the number as a float64.
-func (n Number) Float64() (float64, error) {
-	return strconv.ParseFloat(string(n), 64)
-}
-
-// Int64 returns the number as an int64.
-func (n Number) Int64() (int64, error) {
-	return strconv.ParseInt(string(n), 10, 64)
-}
+type JsonNumber = eJson.Number
+type Number = iter.Number
 
 func Marshal(v interface{}) ([]byte, error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	json := iter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(v)
 }
 
 func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
-	return jsoniter.MarshalIndent(v, prefix, indent)
+	return iter.MarshalIndent(v, prefix, indent)
 }
 
 func MarshalToString(v interface{}) (string, error) {
-	return jsoniter.MarshalToString(v)
+	return iter.MarshalToString(v)
 }
 
 func Unmarshal(bs []byte, v interface{}) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	json := iter.ConfigCompatibleWithStandardLibrary
 	return json.Unmarshal(bs, v)
 }
 
 func UnmarshalFromString(bs string, v interface{}) error {
-	return jsoniter.UnmarshalFromString(bs, v)
+	return iter.UnmarshalFromString(bs, v)
 }
 
-func NewDecoder(reader io.Reader) *jsoniter.Decoder {
-	return jsoniter.NewDecoder(reader)
+func NewDecoder(reader io.Reader) *iter.Decoder {
+	return iter.NewDecoder(reader)
 }
 
-func NewEncoder(writer io.Writer) *jsoniter.Encoder {
-	return jsoniter.NewEncoder(writer)
+func NewEncoder(writer io.Writer) *iter.Encoder {
+	return iter.NewEncoder(writer)
 }

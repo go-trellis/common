@@ -22,6 +22,7 @@ import (
 	"reflect"
 
 	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/transaction"
 
 	"xorm.io/xorm"
 )
@@ -33,6 +34,8 @@ type BaseRepository interface {
 	Delete(bean interface{}, opts ...DeleteOption) (int64, error)
 	Get(bean interface{}, opts ...GetOption) (bool, error)
 	Find(beans interface{}, opts ...GetOption) error
+
+	transaction.Repo
 }
 
 type BaseRepo struct {

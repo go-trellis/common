@@ -222,6 +222,8 @@ func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int6
 	session = session.Where(updateOptions.Wheres, updateOptions.Args...)
 	if len(updateOptions.Cols) > 0 {
 		session = session.Cols(updateOptions.Cols...)
+	} else {
+		session = session.AllCols()
 	}
 
 	return session.Update(bean)

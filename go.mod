@@ -9,13 +9,13 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/json-iterator/go v1.1.12
-	github.com/mattn/go-colorable v0.1.12
-	github.com/prometheus/client_golang v1.12.2
+	github.com/mattn/go-colorable v0.1.13
+	github.com/prometheus/client_golang v1.13.0
 	go.etcd.io/etcd/client/pkg/v3 v3.5.4
 	go.etcd.io/etcd/client/v3 v3.5.4
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.23.0
 	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.48.0
+	google.golang.org/grpc v1.49.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/xorm v1.3.1

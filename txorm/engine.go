@@ -34,6 +34,19 @@ type XEngine struct {
 	*xorm.Engine
 }
 
+// NewEngine New XEngine
+// Deprecated: Use NewXEngine
+func NewEngine(driver string, dsn string) (*XEngine, error) {
+	engine, err := NewXORMEngine(driver, dsn)
+	if err != nil {
+		return nil, err
+	}
+	x := &XEngine{
+		Engine: engine,
+	}
+	return x, nil
+}
+
 func NewXORMEngine(driver string, dsn string) (*xorm.Engine, error) {
 	return xorm.NewEngine(driver, dsn)
 }
@@ -99,20 +112,15 @@ func NewXEngine(driver string, dsn string) (*XEngine, error) {
 	return x, nil
 }
 
-// NewEngine New XEngine
-// Deprecated: Use NewXEngine
-func NewEngine(driver string, dsn string) (*XEngine, error) {
-	engine, err := NewXORMEngine(driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-	x := &XEngine{
-		Engine: engine,
-	}
-	return x, nil
+func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {
+	return TransactionDoWithSession(p.Engine.NewSession(), fn)
 }
 
 func (p *XEngine) NewSession() (interface{}, error) {
+	return p.NewXORMSession()
+}
+
+func (p *XEngine) NewXORMSession() (*xorm.Session, error) {
 	return p.Engine.NewSession(), nil
 }
 

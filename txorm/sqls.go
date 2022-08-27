@@ -20,12 +20,14 @@ package txorm
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/transaction"
-
 	"xorm.io/xorm"
 )
+
+var _ BaseRepository = (*BaseRepo)(nil)
 
 type BaseRepository interface {
 	Insert(...interface{}) (int64, error)
@@ -34,12 +36,25 @@ type BaseRepository interface {
 	Delete(bean interface{}, opts ...DeleteOption) (int64, error)
 	Get(bean interface{}, opts ...GetOption) (bool, error)
 	Find(beans interface{}, opts ...GetOption) error
+	FindAndCount(beans interface{}, opts ...GetOption) (int64, error)
+	Count(beans interface{}, opts ...GetOption) (int64, error)
 
 	transaction.Repo
 }
 
 type BaseRepo struct {
 	session *xorm.Session
+}
+
+func NewBaseRepo(ss ...*xorm.Session) *BaseRepo {
+	r := &BaseRepo{}
+	for _, s := range ss {
+		if s != nil {
+			r.session = s
+			break
+		}
+	}
+	return r
 }
 
 func (p *BaseRepo) SetSession(x interface{}) error {
@@ -49,10 +64,6 @@ func (p *BaseRepo) SetSession(x interface{}) error {
 	}
 	p.session = session
 	return nil
-}
-
-func NewBaseRepo() BaseRepository {
-	return &BaseRepo{}
 }
 
 func (p *BaseRepo) Insert(beans ...interface{}) (int64, error) {
@@ -79,6 +90,14 @@ func (p *BaseRepo) Find(beans interface{}, opts ...GetOption) error {
 	return Find(p.session, beans, opts...)
 }
 
+func (p *BaseRepo) FindAndCount(beans interface{}, opts ...GetOption) (int64, error) {
+	return FindAndCount(p.session, beans, opts...)
+}
+
+func (p *BaseRepo) Count(beans interface{}, opts ...GetOption) (int64, error) {
+	return Count(p.session, beans, opts...)
+}
+
 func CheckSession(x interface{}) (*xorm.Session, error) {
 	switch t := x.(type) {
 	case *xorm.Session:
@@ -88,6 +107,11 @@ func CheckSession(x interface{}) (*xorm.Session, error) {
 	default:
 		return nil, errcode.New("not supported session type")
 	}
+}
+
+func Args(args ...interface{}) []interface{} {
+	var bs []interface{}
+	return append(bs, args...)
 }
 
 // Do to do transaction with customer function
@@ -118,6 +142,18 @@ func TransactionDoWithSession(s *xorm.Session, fn func(*xorm.Session) error) (er
 	return
 }
 
+type In struct {
+	Column string
+	Args   []interface{}
+}
+
+func InOpts(column string, args ...interface{}) *In {
+	if column == "" {
+		return nil
+	}
+	return &In{column, args}
+}
+
 /// Get Execute
 
 type GetOption func(*GetOptions)
@@ -125,13 +161,63 @@ type GetOptions struct {
 	Wheres interface{}
 	Args   []interface{}
 
+	InWheres    []*In
+	NotInWheres []*In
+
 	Limit, Offset int
 	OrderBy       string
+
+	Distinct []string
+}
+
+func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
+
+	for _, where := range p.InWheres {
+		if where != nil {
+			session = session.In(where.Column, where.Args...)
+		}
+	}
+	for _, where := range p.NotInWheres {
+		if where != nil {
+			session = session.NotIn(where.Column, where.Args...)
+		}
+	}
+	if p.Wheres != nil {
+		session = session.Where(p.Wheres, p.Args...)
+	}
+	if p.Limit > 0 {
+		session = session.Limit(p.Limit, p.Offset)
+	}
+	if p.Distinct != nil && len(p.Distinct) > 0 {
+		session = session.Distinct(p.Distinct...)
+	}
+	if len(p.OrderBy) > 0 {
+		session = session.OrderBy(p.OrderBy)
+	}
+	return session
 }
 
 func GetWheres(wheres interface{}) GetOption {
 	return func(options *GetOptions) {
-		options.Wheres = wheres
+		switch wheres.(type) {
+		case []string:
+			ts := wheres.([]string)
+			options.Wheres = GetWheres(strings.Join(ts, " AND "))
+		default:
+			options.Wheres = wheres
+		}
+	}
+}
+
+func GetIn(ins ...*In) GetOption {
+	return func(options *GetOptions) {
+		options.InWheres = append(options.InWheres, ins...)
+	}
+}
+
+func GetNotIn(ins ...*In) GetOption {
+	return func(options *GetOptions) {
+		options.NotInWheres = append(options.NotInWheres, ins...)
 	}
 }
 
@@ -154,20 +240,19 @@ func GetOrderBy(order string) GetOption {
 	}
 }
 
+func GetDistinct(args ...string) GetOption {
+	return func(options *GetOptions) {
+		options.Distinct = args
+	}
+}
+
 func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (bool, error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
 	}
 
-	session = session.Where(getOptions.Wheres, getOptions.Args...)
-	if getOptions.Limit > 0 {
-		session = session.Limit(getOptions.Limit, getOptions.Offset)
-	}
-	if len(getOptions.OrderBy) > 0 {
-		session = session.OrderBy(getOptions.OrderBy)
-	}
-	return session.Get(bean)
+	return getOptions.Session(session).Get(bean)
 }
 
 func Find(session *xorm.Session, bean interface{}, opts ...GetOption) error {
@@ -176,14 +261,25 @@ func Find(session *xorm.Session, bean interface{}, opts ...GetOption) error {
 		opt(getOptions)
 	}
 
-	session = session.Where(getOptions.Wheres, getOptions.Args...)
-	if getOptions.Limit > 0 {
-		session = session.Limit(getOptions.Limit, getOptions.Offset)
+	return getOptions.Session(session).Find(bean)
+}
+
+func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+	getOptions := &GetOptions{}
+	for _, opt := range opts {
+		opt(getOptions)
 	}
-	if len(getOptions.OrderBy) > 0 {
-		session = session.OrderBy(getOptions.OrderBy)
+
+	return getOptions.Session(session).FindAndCount(bean)
+}
+
+func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+	getOptions := &GetOptions{}
+	for _, opt := range opts {
+		opt(getOptions)
 	}
-	return session.Find(bean)
+
+	return getOptions.Session(session).Count(bean)
 }
 
 /// Update Execute
@@ -193,11 +289,20 @@ type UpdateOptions struct {
 	Wheres interface{}
 	Args   []interface{}
 	Cols   []string
+
+	InWheres    []*In
+	NotInWheres []*In
 }
 
 func UpdateWheres(wheres interface{}) UpdateOption {
 	return func(options *UpdateOptions) {
-		options.Wheres = wheres
+		switch wheres.(type) {
+		case []string:
+			ts := wheres.([]string)
+			options.Wheres = GetWheres(strings.Join(ts, " AND "))
+		default:
+			options.Wheres = wheres
+		}
 	}
 }
 
@@ -213,13 +318,37 @@ func UpdateCols(cols ...string) UpdateOption {
 	}
 }
 
+func UpdateIn(ins ...*In) UpdateOption {
+	return func(options *UpdateOptions) {
+		options.InWheres = append(options.InWheres, ins...)
+	}
+}
+
+func UpdateNotIn(ins ...*In) UpdateOption {
+	return func(options *UpdateOptions) {
+		options.NotInWheres = append(options.NotInWheres, ins...)
+	}
+}
+
 func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int64, error) {
 	updateOptions := &UpdateOptions{}
 	for _, opt := range opts {
 		opt(updateOptions)
 	}
 
-	session = session.Where(updateOptions.Wheres, updateOptions.Args...)
+	for _, where := range updateOptions.InWheres {
+		if where != nil {
+			session = session.In(where.Column, where.Args...)
+		}
+	}
+	for _, where := range updateOptions.NotInWheres {
+		if where != nil {
+			session = session.NotIn(where.Column, where.Args...)
+		}
+	}
+	if updateOptions.Wheres != nil {
+		session = session.Where(updateOptions.Wheres, updateOptions.Args...)
+	}
 	if len(updateOptions.Cols) > 0 {
 		session = session.Cols(updateOptions.Cols...)
 	} else {
@@ -309,11 +438,20 @@ type DeleteOption func(*DeleteOptions)
 type DeleteOptions struct {
 	Wheres interface{}
 	Args   []interface{}
+
+	InWheres    []*In
+	NotInWheres []*In
 }
 
 func DeleteWheres(wheres interface{}) DeleteOption {
 	return func(options *DeleteOptions) {
-		options.Wheres = wheres
+		switch wheres.(type) {
+		case []string:
+			ts := wheres.([]string)
+			options.Wheres = GetWheres(strings.Join(ts, " AND "))
+		default:
+			options.Wheres = wheres
+		}
 	}
 }
 
@@ -323,11 +461,37 @@ func DeleteArgs(args ...interface{}) DeleteOption {
 	}
 }
 
+func DeleteIn(ins ...*In) DeleteOption {
+	return func(options *DeleteOptions) {
+		options.InWheres = append(options.InWheres, ins...)
+	}
+}
+
+func DeleteNotIn(ins ...*In) DeleteOption {
+	return func(options *DeleteOptions) {
+		options.NotInWheres = append(options.NotInWheres, ins...)
+	}
+}
+
 func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (int64, error) {
 	deleteOptions := &DeleteOptions{}
 	for _, opt := range opts {
 		opt(deleteOptions)
 	}
 
-	return session.Where(deleteOptions.Wheres, deleteOptions.Args...).Delete(bean)
+	for _, where := range deleteOptions.InWheres {
+		if where != nil {
+			session = session.In(where.Column, where.Args...)
+		}
+	}
+	for _, where := range deleteOptions.NotInWheres {
+		if where != nil {
+			session = session.NotIn(where.Column, where.Args...)
+		}
+	}
+	if deleteOptions.Wheres != nil {
+		session = session.Where(deleteOptions.Wheres, deleteOptions.Args...)
+	}
+
+	return session.Delete(bean)
 }

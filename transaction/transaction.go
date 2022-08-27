@@ -17,13 +17,15 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package transaction
 
-//type NewTransactionFunc func() Transaction
-
 type Transaction interface {
 	Session() interface{}
 	IsTransaction() bool
 
 	Commit(fn interface{}, repos ...interface{}) error
+}
+
+type Repo interface {
+	SetSession(interface{}) error
 }
 
 // Derivative derive function

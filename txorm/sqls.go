@@ -30,14 +30,19 @@ import (
 var _ BaseRepository = (*BaseRepo)(nil)
 
 type BaseRepository interface {
-	Insert(...interface{}) (int64, error)
-	InsertMulti(beans interface{}, opts ...InsertMultiOption) (int64, error)
-	Update(bean interface{}, opts ...UpdateOption) (int64, error)
-	Delete(bean interface{}, opts ...DeleteOption) (int64, error)
 	Get(bean interface{}, opts ...GetOption) (bool, error)
 	Find(beans interface{}, opts ...GetOption) error
 	FindAndCount(beans interface{}, opts ...GetOption) (int64, error)
 	Count(beans interface{}, opts ...GetOption) (int64, error)
+
+	ExecRepository
+}
+
+type ExecRepository interface {
+	Insert(...interface{}) (int64, error)
+	InsertMulti(beans interface{}, opts ...InsertMultiOption) (int64, error)
+	Update(bean interface{}, opts ...UpdateOption) (int64, error)
+	Delete(bean interface{}, opts ...DeleteOption) (int64, error)
 
 	transaction.Repo
 }
@@ -362,12 +367,22 @@ func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int6
 
 type InsertMultiOption func(*InsertMultiOptions)
 type InsertMultiOptions struct {
-	StepNumber int
+	StepNumber  int
+	CheckNumber bool
 }
 
 func InsertMultiStepNumber(number int) InsertMultiOption {
 	return func(options *InsertMultiOptions) {
 		options.StepNumber = number
+	}
+}
+
+func InsertMultiCheckNumber(check ...bool) InsertMultiOption {
+	return func(options *InsertMultiOptions) {
+		if len(check) > 0 {
+			options.CheckNumber = check[0]
+		}
+		options.CheckNumber = true
 	}
 }
 
@@ -423,7 +438,7 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 			processNum -= options.StepNumber
 		}
 
-		if count != onesLen {
+		if options.CheckNumber && count != onesLen {
 			return 0, fmt.Errorf("insert number not %d, but %d", onesLen, count)
 		}
 		return int64(count), nil

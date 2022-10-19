@@ -440,3 +440,7 @@ func (p *AdapterConfig) Dump() (bs []byte, err error) {
 func (p *AdapterConfig) Copy() Config {
 	return p.copy()
 }
+
+func (p *AdapterConfig) IsEmpty() bool {
+	return len(p.configs) == 0
+}

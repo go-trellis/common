@@ -117,6 +117,13 @@ func testFunc(t *testing.T, c config.Config) {
 		}
 	}
 
+	vCfg := c.GetValuesConfig("xxx")
+	testutils.Assert(t, vCfg.IsEmpty(), "xxx config should be empty")
+
+	bCfg := c.GetValuesConfig("b")
+	testutils.Assert(t, !bCfg.IsEmpty(), "b config must have some data")
+	testutils.Assert(t, bCfg.GetInterface("c.cn.a") == "test", "c.cn.a should be test in b")
+
 	testutils.Assert(t, c.GetString("b.u") == "", "env user should be empty")
 	testutils.Assert(t, c.GetString("b.pre") == envUser, "env prefix user should be: "+envUser)
 	testutils.Assert(t, c.GetString("b.xxx") == "", "b.xxx should be empty")

@@ -104,6 +104,7 @@ type Config interface {
 	GetKeys() []string
 	// Copy deep copy configs
 	Copy() Config
+	IsEmpty() bool
 }
 
 // NewConfig return Config by file's path, judge path's suffix, supported .json, .yml, .yaml

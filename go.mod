@@ -11,11 +11,11 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/mattn/go-colorable v0.1.13
 	github.com/prometheus/client_golang v1.13.0
-	go.etcd.io/etcd/client/pkg/v3 v3.5.4
-	go.etcd.io/etcd/client/v3 v3.5.4
+	go.etcd.io/etcd/client/pkg/v3 v3.5.5
+	go.etcd.io/etcd/client/v3 v3.5.5
 	go.uber.org/zap v1.23.0
-	golang.org/x/text v0.3.7
-	google.golang.org/grpc v1.49.0
+	golang.org/x/text v0.4.0
+	google.golang.org/grpc v1.50.1
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/xorm v1.3.2

@@ -59,3 +59,16 @@ func TestFlags(t *testing.T) {
 	testutils.Assert(t, testTime.Secret == "haha", "hidden value: %+v", testTime.Secret)
 	testutils.Assert(t, testTime.Duration == types.Duration(time.Second*5), "time is not 5s: %+v", testTime.Duration)
 }
+
+func TestReduplicate(t *testing.T) {
+	nilSlice := types.Reduplicate(nil)
+	testutils.Assert(t, nilSlice == nil, "nil slice not good")
+
+	var ints = []int{1, 2, 3, 2, 4}
+	intsSlice := types.Reduplicate(ints)
+	testutils.Equals(t, intsSlice, []int{1, 2, 3, 4}, "ints slice not good")
+
+	var strings = []string{"a", "b", "c", "d", "b"}
+	stringsSlice := types.Reduplicate(strings)
+	testutils.Equals(t, stringsSlice, []string{"a", "b", "c", "d"}, "strings slice not good")
+}

@@ -154,7 +154,6 @@ func (p *AdapterConfig) GetByteSize(key string, defValue ...*big.Int) *big.Int {
 
 // GetInterface return a interface object in p.configs by key
 func (p *AdapterConfig) GetInterface(key string, defValue ...interface{}) (res interface{}) {
-
 	var err error
 	var v interface{}
 
@@ -179,7 +178,6 @@ func (p *AdapterConfig) GetInterface(key string, defValue ...interface{}) (res i
 
 // GetString return a string object in p.configs by key
 func (p *AdapterConfig) GetString(key string, defValue ...string) (res string) {
-
 	var ok bool
 	defer func() {
 		if ok || len(defValue) == 0 {
@@ -195,7 +193,6 @@ func (p *AdapterConfig) GetString(key string, defValue ...string) (res string) {
 
 // GetBoolean return a bool object in p.configs by key
 func (p *AdapterConfig) GetBoolean(key string, defValue ...bool) (b bool) {
-
 	var ok bool
 	defer func() {
 		if ok || len(defValue) == 0 {
@@ -221,7 +218,6 @@ func (p *AdapterConfig) GetBoolean(key string, defValue ...bool) (b bool) {
 
 // GetInt return a int object in p.configs by key
 func (p *AdapterConfig) GetInt(key string, defValue ...int) (res int) {
-
 	var err error
 	defer func() {
 		if err != nil {
@@ -242,7 +238,6 @@ func (p *AdapterConfig) GetInt(key string, defValue ...int) (res int) {
 
 // GetFloat return a float object in p.configs by key
 func (p *AdapterConfig) GetFloat(key string, defValue ...float64) (res float64) {
-
 	var err error
 	defer func() {
 		if err != nil {
@@ -263,7 +258,6 @@ func (p *AdapterConfig) GetFloat(key string, defValue ...float64) (res float64) 
 
 // GetList return a list of interface{} in p.configs by key
 func (p *AdapterConfig) GetList(key string) (res []interface{}) {
-
 	vS := reflect.Indirect(reflect.ValueOf(p.GetInterface(key)))
 	if vS.Kind() != reflect.Slice {
 		return nil
@@ -278,7 +272,6 @@ func (p *AdapterConfig) GetList(key string) (res []interface{}) {
 
 // GetStringList return a list of strings in p.configs by key
 func (p *AdapterConfig) GetStringList(key string) []string {
-
 	var items []string
 	for _, v := range p.GetList(key) {
 		item, ok := v.(string)
@@ -293,7 +286,6 @@ func (p *AdapterConfig) GetStringList(key string) []string {
 
 // GetBooleanList return a list of booleans in p.configs by key
 func (p *AdapterConfig) GetBooleanList(key string) []bool {
-
 	var items []bool
 	for _, v := range p.GetList(key) {
 		item, ok := v.(bool)
@@ -308,7 +300,6 @@ func (p *AdapterConfig) GetBooleanList(key string) []bool {
 
 // GetIntList return a list of ints in p.configs by key
 func (p *AdapterConfig) GetIntList(key string) []int {
-
 	var items []int
 	for _, v := range p.GetList(key) {
 		i, e := types.ToInt(v)
@@ -322,7 +313,6 @@ func (p *AdapterConfig) GetIntList(key string) []int {
 
 // GetFloatList return a list of floats in p.configs by key
 func (p *AdapterConfig) GetFloatList(key string) []float64 {
-
 	var items []float64
 	for _, v := range p.GetList(key) {
 		f, e := types.ToFloat64(v)
@@ -336,7 +326,6 @@ func (p *AdapterConfig) GetFloatList(key string) []float64 {
 
 // GetMap get map value
 func (p *AdapterConfig) GetMap(key string) Options {
-
 	vm, err := p.getKeyValue(key)
 	if err != nil {
 		return nil
@@ -364,23 +353,18 @@ func (p *AdapterConfig) GetMap(key string) Options {
 
 // GetConfig return object config in p.configs by key
 func (p *AdapterConfig) GetConfig(key string) Config {
-
 	vm, err := p.getKeyValue(key)
 	if err != nil {
 		return nil
 	}
 
-	c := &AdapterConfig{
-		reader:  p.reader,
-		configs: map[string]interface{}{key: vm},
-	}
-
+	c := p.copy()
+	c.configs = map[string]interface{}{key: vm}
 	return c
 }
 
 // ToObject unmarshal values to object
 func (p *AdapterConfig) ToObject(key string, model interface{}) (err error) {
-
 	var vm interface{}
 	if key != "" {
 		vm, err = p.getKeyValue(key)

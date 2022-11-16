@@ -97,7 +97,6 @@ func (p *AdapterConfig) checkValue(value interface{}) interface{} {
 }
 
 func (p *AdapterConfig) getKeyValue(key string) (interface{}, error) {
-
 	tokens := strings.Split(key, ".")
 	vm := p.configs[tokens[0]]
 

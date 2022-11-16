@@ -17,7 +17,9 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package types
 
-import "reflect"
+import (
+	"reflect"
+)
 
 func Reduplicate(data interface{}) interface{} {
 	inArr := reflect.ValueOf(data)

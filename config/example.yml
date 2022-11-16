@@ -36,3 +36,6 @@ h: 1.01
     value: "${PRE_USER}"
   - name: "slice_user_wrong"
     value: "${USER}"
+m:
+  1: "test1"
+  2: "test2"

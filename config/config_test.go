@@ -87,16 +87,19 @@ func TestNewYAMLConfig(t *testing.T) {
 		config.OptionENVAllowed(),
 		config.OptionENVPrefix("PRE"))
 
-	if err != nil {
-		panic(err)
-	}
-
 	testutils.Ok(t, err)
 	testutils.Assert(t, c != nil, "loaded config should not be nil")
 	faceList := c.GetList("b.d")
 
 	testutils.Assert(t, faceList[0] == 3, "b.d[0] should be `3`")
 	testutils.Assert(t, faceList[1] == 4, "b.d[1] should be `4`")
+
+	mT := map[int32]string{}
+	err = c.ToObject("m", &mT)
+
+	testutils.Ok(t, err)
+	testutils.Assert(t, mT[1] == "test1", "1 should be test1")
+	testutils.Assert(t, mT[2] == "test2", "2 should be test2")
 
 	testFunc(t, c)
 }

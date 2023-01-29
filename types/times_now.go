@@ -33,6 +33,8 @@ type Times interface {
 	Now() time.Time
 	Monday() time.Time
 	Sunday() time.Time
+	BeginOfHour() time.Time
+	EndOfHour() time.Time
 	BeginOfDay() time.Time
 	EndOfDay() time.Time
 	BeginOfWeek() time.Time
@@ -135,6 +137,16 @@ func ParseInLocation(layout, timestring string, loc *time.Location) (time.Time, 
 	return GetNow().ParseInLocation(layout, timestring, loc)
 }
 
+// BeginOfHour 当前小时的起始时间
+func BeginOfHour() time.Time {
+	return GetNow().BeginOfHour()
+}
+
+// EndOfDay 当前小时的结束时间
+func EndOfHour() time.Time {
+	return GetNow().EndOfHour()
+}
+
 // BeginOfDay 当前日期的起始时间
 func BeginOfDay() time.Time {
 	return GetNow().BeginOfDay()
@@ -228,6 +240,17 @@ func (p *Now) Sunday() time.Time {
 		return t
 	}
 	return t.AddDate(0, 0, 7-weekday)
+}
+
+// BeginOfHour begin of hour
+func (p *Now) BeginOfHour() time.Time {
+	y, m, d := p.Date()
+	return time.Date(y, m, d, p.Time.Hour(), 0, 0, 0, p.Time.Location())
+}
+
+// EndOfHour end of hour
+func (p *Now) EndOfHour() time.Time {
+	return p.BeginOfHour().Add(time.Hour - time.Nanosecond)
 }
 
 // BeginOfDay begin of day

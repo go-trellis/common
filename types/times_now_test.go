@@ -113,4 +113,22 @@ func TestTimes(t *testing.T) {
 	testutils.Equals(t, 0, int(tNow.Sunday().Weekday()))
 	testutils.Equals(t, 1, int(tNow.Monday().Weekday()))
 	testutils.Equals(t, 4, tNow.DayOfWeek())
+
+	testHourTime := time.Date(2023, 1, 29, 16, 15, 2, 0, &time.Location{})
+	tHourNow := types.GetNow(types.NowTime(&testHourTime))
+
+	tHBegin := tHourNow.BeginOfHour()
+	testutils.Equals(t, 29, tHBegin.Day())
+	testutils.Equals(t, 29, tHBegin.Day())
+	testutils.Equals(t, 16, tHBegin.Hour())
+	testutils.Equals(t, 0, tHBegin.Minute())
+	testutils.Equals(t, 0, tHBegin.Second())
+
+	tHEnd := tHourNow.EndOfHour()
+	testutils.Equals(t, 29, tHEnd.Day())
+	testutils.Equals(t, 29, tHEnd.Day())
+	testutils.Equals(t, 16, tHEnd.Hour())
+	testutils.Equals(t, 59, tHEnd.Minute())
+	testutils.Equals(t, 59, tHEnd.Second())
+	testutils.Equals(t, 999999999, tHEnd.Nanosecond())
 }

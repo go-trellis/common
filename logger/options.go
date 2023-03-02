@@ -141,6 +141,12 @@ func (p *LogConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	p.FileOptions.ParseFlagsWithPrefix(prefix, f)
 }
 
+// UnmarshalYAML implements the yaml.Unmarshaler interface for LogConfig.
+func (p *LogConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain LogConfig
+	return unmarshal((*plain)(p))
+}
+
 // Encoding 设置移动文件的类型
 func Encoding(encoding string) Option {
 	return func(f *LogConfig) {

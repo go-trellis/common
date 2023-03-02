@@ -34,16 +34,18 @@ type Config struct {
 	MaxBackups   int      `yaml:"max_backups" json:"max_backups"`
 	StdPrinters  []string `yaml:"std_printers" json:"std_printers"`
 	TimeFormat   string   `yaml:"time_format" json:"time_format"`
+	Caller       bool     `yaml:"caller" json:"caller"`
+	CallerSkip   int      `yaml:"caller_skip" json:"caller_skip"`
 }
 
-//UnmarshalYAML implements the yaml.Unmarshaler interface for Config.
+// UnmarshalYAML implements the yaml.Unmarshaler interface for Config.
 func (p *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	type plain Config
 	return unmarshal((*plain)(p))
 }
 
 func New(config *Config) log.Logger {
-	stdLog, err := logger.NewLogger(
+	options := []logger.Option{
 		logger.LogFileOption(
 			logger.OptionFilename(config.FileName),
 			logger.OptionMoveFileType(logger.MoveFileType(config.MoveFileType)),
@@ -52,7 +54,13 @@ func New(config *Config) log.Logger {
 			logger.OptionStdPrinters(config.StdPrinters),
 		),
 		logger.EncoderConfig(&zapcore.EncoderConfig{}),
-	)
+		logger.CallerSkip(config.CallerSkip),
+	}
+	if config.Caller {
+		options = append(options, logger.Caller())
+	}
+
+	stdLog, err := logger.NewLogger(options...)
 	if err != nil {
 		panic(err)
 	}
@@ -66,7 +74,7 @@ func New(config *Config) log.Logger {
 		config.TimeFormat,
 	)
 	l := level.NewFilter(stdLog, getLevel(config.Level))
-	l = log.With(l, "ts", timestampFormat, "caller", log.DefaultCaller)
+	l = log.With(l, "ts", timestampFormat)
 
 	return l
 }

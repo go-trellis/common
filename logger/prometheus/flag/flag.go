@@ -36,4 +36,6 @@ func AddFlags(a *kingpin.Application, config *prometheus.Config) {
 		Default("10").IntVar(&config.MaxBackups)
 	a.Flag("log.std_printers", "The standard printers: stderr, stdout").StringsVar(&config.StdPrinters)
 	a.Flag("log.time_format", "The time format").Default("").StringVar(&config.TimeFormat)
+	a.Flag("log.caller", "caller").Default("false").BoolVar(&config.Caller)
+	a.Flag("log.caller_skip", "caller skip").Default("3").IntVar(&config.CallerSkip)
 }

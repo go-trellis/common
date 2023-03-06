@@ -26,6 +26,8 @@ import (
 type Queue interface {
 	// Push a data into queue
 	Push(v interface{})
+	// PushMany many data into queue
+	PushMany(vs ...interface{})
 	// Pop first data
 	Pop() (interface{}, bool)
 	// PopMany pop many of data
@@ -54,11 +56,15 @@ func New() Queue {
 }
 
 func (p *defaultQueue) Push(v interface{}) {
+	p.PushMany(v)
+}
+
+func (p *defaultQueue) PushMany(vs ...interface{}) {
 	p.Lock()
 	defer p.Unlock()
 
-	p.queue = append(p.queue, v)
-	p.length++
+	p.queue = append(p.queue, vs...)
+	p.length += int64(len(vs))
 }
 
 func (p *defaultQueue) Pop() (v interface{}, exist bool) {

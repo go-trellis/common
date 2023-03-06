@@ -26,6 +26,8 @@ import (
 type Stack interface {
 	// Push a data into stack
 	Push(v interface{})
+	// PushMany many data into stack
+	PushMany(vs ...interface{})
 	// Pop last data
 	Pop() (interface{}, bool)
 	// PopMany pop many of data
@@ -52,14 +54,22 @@ func New() Stack {
 }
 
 func (p *defaultStack) Push(v interface{}) {
+	p.PushMany(v)
+}
+
+func (p *defaultStack) PushMany(vs ...interface{}) {
 	p.Lock()
 	defer p.Unlock()
 
-	prepend := make([]interface{}, 1)
-	prepend[0] = v
+	lenVS := len(vs)
+
+	prepend := make([]interface{}, lenVS)
+	for i, v := range vs {
+		prepend[i] = v
+	}
 
 	p.stack = append(prepend, p.stack...)
-	p.length++
+	p.length += int64(lenVS)
 }
 
 func (p *defaultStack) Pop() (v interface{}, exist bool) {

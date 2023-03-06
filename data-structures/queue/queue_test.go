@@ -37,4 +37,10 @@ func TestQueue(t *testing.T) {
 	iArr, ok = q.PopMany(2)
 	testutils.Equals(t, false, ok, "not get")
 	testutils.Equals(t, []interface{}(nil), iArr, "get data")
+
+	q.PushMany(5, 6, 7, 8)
+	testutils.Equals(t, int64(4), q.Length(), "length is 4")
+	iArr, ok = q.PopMany(4)
+	testutils.Equals(t, true, ok, "not get")
+	testutils.Equals(t, []interface{}{5, 6, 7, 8}, iArr, "not get 5,6,7,8")
 }

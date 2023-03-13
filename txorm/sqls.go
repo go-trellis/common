@@ -171,12 +171,14 @@ type GetOptions struct {
 
 	Limit, Offset int
 	OrderBy       string
+	GroupBy       string
+	Having        string
 
+	Cols     []string
 	Distinct []string
 }
 
 func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
-
 	for _, where := range p.InWheres {
 		if where != nil {
 			session = session.In(where.Column, where.Args...)
@@ -199,6 +201,16 @@ func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
 	if len(p.OrderBy) > 0 {
 		session = session.OrderBy(p.OrderBy)
 	}
+	if len(p.GroupBy) > 0 {
+		session = session.GroupBy(p.GroupBy)
+	}
+	if len(p.Having) > 0 {
+		session = session.Having(p.Having)
+	}
+	if len(p.Cols) > 0 {
+		session = session.Cols(p.Cols...)
+	}
+
 	return session
 }
 
@@ -242,6 +254,24 @@ func GetLimit(limit, offset int) GetOption {
 func GetOrderBy(order string) GetOption {
 	return func(options *GetOptions) {
 		options.OrderBy = order
+	}
+}
+
+func GetGroupBy(groupBy string) GetOption {
+	return func(options *GetOptions) {
+		options.GroupBy = groupBy
+	}
+}
+
+func GetHaving(having string) GetOption {
+	return func(options *GetOptions) {
+		options.Having = having
+	}
+}
+
+func GetCols(cols ...string) GetOption {
+	return func(options *GetOptions) {
+		options.Cols = cols
 	}
 }
 

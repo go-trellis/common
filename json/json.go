@@ -18,41 +18,32 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package json
 
 import (
-	eJson "encoding/json"
 	"io"
 
-	iter "github.com/json-iterator/go"
+	"github.com/goccy/go-json"
 )
 
-type JsonNumber = eJson.Number
-type Number = iter.Number
+type Number = json.Number
+type RawMessage = json.RawMessage
+type Delim = json.Delim
+type Token = json.Token
+
+func Unmarshal(bs []byte, v interface{}) error {
+	return json.Unmarshal(bs, v)
+}
 
 func Marshal(v interface{}) ([]byte, error) {
-	json := iter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(v)
 }
 
 func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
-	return iter.MarshalIndent(v, prefix, indent)
+	return json.MarshalIndent(v, prefix, indent)
 }
 
-func MarshalToString(v interface{}) (string, error) {
-	return iter.MarshalToString(v)
+func NewDecoder(reader io.Reader) *json.Decoder {
+	return json.NewDecoder(reader)
 }
 
-func Unmarshal(bs []byte, v interface{}) error {
-	json := iter.ConfigCompatibleWithStandardLibrary
-	return json.Unmarshal(bs, v)
-}
-
-func UnmarshalFromString(bs string, v interface{}) error {
-	return iter.UnmarshalFromString(bs, v)
-}
-
-func NewDecoder(reader io.Reader) *iter.Decoder {
-	return iter.NewDecoder(reader)
-}
-
-func NewEncoder(writer io.Writer) *iter.Encoder {
-	return iter.NewEncoder(writer)
+func NewEncoder(writer io.Writer) *json.Encoder {
+	return json.NewEncoder(writer)
 }

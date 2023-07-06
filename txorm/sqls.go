@@ -214,14 +214,55 @@ func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
 	return session
 }
 
+func (p *GetOptions) addMapWheres(maps map[string]interface{}) {
+	if maps == nil {
+		return
+	}
+
+	if p.Wheres == nil {
+		p.Wheres = maps
+		return
+	}
+
+	switch t := p.Wheres.(type) {
+	case map[string]interface{}:
+		for k, v := range maps {
+			t[k] = v
+		}
+		p.Wheres = t
+	default:
+		panic(fmt.Errorf("not supported maps wheres type in: %s", reflect.TypeOf(t).String()))
+	}
+}
+
+func (p *GetOptions) addStringWheres(where string) {
+	if p.Wheres == nil {
+		p.Wheres = where
+		return
+	}
+	switch t := p.Wheres.(type) {
+	case string:
+		if t != "" {
+			p.Wheres = t + " AND " + where
+			return
+		}
+		p.Wheres = t
+	default:
+		panic(fmt.Errorf("not supported string wheres type in: %s", reflect.TypeOf(t).String()))
+	}
+}
+
 func GetWheres(wheres interface{}) GetOption {
 	return func(options *GetOptions) {
-		switch wheres.(type) {
+		switch ts := wheres.(type) {
+		case string:
+			options.addStringWheres(ts)
 		case []string:
-			ts := wheres.([]string)
-			options.Wheres = GetWheres(strings.Join(ts, " AND "))
+			options.addStringWheres(strings.Join(ts, " AND "))
+		case map[string]interface{}:
+			options.addMapWheres(ts)
 		default:
-			options.Wheres = wheres
+			panic(fmt.Errorf("not supported wheres type: %s", reflect.TypeOf(ts).String()))
 		}
 	}
 }
@@ -331,9 +372,8 @@ type UpdateOptions struct {
 
 func UpdateWheres(wheres interface{}) UpdateOption {
 	return func(options *UpdateOptions) {
-		switch wheres.(type) {
+		switch ts := wheres.(type) {
 		case []string:
-			ts := wheres.([]string)
 			options.Wheres = GetWheres(strings.Join(ts, " AND "))
 		default:
 			options.Wheres = wheres
@@ -490,9 +530,8 @@ type DeleteOptions struct {
 
 func DeleteWheres(wheres interface{}) DeleteOption {
 	return func(options *DeleteOptions) {
-		switch wheres.(type) {
+		switch ts := wheres.(type) {
 		case []string:
-			ts := wheres.([]string)
 			options.Wheres = GetWheres(strings.Join(ts, " AND "))
 		default:
 			options.Wheres = wheres

@@ -19,10 +19,12 @@ package txorm
 
 import (
 	"database/sql"
+	"fmt"
 	"sync"
 
 	"trellis.tech/trellis/common.v1/config"
 	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/logger"
 	"trellis.tech/trellis/common.v1/transaction"
 
 	"xorm.io/xorm"
@@ -43,13 +45,12 @@ func NewEnginesFromFile(file string) (map[string]transaction.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewEnginesFromConfig(conf)
+	return NewEnginesFromConfig(conf, logger.Noop())
 }
 
 // NewEnginesFromConfig initial engines from config
-func NewEnginesFromConfig(conf config.Config) (engines map[string]transaction.Engine, err error) {
-
-	if conf == nil {
+func NewEnginesFromConfig(cfg config.Config, logger logger.Logger) (engines map[string]transaction.Engine, err error) {
+	if cfg == nil {
 		return nil, errcode.New("nil config")
 	}
 
@@ -66,32 +67,16 @@ func NewEnginesFromConfig(conf config.Config) (engines map[string]transaction.En
 		}
 	}()
 
-	for _, key := range conf.GetKeys() {
-		databaseConf := conf.GetValuesConfig(key)
-		driver := databaseConf.GetString("driver", "mysql")
-
-		f, err := transaction.GetDSNFactory(driver)
+	for _, key := range cfg.GetKeys() {
+		engine, err := genXormEngine(cfg, key, logger)
 		if err != nil {
 			return nil, err
 		}
-
-		dsn, err := f(databaseConf)
+		xEngine, err := newXEngine(engine)
 		if err != nil {
 			return nil, err
 		}
-
-		xEngine, err := NewXEngine(driver, dsn)
-		if err != nil {
-			return nil, err
-		}
-
-		xEngine.Engine.SetMaxIdleConns(conf.GetInt(key+".max_idle_conns", 10))
-		xEngine.Engine.SetMaxOpenConns(conf.GetInt(key+".max_open_conns", 100))
-		xEngine.Engine.ShowSQL(conf.GetBoolean(key + ".show_sql"))
-
-		xEngine.Engine.Logger().SetLevel(log.LogLevel(conf.GetInt(key+".log_level", 0)))
-
-		if _isD := conf.GetBoolean(key + ".is_default"); _isD {
+		if _isD := cfg.GetBoolean(key + ".is_default"); _isD {
 			es[transaction.DefaultDatabase] = xEngine
 		}
 
@@ -124,10 +109,10 @@ func NewXORMEnginesFromFile(file string) (map[string]*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewXORMEngines(conf)
+	return NewXORMEngines(conf, logger.Noop())
 }
 
-func NewXORMEngines(cfg config.Config) (engines map[string]*xorm.Engine, err error) {
+func NewXORMEngines(cfg config.Config, logger logger.Logger) (engines map[string]*xorm.Engine, err error) {
 	engines = make(map[string]*xorm.Engine, 0)
 
 	locker.Lock()
@@ -142,32 +127,10 @@ func NewXORMEngines(cfg config.Config) (engines map[string]*xorm.Engine, err err
 	}()
 
 	for _, key := range cfg.GetKeys() {
-		dConfig := cfg.GetValuesConfig(key)
-		if dConfig == nil {
-			return nil, errcode.Newf("not found config with key: %s", key)
-		}
-		driver := dConfig.GetString("driver", "mysql")
-
-		f, err := transaction.GetDSNFactory(driver)
+		engine, err := genXormEngine(cfg, key, logger)
 		if err != nil {
 			return nil, err
 		}
-
-		dsn, err := f(dConfig)
-		if err != nil {
-			return nil, err
-		}
-
-		engine, err := NewXORMEngine(driver, dsn)
-		if err != nil {
-			return nil, err
-		}
-
-		engine.SetMaxIdleConns(cfg.GetInt(key+".max_idle_conns", 10))
-		engine.SetMaxOpenConns(cfg.GetInt(key+".max_open_conns", 100))
-		engine.ShowSQL(cfg.GetBoolean(key + ".show_sql"))
-		engine.Logger().SetLevel(log.LogLevel(cfg.GetInt(key+".log_level", 0)))
-
 		if _isD := cfg.GetBoolean(key + ".is_default"); _isD {
 			engines[transaction.DefaultDatabase] = engine
 		}
@@ -176,10 +139,50 @@ func NewXORMEngines(cfg config.Config) (engines map[string]*xorm.Engine, err err
 	return engines, nil
 }
 
+func genXormEngine(cfg config.Config, key string, logger logger.Logger) (*xorm.Engine, error) {
+	dConfig := cfg.GetValuesConfig(key)
+	if dConfig == nil {
+		return nil, errcode.Newf("not found config with key: %s", key)
+	}
+	driver := dConfig.GetString("driver", "mysql")
+
+	f, err := transaction.GetDSNFactory(driver)
+	if err != nil {
+		return nil, err
+	}
+
+	dsn, err := f(dConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	engine, err := NewXORMEngine(driver, dsn)
+	if err != nil {
+		return nil, err
+	}
+
+	engine.SetMaxIdleConns(cfg.GetInt(key+".max_idle_conns", 10))
+	engine.SetMaxOpenConns(cfg.GetInt(key+".max_open_conns", 100))
+
+	engine.SetLogger(logger)
+
+	engine.ShowSQL(cfg.GetBoolean(key + ".show_sql"))
+	engine.Logger().SetLevel(log.LogLevel(cfg.GetInt(key+".log_level", 0)))
+	return engine, nil
+}
+
 func NewXEngine(driver string, dsn string) (*XEngine, error) {
 	engine, err := NewXORMEngine(driver, dsn)
 	if err != nil {
 		return nil, err
+	}
+
+	return newXEngine(engine)
+}
+
+func newXEngine(engine *xorm.Engine) (*XEngine, error) {
+	if engine == nil {
+		return nil, fmt.Errorf("nil engine")
 	}
 	x := &XEngine{
 		Engine: engine,
@@ -210,8 +213,4 @@ func (p *XEngine) BeginTransaction() (transaction.Transaction, error) {
 
 func (p *XEngine) BeginNonTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: false, engine: p.Engine}, nil
-}
-
-func (p *XEngine) SetLogger(logger interface{}) {
-	p.Engine.SetLogger(logger)
 }

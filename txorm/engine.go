@@ -211,3 +211,7 @@ func (p *XEngine) BeginTransaction() (transaction.Transaction, error) {
 func (p *XEngine) BeginNonTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: false, engine: p.Engine}, nil
 }
+
+func (p *XEngine) SetLogger(logger interface{}) {
+	p.Engine.SetLogger(logger)
+}

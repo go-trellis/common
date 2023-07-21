@@ -25,10 +25,9 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap/zapcore"
 	"trellis.tech/trellis/common.v1/flagext"
 	"trellis.tech/trellis/common.v1/types"
-
-	"go.uber.org/zap/zapcore"
 )
 
 // MoveFileType move file type
@@ -123,6 +122,8 @@ type LogConfig struct {
 	FileOptions FileOptions `yaml:",inline" json:",inline"`
 
 	EncoderConfig *zapcore.EncoderConfig `yaml:",inline,omitempty" json:",inline,omitempty"`
+
+	ShowXormSQL bool `yaml:"show_xorm_sql" json:"show_xorm_sql"`
 }
 
 func (p *LogConfig) ParseFlags(f *flag.FlagSet) {
@@ -138,6 +139,8 @@ func (p *LogConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.IntVar(&p.CallerSkip, prefix+"log.caller_skip", 0, "caller skip")
 	f.BoolVar(&p.Caller, prefix+"log.caller", false, "open the caller")
 	f.BoolVar(&p.StackTrace, prefix+"log.stack_trace", false, "log trace")
+	f.BoolVar(&p.ShowXormSQL, prefix+"log.xorm_show_sql", false, "xorm show sql")
+
 	p.FileOptions.ParseFlagsWithPrefix(prefix, f)
 }
 
@@ -202,6 +205,17 @@ func LogFileOption(opts ...FileOption) Option {
 func EncoderConfig(encoder *zapcore.EncoderConfig) Option {
 	return func(f *LogConfig) {
 		f.EncoderConfig = encoder
+	}
+}
+
+// ShowXormSQL 设置等级
+func ShowXormSQL(show ...bool) Option {
+	return func(f *LogConfig) {
+		if len(show) > 0 {
+			f.ShowXormSQL = show[0]
+		} else {
+			f.ShowXormSQL = true
+		}
 	}
 }
 

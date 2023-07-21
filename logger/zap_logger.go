@@ -24,9 +24,13 @@ import (
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"xorm.io/xorm/log"
 )
 
-var _ Logger = (*ZapLogger)(nil)
+var (
+	_ Logger     = (*ZapLogger)(nil)
+	_ log.Logger = (*ZapLogger)(nil)
+)
 
 func NewWithZapLogger(l *zap.Logger) Logger {
 	if l == nil {
@@ -36,8 +40,9 @@ func NewWithZapLogger(l *zap.Logger) Logger {
 }
 
 type ZapLogger struct {
-	options *LogConfig
-	logger  *zap.Logger
+	options   *LogConfig
+	logger    *zap.Logger
+	isShowSQL bool
 }
 
 func NewLogger(opts ...Option) (*ZapLogger, error) {
@@ -129,6 +134,8 @@ func (p *ZapLogger) initLogger() error {
 		options = append(options, zap.AddCaller())
 	}
 
+	p.isShowSQL = p.options.ShowXormSQL
+
 	p.logger = zap.New(core, options...)
 	return nil
 }
@@ -160,84 +167,111 @@ func (p *ZapLogger) With(kvs ...interface{}) Logger {
 
 // Log print log with kvs
 func (p *ZapLogger) Log(kvs ...interface{}) error {
-	p.Info("", kvs...)
+	p.Info(kvs...)
 	return nil
 }
 
 // Debug 打印debug信息
-func (p *ZapLogger) Debug(msg string, kvs ...interface{}) {
-	fields := p.genKVs(kvs...)
-	p.logger.Debug(msg, fields...)
+func (p *ZapLogger) Debug(kvs ...interface{}) {
+	p.DebugM("msg", kvs...)
 }
 
 // Debugf format打印debug信息
 func (p *ZapLogger) Debugf(msg string, kvs ...interface{}) {
-	p.Debug(fmt.Sprintf(msg, kvs...))
+	p.DebugM(fmt.Sprintf(msg, kvs...))
+}
+
+// DebugM 打印debug信息
+func (p *ZapLogger) DebugM(msg string, kvs ...interface{}) {
+	fields := p.genKVs(kvs...)
+	p.logger.Debug(msg, fields...)
 }
 
 // Info 打印Info信息
-func (p *ZapLogger) Info(msg string, kvs ...interface{}) {
-	fields := p.genKVs(kvs...)
-	p.logger.Info(msg, fields...)
+func (p *ZapLogger) Info(kvs ...interface{}) {
+	p.InfoM("msg", kvs...)
 }
 
 // Infof format打印info信息
 func (p *ZapLogger) Infof(msg string, kvs ...interface{}) {
-	p.Info(fmt.Sprintf(msg, kvs...))
+	p.InfoM(fmt.Sprintf(msg, kvs...))
 }
 
-// Warn 打印Warn信息
-func (p *ZapLogger) Warn(msg string, kvs ...interface{}) {
+// InfoM 打印info信息
+func (p *ZapLogger) InfoM(msg string, kvs ...interface{}) {
+	fields := p.genKVs(kvs...)
+	p.logger.Info(msg, fields...)
+}
+
+// Warn 打印warn信息
+func (p *ZapLogger) Warn(kvs ...interface{}) {
+	p.WarnM("msg", kvs...)
+}
+
+// Warnf format打印warn信息
+func (p *ZapLogger) Warnf(msg string, kvs ...interface{}) {
+	p.WarnM(fmt.Sprintf(msg, kvs...))
+}
+
+// WarnM 打印warn信息
+func (p *ZapLogger) WarnM(msg string, kvs ...interface{}) {
 	fields := p.genKVs(kvs...)
 	p.logger.Warn(msg, fields...)
 }
 
-// Warnf format打印Warn信息
-func (p *ZapLogger) Warnf(msg string, kvs ...interface{}) {
-	p.Warn(fmt.Sprintf(msg, kvs...))
+// Error 打印error信息
+func (p *ZapLogger) Error(kvs ...interface{}) {
+	p.ErrorM("msg", kvs...)
 }
 
-// Error 打印Error信息
-func (p *ZapLogger) Error(msg string, kvs ...interface{}) {
+// Errorf format打印error信息
+func (p *ZapLogger) Errorf(msg string, kvs ...interface{}) {
+	p.ErrorM(fmt.Sprintf(msg, kvs...))
+}
+
+// ErrorM 打印error信息
+func (p *ZapLogger) ErrorM(msg string, kvs ...interface{}) {
 	fields := p.genKVs(kvs...)
 	p.logger.Error(msg, fields...)
 }
 
-// Errorf format打印Error信息
-func (p *ZapLogger) Errorf(msg string, kvs ...interface{}) {
-	p.Error(fmt.Sprintf(msg, kvs...))
+// Panic 打印panic信息
+func (p *ZapLogger) Panic(kvs ...interface{}) {
+	p.PanicM("msg", kvs...)
 }
 
-// Panic format打印Panic信息
-func (p *ZapLogger) Panic(msg string, kvs ...interface{}) {
+// Panicf format打印panic信息
+func (p *ZapLogger) Panicf(msg string, kvs ...interface{}) {
+	p.PanicM(fmt.Sprintf(msg, kvs...))
+}
+
+// PanicM 打印info信息
+func (p *ZapLogger) PanicM(msg string, kvs ...interface{}) {
 	fields := p.genKVs(kvs...)
-	defer func() {
-		if err := recover(); err != nil {
-			return
-		}
-	}()
 	p.logger.Panic(msg, fields...)
 }
 
-// Panicf format打印Panic信息
-func (p *ZapLogger) Panicf(msg string, kvs ...interface{}) {
-	p.Panic(fmt.Sprintf(msg, kvs...))
+// Fatal 打印panic信息
+func (p *ZapLogger) Fatal(kvs ...interface{}) {
+	p.PanicM("msg", kvs...)
 }
 
-// Fatal 打印Fatal信息
-func (p *ZapLogger) Fatal(msg string, kvs ...interface{}) {
+// Fatalf format打印panic信息
+func (p *ZapLogger) Fatalf(msg string, kvs ...interface{}) {
+	p.PanicM(fmt.Sprintf(msg, kvs...))
+}
+
+// FatalM 打印info信息
+func (p *ZapLogger) FatalM(msg string, kvs ...interface{}) {
 	fields := p.genKVs(kvs...)
 	p.logger.Fatal(msg, fields...)
 }
 
-// Fatalf format打印Fatal信息
-func (p *ZapLogger) Fatalf(msg string, kvs ...interface{}) {
-	p.Fatal(fmt.Sprintf(msg, kvs...))
-}
-
 func (p *ZapLogger) genKVs(kvs ...interface{}) []zap.Field {
-
 	lenFields := len(kvs)
+	if lenFields == 0 {
+		return nil
+	}
 	n := 4 + (lenFields+1)/2*2
 
 	logs := make([]zap.Field, 0, n)
@@ -252,4 +286,34 @@ func (p *ZapLogger) genKVs(kvs ...interface{}) []zap.Field {
 	}
 
 	return logs
+}
+
+func (p *ZapLogger) Level() log.LogLevel {
+	return 0
+}
+
+func (p *ZapLogger) SetLevel(l log.LogLevel) {
+	level := p.logger.Level()
+	switch l {
+	case log.LOG_DEBUG:
+		level.Set("DEBUG")
+	case log.LOG_INFO:
+		level.Set("INFO")
+	case log.LOG_WARNING:
+		level.Set("WARN")
+	case log.LOG_ERR:
+		level.Set("ERROR")
+	case log.LOG_OFF:
+		level.Set("PANIC")
+	}
+}
+func (p *ZapLogger) ShowSQL(show ...bool) {
+	if len(show) > 0 {
+		p.isShowSQL = show[0]
+	} else {
+		p.isShowSQL = true
+	}
+}
+func (p *ZapLogger) IsShowSQL() bool {
+	return p.isShowSQL
 }

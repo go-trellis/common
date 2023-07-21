@@ -27,18 +27,24 @@ type noop struct{}
 func (noop) Log(...interface{}) error {
 	return nil
 }
-func (noop) Debug(msg string, args ...interface{})  {}
+func (noop) Debug(args ...interface{})              {}
 func (noop) Debugf(msg string, args ...interface{}) {}
+func (noop) DebugM(msg string, args ...interface{}) {}
+func (noop) Info(args ...interface{})               {}
 func (noop) Infof(msg string, args ...interface{})  {}
-func (noop) Info(msg string, args ...interface{})   {}
+func (noop) InfoM(msg string, args ...interface{})  {}
+func (noop) Warn(args ...interface{})               {}
 func (noop) Warnf(msg string, args ...interface{})  {}
-func (noop) Warn(msg string, args ...interface{})   {}
-func (noop) Error(msg string, args ...interface{})  {}
+func (noop) WarnM(msg string, args ...interface{})  {}
+func (noop) Error(args ...interface{})              {}
 func (noop) Errorf(msg string, args ...interface{}) {}
-func (noop) Panic(msg string, args ...interface{})  {}
+func (noop) ErrorM(msg string, args ...interface{}) {}
+func (noop) Panic(args ...interface{})              {}
 func (noop) Panicf(msg string, args ...interface{}) {}
-func (noop) Fatal(msg string, args ...interface{})  {}
+func (noop) PanicM(msg string, args ...interface{}) {}
+func (noop) Fatal(args ...interface{})              {}
 func (noop) Fatalf(msg string, args ...interface{}) {}
+func (noop) FatalM(msg string, args ...interface{}) {}
 func (noop) With(...interface{}) Logger {
 	return &noop{}
 }

@@ -74,7 +74,6 @@ func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
 }
 
 func (p *fileLogger) init() (err error) {
-
 	p.backupFileReg = regexp.MustCompile(fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
 
 	err = p.openFile()

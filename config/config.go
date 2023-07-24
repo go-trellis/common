@@ -93,7 +93,10 @@ type Config interface {
 	// GetConfig get key's config
 	GetConfig(key string) Config
 	// ToObject unmarshal values to object
+	// Deprecated: see function: Object
 	ToObject(key string, model interface{}) error
+	// Object unmarshal values to object
+	Object(model interface{}, opts ...ObjOption) error
 	// GetValuesConfig get key's values if values can be Config, or panic
 	GetValuesConfig(key string) Config
 	// SetKeyValue set key's value into config
@@ -105,6 +108,18 @@ type Config interface {
 	// Copy deep copy configs
 	Copy() Config
 	IsEmpty() bool
+}
+
+type ObjOption func(*ObjOptions)
+
+type ObjOptions struct {
+	Key string
+}
+
+func ObjOptionKey(key string) ObjOption {
+	return func(options *ObjOptions) {
+		options.Key = key
+	}
 }
 
 // NewConfig return Config by file's path, judge path's suffix, supported .json, .yml, .yaml

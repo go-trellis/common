@@ -364,12 +364,44 @@ func (p *AdapterConfig) GetConfig(key string) Config {
 }
 
 // ToObject unmarshal values to object
-func (p *AdapterConfig) ToObject(key string, model interface{}) (err error) {
-	var vm interface{}
+func (p *AdapterConfig) ToObject(key string, model interface{}) error {
+	var (
+		vm  interface{}
+		err error
+	)
 	if key != "" {
 		vm, err = p.getKeyValue(key)
 		if err != nil {
-			return
+			return err
+		}
+	} else {
+		vm = p.copy().configs
+	}
+
+	switch p.readerType {
+	case ReaderTypeJSON:
+		bs, _ := json.Marshal(vm)
+		err = json.Unmarshal(bs, model)
+	case ReaderTypeYAML:
+		bs, _ := yaml.Marshal(vm)
+		err = yaml.Unmarshal(bs, model)
+	}
+	return err
+}
+
+func (p *AdapterConfig) Object(model interface{}, opts ...ObjOption) error {
+	options := ObjOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+	var (
+		vm  interface{}
+		err error
+	)
+	if options.Key != "" {
+		vm, err = p.getKeyValue(options.Key)
+		if err != nil {
+			return err
 		}
 	} else {
 		vm = p.copy().configs

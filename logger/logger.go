@@ -19,6 +19,7 @@ package logger
 
 import (
 	"fmt"
+	"io"
 	"reflect"
 
 	"go.uber.org/zap/zapcore"
@@ -35,6 +36,7 @@ type Logger interface {
 	SimpleLogger
 
 	With(kvs ...interface{}) Logger
+	Writer() io.Writer
 
 	Debug(kvs ...interface{})
 	DebugM(msg string, kvs ...interface{})

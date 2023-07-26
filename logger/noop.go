@@ -17,6 +17,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package logger
 
+import "io"
+
 // Noop logger.
 func Noop() Logger {
 	return noop{}
@@ -45,6 +47,9 @@ func (noop) PanicM(msg string, args ...interface{}) {}
 func (noop) Fatal(args ...interface{})              {}
 func (noop) Fatalf(msg string, args ...interface{}) {}
 func (noop) FatalM(msg string, args ...interface{}) {}
+func (noop) Writer() io.Writer {
+	return io.Discard
+}
 func (noop) With(...interface{}) Logger {
 	return &noop{}
 }

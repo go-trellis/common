@@ -20,6 +20,7 @@ package logger
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"go.uber.org/zap"
@@ -43,6 +44,7 @@ type ZapLogger struct {
 	options   *LogConfig
 	logger    *zap.Logger
 	isShowSQL bool
+	writer    zapcore.WriteSyncer
 }
 
 func NewLogger(opts ...Option) (*ZapLogger, error) {
@@ -119,7 +121,8 @@ func (p *ZapLogger) initLogger() error {
 		ws = append(ws, w)
 	}
 
-	core := zapcore.NewCore(encoder, zapcore.NewMultiWriteSyncer(ws...), level)
+	p.writer = zapcore.NewMultiWriteSyncer(ws...)
+	core := zapcore.NewCore(encoder, p.writer, level)
 
 	var options []zap.Option
 	if p.options.CallerSkip != 0 {
@@ -316,4 +319,8 @@ func (p *ZapLogger) ShowSQL(show ...bool) {
 }
 func (p *ZapLogger) IsShowSQL() bool {
 	return p.isShowSQL
+}
+
+func (p *ZapLogger) Writer() io.Writer {
+	return p.writer
 }

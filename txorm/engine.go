@@ -39,17 +39,28 @@ type XEngine struct {
 
 var locker = &sync.Mutex{}
 
+type Option func(*Options)
+type Options struct {
+	logger logger.Logger
+}
+
+func OptLogger(l logger.Logger) Option {
+	return func(o *Options) {
+		o.logger = l
+	}
+}
+
 // NewEnginesFromFile initial engines from file
 func NewEnginesFromFile(file string) (map[string]transaction.Engine, error) {
 	conf, err := config.NewConfigOptions(config.OptionFile(file))
 	if err != nil {
 		return nil, err
 	}
-	return NewEnginesFromConfig(conf, logger.Noop())
+	return NewEnginesFromConfig(conf)
 }
 
 // NewEnginesFromConfig initial engines from config
-func NewEnginesFromConfig(cfg config.Config, logger logger.Logger) (engines map[string]transaction.Engine, err error) {
+func NewEnginesFromConfig(cfg config.Config, opts ...Option) (engines map[string]transaction.Engine, err error) {
 	if cfg == nil {
 		return nil, errcode.New("nil config")
 	}
@@ -67,8 +78,13 @@ func NewEnginesFromConfig(cfg config.Config, logger logger.Logger) (engines map[
 		}
 	}()
 
+	options := &Options{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	for _, key := range cfg.GetKeys() {
-		engine, err := genXormEngine(cfg, key, logger)
+		engine, err := genXormEngine(cfg, key, options.logger)
 		if err != nil {
 			return nil, err
 		}
@@ -109,10 +125,10 @@ func NewXORMEnginesFromFile(file string) (map[string]*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewXORMEngines(conf, logger.Noop())
+	return NewXORMEngines(conf, nil)
 }
 
-func NewXORMEngines(cfg config.Config, logger logger.Logger) (engines map[string]*xorm.Engine, err error) {
+func NewXORMEngines(cfg config.Config, opts ...Option) (engines map[string]*xorm.Engine, err error) {
 	engines = make(map[string]*xorm.Engine, 0)
 
 	locker.Lock()
@@ -126,8 +142,13 @@ func NewXORMEngines(cfg config.Config, logger logger.Logger) (engines map[string
 		}
 	}()
 
+	options := &Options{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
 	for _, key := range cfg.GetKeys() {
-		engine, err := genXormEngine(cfg, key, logger)
+		engine, err := genXormEngine(cfg, key, options.logger)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +185,9 @@ func genXormEngine(cfg config.Config, key string, logger logger.Logger) (*xorm.E
 	engine.SetMaxIdleConns(cfg.GetInt(key+".max_idle_conns", 10))
 	engine.SetMaxOpenConns(cfg.GetInt(key+".max_open_conns", 100))
 
-	engine.SetLogger(logger)
+	if logger != nil {
+		engine.SetLogger(logger)
+	}
 
 	engine.ShowSQL(cfg.GetBoolean(key + ".show_sql"))
 	engine.Logger().SetLevel(log.LogLevel(cfg.GetInt(key+".log_level", 0)))

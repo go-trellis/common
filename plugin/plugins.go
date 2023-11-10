@@ -19,22 +19,12 @@ package plugin
 
 import (
 	"flag"
-	"os"
+	"fmt"
 
 	"trellis.tech/trellis/common.v1/config"
 	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/trellis/common.v1/logger"
 )
-
-var defPlugins Repo
-
-func init() {
-	plugins := NewPlugins()
-	plugins.configFile = os.Getenv("TRELLIS_PLUGIN_FILENAME")
-	defPlugins = plugins
-	if err := defPlugins.Start(); err != nil {
-		panic(err)
-	}
-}
 
 func (p *Plugins) ParseFlags(set *flag.FlagSet) {
 	set.StringVar(&p.configFile, "trellis.plugin.file-name", "", "plugin config path")
@@ -45,8 +35,13 @@ type Plugins struct {
 	trellisConfig config.Config
 
 	configs Configs
+	workers map[string]Worker
 
-	plugins map[string]Repo
+	logger logger.Logger
+}
+
+type Configs struct {
+	Plugins []*Config `yaml:"plugins" json:"plugins"`
 }
 
 type Option func(*Plugins)
@@ -65,29 +60,34 @@ func TrellisConfig(config config.Config) Option {
 	}
 }
 
-func NewPlugins(opts ...Option) *Plugins {
+// Logger set config logger
+func Logger(l logger.Logger) Option {
+	return func(p *Plugins) {
+		p.logger = l
+	}
+}
+
+func NewPlugins(opts ...Option) (*Plugins, error) {
 	p := &Plugins{
-		plugins: make(map[string]Repo),
+		workers: make(map[string]Worker),
 	}
 	for _, opt := range opts {
 		opt(p)
 	}
-	return p
-}
-
-// Stop default plugins
-func Stop() {
-	defPlugins.Stop()
-}
-
-func (p *Plugins) Start() error {
-	if p.configFile == "" && p.trellisConfig == nil {
-		return nil
+	if err := p.init(); err != nil {
+		return nil, err
 	}
+	return p, nil
+}
 
+func (p *Plugins) init() error {
+	if p.logger == nil {
+		p.logger = logger.Noop()
+	}
 	if p.configFile != "" {
 		reader, err := config.NewSuffixReader(config.ReaderOptionFilename(p.configFile))
 		if err != nil {
+			fmt.Println(err)
 			return err
 		}
 
@@ -98,33 +98,48 @@ func (p *Plugins) Start() error {
 	}
 
 	if p.trellisConfig != nil {
-		if err := p.trellisConfig.ToObject("plugins", &p.configs); err != nil {
+		if err := p.trellisConfig.Object(&p.configs, config.ObjOptionKey("plugins")); err != nil {
 			return err
 		}
 	}
 
 	for _, pConfig := range p.configs.Plugins {
-		if _, ok := p.plugins[pConfig.Name]; ok {
-			return errcode.Newf("config is already exists: %s", pConfig.Name)
-		}
-		plg, err := NewPlugin(pConfig)
-		if err != nil {
-			return err
-		}
-		p.plugins[pConfig.Name] = plg
-	}
-
-	for _, plg := range p.plugins {
-		if err := plg.Start(); err != nil {
+		if err := p.registerWorker(pConfig); err != nil {
 			return err
 		}
 	}
 
+	for _, pConfig := range mapPluginConfigs {
+		if err := p.registerWorker(pConfig); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Plugins) Start() error {
+	for _, worker := range p.workers {
+		if err := worker.Start(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (p *Plugins) registerWorker(c *Config) error {
+	if _, ok := p.workers[c.Name]; ok {
+		return errcode.Newf("plugin is already exists: %s", c.Name)
+	}
+	worker, err := NewPlugin(c, p.logger.With("plugin", c.Name))
+	if err != nil {
+		return errcode.Newf("initial plugin failed: %+v", err)
+	}
+	p.workers[c.Name] = worker
 	return nil
 }
 
 func (p *Plugins) Stop() {
-	for _, repo := range p.plugins {
-		repo.Stop()
+	for _, worker := range p.workers {
+		worker.Stop()
 	}
 }

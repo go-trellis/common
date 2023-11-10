@@ -6,7 +6,7 @@ plugins:
     interval: 0s
   - name: test2
     script_file: ./test2.sh
-    interval: 5s
+    interval: 2s
   - name: test3
     script_file: ./test3.sh
-    interval: 5s
+    interval: 3s

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package flag
 
 import (
-	kingpin "github.com/alecthomas/kingpin/v2"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 	"trellis.tech/trellis/common.v1/logger/prometheus"
 )
 

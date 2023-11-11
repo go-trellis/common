@@ -21,6 +21,7 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/go-kit/log"
 	"trellis.tech/trellis/common.v1/config"
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/logger"
@@ -37,7 +38,7 @@ type Plugins struct {
 	configs Configs
 	workers map[string]Worker
 
-	logger logger.Logger
+	logger logger.KitLogger
 }
 
 type Configs struct {
@@ -61,7 +62,7 @@ func TrellisConfig(config config.Config) Option {
 }
 
 // Logger set config logger
-func Logger(l logger.Logger) Option {
+func Logger(l logger.KitLogger) Option {
 	return func(p *Plugins) {
 		p.logger = l
 	}
@@ -130,7 +131,7 @@ func (p *Plugins) registerWorker(c *Config) error {
 	if _, ok := p.workers[c.Name]; ok {
 		return errcode.Newf("plugin is already exists: %s", c.Name)
 	}
-	worker, err := NewPlugin(c, p.logger.With("plugin", c.Name))
+	worker, err := NewPlugin(c, log.With(p.logger, "plugin", c.Name))
 	if err != nil {
 		return errcode.Newf("initial plugin failed: %+v", err)
 	}

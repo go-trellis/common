@@ -28,13 +28,13 @@ var _ log.Logger = (*ZapLogger)(nil)
 type zapSugarLogger func(msg string, keysAndValues ...interface{})
 
 func (l zapSugarLogger) Log(kv ...interface{}) error {
-	l("", kv...)
+	l("msg", kv...)
 	return nil
 }
 
 // NewZapSugarLogger returns a Go kit log.Logger that sends
 // log events to a zap.Logger.
-func NewZapSugarLogger(logger *zap.Logger, level zapcore.Level, opts ...zap.Option) SimpleLogger {
+func NewZapSugarLogger(logger *zap.Logger, level zapcore.Level, opts ...zap.Option) KitLogger {
 	sugarLogger := logger.WithOptions(opts...).Sugar()
 	var sugar zapSugarLogger
 	switch level {

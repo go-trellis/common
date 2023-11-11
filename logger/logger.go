@@ -22,48 +22,32 @@ import (
 	"io"
 	"reflect"
 
+	kLog "github.com/go-kit/log"
 	"go.uber.org/zap/zapcore"
 	"trellis.tech/trellis/common.v1/json"
 	"xorm.io/xorm/log"
 )
 
-type SimpleLogger interface {
-	Log(kvs ...interface{}) error
+type KitLogger = kLog.Logger
+type XormLogger = log.Logger
+
+type MessageLogger interface {
+	DebugM(msg string, kvs ...interface{})
+	InfoM(msg string, kvs ...interface{})
+	WarnM(msg string, kvs ...interface{})
+	ErrorM(msg string, kvs ...interface{})
+	PanicM(msg string, kvs ...interface{})
+	FatalM(msg string, kvs ...interface{})
 }
 
 // Logger 日志对象
 type Logger interface {
-	SimpleLogger
+	KitLogger
+	XormLogger
+	MessageLogger
 
 	With(kvs ...interface{}) Logger
 	Writer() io.Writer
-
-	Debug(kvs ...interface{})
-	DebugM(msg string, kvs ...interface{})
-	Debugf(msg string, kvs ...interface{})
-	Info(kvs ...interface{})
-	InfoM(msg string, kvs ...interface{})
-	Infof(msg string, kvs ...interface{})
-	Warn(kvs ...interface{})
-	WarnM(msg string, kvs ...interface{})
-	Warnf(msg string, kvs ...interface{})
-	Error(kvs ...interface{})
-	ErrorM(msg string, kvs ...interface{})
-	Errorf(msg string, kvs ...interface{})
-	Panic(kvs ...interface{})
-	PanicM(msg string, kvs ...interface{})
-	Panicf(msg string, kvs ...interface{})
-	Fatal(kvs ...interface{})
-	FatalM(msg string, kvs ...interface{})
-	Fatalf(msg string, kvs ...interface{})
-}
-
-type XormLogger interface {
-	Level() log.LogLevel
-	SetLevel(l log.LogLevel)
-
-	ShowSQL(show ...bool)
-	IsShowSQL() bool
 }
 
 // Level log level

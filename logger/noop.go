@@ -17,14 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package logger
 
-import "io"
+import (
+	"io"
+
+	"xorm.io/xorm/log"
+)
 
 // Noop logger.
 func Noop() Logger {
-	return noop{}
+	return &noop{}
 }
 
-type noop struct{}
+type noop struct {
+	level log.LogLevel
+}
 
 func (noop) Log(...interface{}) error {
 	return nil
@@ -53,3 +59,13 @@ func (noop) Writer() io.Writer {
 func (noop) With(...interface{}) Logger {
 	return &noop{}
 }
+func (p *noop) Level() log.LogLevel {
+	return p.level
+}
+
+func (p *noop) SetLevel(l log.LogLevel) {
+	p.level = l
+}
+
+func (p *noop) ShowSQL(show ...bool) {}
+func (p *noop) IsShowSQL() bool      { return false }

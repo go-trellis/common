@@ -41,10 +41,10 @@ var locker = &sync.Mutex{}
 
 type Option func(*Options)
 type Options struct {
-	logger logger.Logger
+	logger logger.XormLogger
 }
 
-func OptLogger(l logger.Logger) Option {
+func OptLogger(l logger.XormLogger) Option {
 	return func(o *Options) {
 		o.logger = l
 	}
@@ -160,7 +160,7 @@ func NewXORMEngines(cfg config.Config, opts ...Option) (engines map[string]*xorm
 	return engines, nil
 }
 
-func genXormEngine(cfg config.Config, key string, logger logger.Logger) (*xorm.Engine, error) {
+func genXormEngine(cfg config.Config, key string, logger logger.XormLogger) (*xorm.Engine, error) {
 	dConfig := cfg.GetValuesConfig(key)
 	if dConfig == nil {
 		return nil, errcode.Newf("not found config with key: %s", key)
@@ -186,7 +186,7 @@ func genXormEngine(cfg config.Config, key string, logger logger.Logger) (*xorm.E
 	engine.SetMaxOpenConns(cfg.GetInt(key+".max_open_conns", 100))
 
 	if logger != nil {
-		engine.SetLogger(logger)
+		engine.SetLogger(logger.(log.Logger))
 	}
 
 	engine.ShowSQL(cfg.GetBoolean(key + ".show_sql"))

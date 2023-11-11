@@ -22,6 +22,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
 	"trellis.tech/trellis/common.v1/errcode"
 	"trellis.tech/trellis/common.v1/logger"
@@ -99,7 +100,7 @@ type Worker interface {
 
 type Plugin struct {
 	config *Config
-	logger logger.Logger
+	logger logger.KitLogger
 
 	ticker   *time.Ticker
 	stopChan chan struct{}
@@ -157,7 +158,7 @@ func RegisterPlugin(name string, w func() error, opts ...ConfigOption) {
 	mapPluginConfigs[name] = c
 }
 
-func NewPlugin(c *Config, l logger.Logger) (Worker, error) {
+func NewPlugin(c *Config, l logger.KitLogger) (Worker, error) {
 	if c.ScriptFile == "" && c.FN == nil {
 		return nil, errcode.New("not set script file or function")
 	}
@@ -213,7 +214,7 @@ func (p *Plugin) doRun(t time.Time) {
 	evalTotalCounter.WithLabelValues(p.config.Name).Add(1)
 	err := p.config.FN()
 	if err != nil {
-		p.logger.Error("msg", "eval_function_failed", "error", err)
+		level.Error(p.logger).Log("msg", "eval_function_failed", "error", err)
 		evalFailureTotalCounter.WithLabelValues(p.config.Name).Add(1)
 	} else {
 		evalSuccessTotalCounter.WithLabelValues(p.config.Name).Add(1)

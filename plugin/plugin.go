@@ -195,8 +195,8 @@ func (p *Plugin) Start() error {
 
 func (p *Plugin) do() {
 	intervalsGauge.WithLabelValues(p.config.Name).Set(float64(time.Duration(p.config.Interval) / time.Second))
+	p.doRun(time.Now())
 	if p.config.Interval <= 0 {
-		p.doRun(time.Now())
 		return
 	}
 	for {

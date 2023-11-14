@@ -53,7 +53,7 @@ func New(config *Config) log.Logger {
 			logger.OptionMaxBackups(config.MaxBackups),
 			logger.OptionStdPrinters(config.StdPrinters),
 		),
-		logger.EncoderConfig(&zapcore.EncoderConfig{}),
+		logger.EncoderConfig(zapcore.EncoderConfig{}),
 		logger.CallerSkip(config.CallerSkip),
 	}
 	if config.Caller {

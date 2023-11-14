@@ -121,7 +121,9 @@ type LogConfig struct {
 	StackTrace  bool        `yaml:"stack_trace" json:"stack_trace"`
 	FileOptions FileOptions `yaml:",inline" json:",inline"`
 
-	EncoderConfig *zapcore.EncoderConfig `yaml:",inline,omitempty" json:",inline,omitempty"`
+	customEncoderConfig bool `yaml:"-"`
+
+	EncoderConfig zapcore.EncoderConfig `yaml:",inline,omitempty" json:",inline,omitempty"`
 
 	ShowXormSQL bool `yaml:"show_xorm_sql" json:"show_xorm_sql"`
 }
@@ -202,8 +204,9 @@ func LogFileOption(opts ...FileOption) Option {
 }
 
 // EncoderConfig 设置等级
-func EncoderConfig(encoder *zapcore.EncoderConfig) Option {
+func EncoderConfig(encoder zapcore.EncoderConfig) Option {
 	return func(f *LogConfig) {
+		f.customEncoderConfig = true
 		f.EncoderConfig = encoder
 	}
 }

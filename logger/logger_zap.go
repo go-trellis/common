@@ -31,6 +31,20 @@ import (
 var (
 	_ Logger     = (*ZapLogger)(nil)
 	_ log.Logger = (*ZapLogger)(nil)
+
+	DefaultEncoderConfig = zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level",
+		NameKey:        "log",
+		CallerKey:      "caller",
+		MessageKey:     "msg",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.LowercaseLevelEncoder,
+		EncodeTime:     zapcore.RFC3339NanoTimeEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeCaller:   zapcore.ShortCallerEncoder,
+	}
 )
 
 func NewWithZapLogger(l *zap.Logger) Logger {
@@ -72,21 +86,12 @@ func NewLoggerWithConfig(c *LogConfig) (*ZapLogger, error) {
 }
 
 func (p *ZapLogger) initLogger() error {
-	if p.options.EncoderConfig == nil {
-		p.options.EncoderConfig = &zapcore.EncoderConfig{
-			TimeKey:          "ts",
-			LevelKey:         "level",
-			NameKey:          "log",
-			CallerKey:        "caller",
-			MessageKey:       "msg",
-			StacktraceKey:    "stacktrace",
-			LineEnding:       zapcore.DefaultLineEnding,
-			EncodeLevel:      zapcore.LowercaseLevelEncoder,
-			EncodeTime:       zapcore.RFC3339NanoTimeEncoder,
-			EncodeDuration:   zapcore.SecondsDurationEncoder,
-			EncodeCaller:     zapcore.ShortCallerEncoder,
-			ConsoleSeparator: p.options.FileOptions.Separator,
-		}
+	if !p.options.customEncoderConfig {
+		p.options.EncoderConfig = DefaultEncoderConfig
+	}
+
+	if p.options.FileOptions.Separator != "" {
+		p.options.EncoderConfig.ConsoleSeparator = p.options.FileOptions.Separator
 	}
 
 	level := zap.NewAtomicLevelAt(p.options.Level.ToZapLevel())
@@ -94,9 +99,9 @@ func (p *ZapLogger) initLogger() error {
 	var encoder zapcore.Encoder
 	switch p.options.Encoding {
 	case "", "console":
-		encoder = zapcore.NewConsoleEncoder(*p.options.EncoderConfig)
+		encoder = zapcore.NewConsoleEncoder(p.options.EncoderConfig)
 	case "json":
-		encoder = zapcore.NewJSONEncoder(*p.options.EncoderConfig)
+		encoder = zapcore.NewJSONEncoder(p.options.EncoderConfig)
 	default:
 		return errors.New("unknown encoding")
 	}

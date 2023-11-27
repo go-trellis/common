@@ -72,7 +72,7 @@ func NewLogger(opts ...Option) (*ZapLogger, error) {
 }
 
 func NewLoggerWithConfig(c *LogConfig) (*ZapLogger, error) {
-	if c == nil || (c.FileOptions.Filename == "" && len(c.FileOptions.StdPrinters) == 0) {
+	if c == nil || (c.FileOptions.Filename == "" && len(c.StdPrinters) == 0) {
 		return &ZapLogger{logger: zap.NewNop()}, nil
 	}
 	zl := &ZapLogger{
@@ -107,7 +107,7 @@ func (p *ZapLogger) initLogger() error {
 	}
 
 	var ws []zapcore.WriteSyncer
-	for _, op := range p.options.FileOptions.StdPrinters {
+	for _, op := range p.options.StdPrinters {
 		switch op {
 		case "stderr":
 			ws = append(ws, zapcore.AddSync(os.Stderr))

@@ -51,10 +51,10 @@ func New(config *Config) log.Logger {
 			logger.OptionMoveFileType(logger.MoveFileType(config.MoveFileType)),
 			logger.OptionMaxLength(config.MaxLength),
 			logger.OptionMaxBackups(config.MaxBackups),
-			logger.OptionStdPrinters(config.StdPrinters),
 		),
 		logger.EncoderConfig(zapcore.EncoderConfig{}),
 		logger.CallerSkip(config.CallerSkip),
+		logger.StdPrinters(config.StdPrinters),
 	}
 	if config.Caller {
 		options = append(options, logger.Caller())

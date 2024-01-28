@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package fsm
 
 import (
-	"trellis.tech/trellis/common.v1/config"
+	"trellis.tech/common.v2/config"
 )
 
 // NewTransactionFromConfig new transactions from config file

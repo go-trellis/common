@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v1/config"
-	"trellis.tech/trellis/common.v1/shell"
-	"trellis.tech/trellis/common.v1/testutils"
+	"trellis.tech/common.v2/config"
+	"trellis.tech/common.v2/shell"
+	"trellis.tech/common.v2/testutils"
 )
 
 const (

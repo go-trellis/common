@@ -17,7 +17,7 @@ The default Twitter format shown below.
 
 ### Usage
 
-import trellis.tech/trellis/common.v1/snowflake
+import trellis.tech/common.v2/snowflake
 
 ```go
 
@@ -41,7 +41,7 @@ go test -bench=. -benchmem  -run=none
 
 goos: darwin
 goarch: amd64
-pkg: trellis.tech/trellis/common.v1/snowflake
+pkg: trellis.tech/common.v2/snowflake
 cpu: Intel(R) Core(TM) i7-7700HQ CPU @ 2.80GHz
 BenchmarkNext-8                   	 4927034	     244.1 ns/op	       0 B/op	       0 allocs/op
 BenchmarkNextMaxSequence-8        	 9595654	     119.1 ns/op	       0 B/op	       0 allocs/op
@@ -50,11 +50,11 @@ BenchmarkNextSleep-8              	     934	   1375943 ns/op	       0 B/op	     
 BenchmarkNextSleepMaxSequence-8   	 9475443	     119.6 ns/op	       0 B/op	       0 allocs/op
 BenchmarkNextSleepNoSequence-8    	     914	   1367458 ns/op	       0 B/op	       0 allocs/op
 PASS
-ok  	trellis.tech/trellis/common.v1/snowflake	8.104s
+ok  	trellis.tech/common.v2/snowflake	8.104s
 
 goos: darwin
 goarch: amd64
-pkg: trellis.tech/trellis/common.v1/snowflake
+pkg: trellis.tech/common.v2/snowflake
 cpu: VirtualApple @ 2.50GHz
 BenchmarkNext-10                    	 4931802	     244.0 ns/op	       0 B/op	       0 allocs/op
 BenchmarkNextMaxSequence-10         	19899342	     59.60 ns/op	       0 B/op	       0 allocs/op
@@ -63,5 +63,5 @@ BenchmarkNextSleep-10               	 4119868	     375.4 ns/op	       0 B/op	   
 BenchmarkNextSleepMaxSequence-10    	17207970	     58.34 ns/op	       0 B/op	       0 allocs/op
 BenchmarkNextSleepNoSequence-10     	    1066	   1160042 ns/op	       0 B/op	       0 allocs/op
 PASS
-ok  	trellis.tech/trellis/common.v1/snowflake	8.529s
+ok  	trellis.tech/common.v2/snowflake	8.529s
 ```

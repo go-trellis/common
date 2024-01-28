@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"time"
 
-	"trellis.tech/trellis/common.v1/config"
-	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/common.v2/config"
+	"trellis.tech/common.v2/errcode"
 
 	"github.com/go-sql-driver/mysql"
 )

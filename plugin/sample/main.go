@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"trellis.tech/trellis/common.v1/plugin"
+	"trellis.tech/common.v2/plugin"
 )
 
 type T struct{}

@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	commonTls "trellis.tech/trellis/common.v1/crypto/tls"
-	"trellis.tech/trellis/common.v1/flagext"
-	"trellis.tech/trellis/common.v1/types"
+	commonTls "trellis.tech/common.v2/crypto/tls"
+	"trellis.tech/common.v2/flagext"
+	"trellis.tech/common.v2/types"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"

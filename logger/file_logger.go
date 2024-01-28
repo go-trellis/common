@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/trellis/common.v1/files"
+	"trellis.tech/common.v2/files"
 
 	"go.uber.org/zap/zapcore"
 )

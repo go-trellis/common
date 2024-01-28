@@ -20,9 +20,9 @@ package types_test
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v1/json"
-	"trellis.tech/trellis/common.v1/testutils"
-	"trellis.tech/trellis/common.v1/types"
+	"trellis.tech/common.v2/json"
+	"trellis.tech/common.v2/testutils"
+	"trellis.tech/common.v2/types"
 )
 
 func Test_QuoteToASCIIWithoutBackslashed(t *testing.T) {

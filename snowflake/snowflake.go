@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/trellis/common.v1/crypto/base64"
-	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/common.v2/crypto/base64"
+	"trellis.tech/common.v2/errcode"
 )
 
 const (

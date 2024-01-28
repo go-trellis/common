@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package flag
 
 import (
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-	"trellis.tech/trellis/common.v1/logger/prometheus"
+	kingpin "github.com/alecthomas/kingpin/v2"
+	"trellis.tech/common.v2/logger/prometheus"
 )
 
 // AddFlags adds the flags used by this package to the Kingpin application.

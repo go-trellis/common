@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"trellis.tech/trellis/common.v1/errcode"
+	"trellis.tech/common.v2/errcode"
 )
 
 // LogicFunc logic functions

@@ -22,9 +22,9 @@ import (
 	"fmt"
 
 	"github.com/go-kit/log"
-	"trellis.tech/trellis/common.v1/config"
-	"trellis.tech/trellis/common.v1/errcode"
-	"trellis.tech/trellis/common.v1/logger"
+	"trellis.tech/common.v2/config"
+	"trellis.tech/common.v2/errcode"
+	"trellis.tech/common.v2/logger"
 )
 
 func (p *Plugins) ParseFlags(set *flag.FlagSet) {

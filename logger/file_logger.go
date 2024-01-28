@@ -57,7 +57,6 @@ func NewFileLogger(opts ...FileOption) (*fileLogger, error) {
 
 // NewFileLoggerWithOptions 标准窗体的输出对象
 func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
-
 	if err := opts.Check(); err != nil {
 		return nil, err
 	}
@@ -104,7 +103,6 @@ func (p *fileLogger) Write(bs []byte) (int, error) {
 func (p *fileLogger) Sync() error { return nil }
 
 func (p *fileLogger) checkFile(dataLen int64) (err error) {
-
 	if p.osFile == nil {
 		err = p.openFile()
 		if err != nil {
@@ -136,7 +134,6 @@ func (p *fileLogger) openFile() (err error) {
 }
 
 func (p *fileLogger) moveFile(t time.Time) error {
-
 	p.osFile = nil
 
 	err := os.Rename(filepath.Join(p.options.FileDir, p.options.Filename),

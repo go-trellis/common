@@ -64,8 +64,6 @@ type FileOptions struct {
 	FileBasename string `yaml:"-" json:"-"`
 	FileDir      string `yaml:"-" json:"-"`
 
-	StdPrinters types.Strings `yaml:"std_printers" json:"std_printers"`
-
 	Separator string `yaml:"separator" json:"separator"`
 	MaxLength int64  `yaml:"max_length" json:"max_length"`
 
@@ -82,7 +80,6 @@ func (p *FileOptions) ParseFlags(f *flag.FlagSet) {
 func (p *FileOptions) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.StringVar(&p.Filename, prefix+"log.filename", "", "logger file")
 	f.StringVar(&p.FileExt, prefix+"log.file_ext", ".log", "logger file ext, default filename ext, but .log")
-	f.Var(&p.StdPrinters, prefix+"log.std_printers", "std printers")
 	f.StringVar(&p.Separator, prefix+"log.separator", "", "log separator")
 	f.Int64Var(&p.MaxLength, prefix+"log.max_length", 0, "the max bytes of data, default: no limited")
 	f.IntVar(&p.MaxBackups, prefix+"log.max_backups", 0, "the max number of logged files, default: no limited")
@@ -100,7 +97,7 @@ func (p *FileOptions) Check() error {
 
 	if ext := filepath.Ext(p.Filename); ext != "" {
 		p.FileExt = ext
-		p.FileBasename = strings.TrimRight(p.Filename, ext)
+		p.FileBasename = strings.TrimSuffix(p.Filename, ext)
 	} else {
 		if p.FileExt == "" {
 			p.FileExt = ".log"
@@ -114,11 +111,14 @@ func (p *FileOptions) Check() error {
 
 type Option func(*LogConfig)
 type LogConfig struct {
-	Level       Level       `yaml:"level" json:"level"`
-	Encoding    string      `yaml:"encoding" json:"encoding"` // json | console, default console
-	CallerSkip  int         `yaml:"caller_skip" json:"caller_skip"`
-	Caller      bool        `yaml:"caller" json:"caller"`
-	StackTrace  bool        `yaml:"stack_trace" json:"stack_trace"`
+	Level      Level  `yaml:"level" json:"level"`
+	Encoding   string `yaml:"encoding" json:"encoding"` // json | console, default console
+	CallerSkip int    `yaml:"caller_skip" json:"caller_skip"`
+	Caller     bool   `yaml:"caller" json:"caller"`
+	StackTrace bool   `yaml:"stack_trace" json:"stack_trace"`
+
+	StdPrinters types.Strings `yaml:"std_printers" json:"std_printers"`
+
 	FileOptions FileOptions `yaml:",inline" json:",inline"`
 
 	customEncoderConfig bool `yaml:"-"`
@@ -142,6 +142,7 @@ func (p *LogConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 	f.BoolVar(&p.Caller, prefix+"log.caller", false, "open the caller")
 	f.BoolVar(&p.StackTrace, prefix+"log.stack_trace", false, "log trace")
 	f.BoolVar(&p.ShowXormSQL, prefix+"log.xorm_show_sql", false, "xorm show sql")
+	f.Var(&p.StdPrinters, prefix+"log.std_printers", "std printers")
 
 	p.FileOptions.ParseFlagsWithPrefix(prefix, f)
 }
@@ -222,6 +223,13 @@ func ShowXormSQL(show ...bool) Option {
 	}
 }
 
+// StdPrinters 设置移动文件的类型
+func StdPrinters(ps []string) Option {
+	return func(c *LogConfig) {
+		c.StdPrinters = ps
+	}
+}
+
 // FileOption 操作配置函数
 type FileOption func(*FileOptions)
 
@@ -257,12 +265,5 @@ func OptionMaxBackups(num int) FileOption {
 func OptionMoveFileType(typ MoveFileType) FileOption {
 	return func(f *FileOptions) {
 		f.MoveFileType = typ
-	}
-}
-
-// OptionStdPrinters 设置移动文件的类型
-func OptionStdPrinters(ps []string) FileOption {
-	return func(f *FileOptions) {
-		f.StdPrinters = ps
 	}
 }

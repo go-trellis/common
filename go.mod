@@ -12,6 +12,7 @@ require (
 	github.com/google/uuid v1.3.1
 	github.com/mattn/go-colorable v0.1.13
 	github.com/prometheus/client_golang v1.14.0
+	github.com/sirupsen/logrus v1.9.3
 	go.etcd.io/etcd/client/pkg/v3 v3.5.11
 	go.etcd.io/etcd/client/v3 v3.5.11
 	go.uber.org/zap v1.26.0

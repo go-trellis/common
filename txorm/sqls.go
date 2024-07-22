@@ -166,6 +166,8 @@ type GetOptions struct {
 	Wheres interface{}
 	Args   []interface{}
 
+	Builders []*Builder
+
 	InWheres    []*In
 	NotInWheres []*In
 
@@ -189,6 +191,18 @@ func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
 			session = session.NotIn(where.Column, where.Args...)
 		}
 	}
+
+	for _, b := range p.Builders {
+		switch b.LinkType {
+		case LinkTypeOR:
+			session = session.Or(b.Where, b.Args...)
+		case LinkTypeNotSet, LinkTypeAND:
+			session = session.And(b.Where, b.Args...)
+		default:
+			panic(fmt.Errorf("not supported link type %s", b.LinkType))
+		}
+	}
+
 	if p.Wheres != nil {
 		session = session.Where(p.Wheres, p.Args...)
 	}

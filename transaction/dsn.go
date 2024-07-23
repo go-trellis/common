@@ -30,8 +30,8 @@ import (
 type DSNFactory func(config.Config) (string, error)
 
 var dsnDrivers = map[string]DSNFactory{
-	"mysql":  MysqlDSNFactory,
-	"sqlite": SqliteDSNFactory,
+	"mysql":   MysqlDSNFactory,
+	"sqlite3": Sqlite3DSNFactory,
 }
 
 func SetDSNFactory(name string, factory DSNFactory) error {
@@ -86,8 +86,8 @@ func MysqlDSNFactory(conf config.Config) (string, error) {
 	return dsnConf.FormatDSN(), nil
 }
 
-// SqliteDSNFactory get sqlite db from config
-func SqliteDSNFactory(conf config.Config) (string, error) {
+// Sqlite3DSNFactory get sqlite3 db from config
+func Sqlite3DSNFactory(conf config.Config) (string, error) {
 	dsn := conf.GetString("dsn")
 	if dsn != "" {
 		return dsn, nil

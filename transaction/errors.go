@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package transaction
 
-import "trellis.tech/common.v2/errcode"
+import "trellis.tech/trellis/common.v2/errcode"
 
 var (
 	ErrAtLeastOneRepo   = errcode.New("input one repo at least")

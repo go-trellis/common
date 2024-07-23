@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"trellis.tech/common.v2/testutils"
-	"trellis.tech/common.v2/types"
+	"trellis.tech/trellis/common.v2/testutils"
+	"trellis.tech/trellis/common.v2/types"
 )
 
 func Test_ToFloat64(t *testing.T) {

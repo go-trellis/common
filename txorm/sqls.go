@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"strings"
 
-	"trellis.tech/common.v2/errcode"
-	"trellis.tech/common.v2/transaction"
+	"trellis.tech/trellis/common.v2/errcode"
+	"trellis.tech/trellis/common.v2/transaction"
 	"xorm.io/xorm"
 )
 

@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
-	"trellis.tech/common.v2/testutils"
-	"trellis.tech/common.v2/types"
+	"trellis.tech/trellis/common.v2/testutils"
+	"trellis.tech/trellis/common.v2/types"
 )
 
 func TestFlags(t *testing.T) {

@@ -4,7 +4,7 @@ This library contains utilities that are useful for gopher.
 
 ## install
 
-> go get trellis.tech/common.v2
+> go get trellis.tech/trellis/common.v2
 
 ## other useful utilities
 

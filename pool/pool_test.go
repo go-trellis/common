@@ -25,7 +25,7 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/common.v2/errcode"
+	"trellis.tech/trellis/common.v2/errcode"
 )
 
 var (

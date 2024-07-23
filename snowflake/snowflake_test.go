@@ -20,7 +20,7 @@ package snowflake
 import (
 	"testing"
 
-	"trellis.tech/common.v2/errcode"
+	"trellis.tech/trellis/common.v2/errcode"
 )
 
 // Benchmarks Presence Update event with fake data.

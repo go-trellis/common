@@ -1,14 +1,14 @@
 # cache
 light cache in go 
 
-* [![GoDoc](http://godoc.org/trellis.tech/common.v2/cache?status.svg)](http://godoc.org/trellis.tech/common.v2/cache)
+* [![GoDoc](http://godoc.org/trellis.tech/trellis/common.v2/cache?status.svg)](http://godoc.org/trellis.tech/trellis/common.v2/cache)
 
 ## Introduction
 
 ### Installation
 
 ```shell
-go get "trellis.tech/common.v2/cache"
+go get "trellis.tech/trellis/common.v2/cache"
 ```
 
 ### Features

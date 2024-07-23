@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package pool
 
 import (
-	"trellis.tech/common.v2/errcode"
+	"trellis.tech/trellis/common.v2/errcode"
 )
 
 var (

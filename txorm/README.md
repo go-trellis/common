@@ -5,4 +5,4 @@
 
 ## database(mysql)
 
-* go get -v trellis.tech/common.v2/txorm
+* go get -v trellis.tech/trellis/common.v2/txorm

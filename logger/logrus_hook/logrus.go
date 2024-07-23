@@ -23,7 +23,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
-	"trellis.tech/common.v2/logger"
+	"trellis.tech/trellis/common.v2/logger"
 )
 
 type LogrusConfig struct {

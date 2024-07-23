@@ -1,4 +1,4 @@
-module trellis.tech/common.v2
+module trellis.tech/trellis/common.v2
 
 go 1.19
 

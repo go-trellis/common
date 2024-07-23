@@ -20,7 +20,7 @@ package pool
 import (
 	"time"
 
-	"trellis.tech/common.v2/errcode"
+	"trellis.tech/trellis/common.v2/errcode"
 )
 
 type Factory func() (interface{}, error)

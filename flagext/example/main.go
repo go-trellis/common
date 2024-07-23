@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"trellis.tech/common.v2/flagext"
-	"trellis.tech/common.v2/types"
+	"trellis.tech/trellis/common.v2/flagext"
+	"trellis.tech/trellis/common.v2/types"
 
 	"gopkg.in/yaml.v3"
 )

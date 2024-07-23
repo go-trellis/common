@@ -5,7 +5,7 @@ Go package for reading cofig file by JSON, XML, YAML.
 ## Installation
 
 ```bash
-go get trellis.tech/common.v2/config
+go get trellis.tech/trellis/common.v2/config
 ```
 
 ### imports

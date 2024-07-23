@@ -24,7 +24,7 @@ import (
 
 	kLog "github.com/go-kit/log"
 	"go.uber.org/zap/zapcore"
-	"trellis.tech/common.v2/json"
+	"trellis.tech/trellis/common.v2/json"
 	"xorm.io/xorm/log"
 )
 

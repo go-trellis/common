@@ -9,7 +9,7 @@ Finite-state machine in go
 ## Installation
 
 ```go
-go get -u trellis.tech/trellis/common.v0/fsm
+go get -u trellis.tech/common.v2/fsm
 ```
 
 ## Usage

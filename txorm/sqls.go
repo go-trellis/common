@@ -477,58 +477,70 @@ func Insert(session *xorm.Session, beans ...interface{}) (int64, error) {
 // InsertMulti insert multi seperated slice data in a big slice with every step number
 // default to insert the slice with no seperated.
 func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (int64, error) {
+	// 初始化选项
 	options := &InsertMultiOptions{}
 	for _, opt := range opts {
 		opt(options)
 	}
+
+	// 如果步长小于等于0，直接插入
 	if options.StepNumber <= 0 {
 		return session.InsertMulti(ones)
 	}
+
+	// 获取ones的反射值
 	sliceOnes := reflect.Indirect(reflect.ValueOf(ones))
-	switch sliceOnes.Kind() {
-	case reflect.Slice, reflect.Array:
+	kind := sliceOnes.Kind()
+
+	// 处理slice或array类型
+	if kind == reflect.Slice || kind == reflect.Array {
 		onesLen := sliceOnes.Len()
 		if onesLen == 0 {
 			return 0, nil
 		}
 
-		switch sliceOnes.Index(0).Kind() {
-		case reflect.Interface:
+		// 如果第一个元素是接口类型，禁用自动时间
+		if sliceOnes.Index(0).Kind() == reflect.Interface {
 			session = session.NoAutoTime()
 		}
 
+		// 如果长度小于等于步长，直接插入
 		if onesLen <= options.StepNumber {
 			return session.InsertMulti(ones)
 		}
 
-		loop, count, processNum := 0, 0, onesLen
-
+		// 分批插入
+		var count int
 		for i := 0; i < onesLen; i += options.StepNumber {
-			if processNum > options.StepNumber {
-				loop = i + options.StepNumber
-			} else {
-				loop = onesLen
+			end := i + options.StepNumber
+			if end > onesLen {
+				end = onesLen
 			}
+
+			// 构建当前批次的插入数据
 			var multi []interface{}
-			for j := i; j < loop; j++ {
+			for j := i; j < end; j++ {
 				multi = append(multi, sliceOnes.Index(j).Interface())
 			}
+
+			// 插入当前批次数据
 			session = session.NoAutoTime()
 			n, err := session.InsertMulti(multi)
 			if err != nil {
 				return int64(count) + n, err
 			}
 			count += int(n)
-			processNum -= options.StepNumber
 		}
 
+		// 检查插入数量是否一致
 		if options.CheckNumber && count != onesLen {
 			return 0, fmt.Errorf("insert number not %d, but %d", onesLen, count)
 		}
 		return int64(count), nil
-	default:
-		return session.InsertMulti(ones)
 	}
+
+	// 默认处理
+	return session.InsertMulti(ones)
 }
 
 /// Delete Execute

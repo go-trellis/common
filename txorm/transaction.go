@@ -30,13 +30,18 @@ type trans struct {
 	session *xorm.Session
 }
 
+// Session 返回一个会话对象。如果当前是事务状态且会话为空，则创建一个新的会话。
 func (p *trans) Session() interface{} {
+	// 如果当前是事务状态
 	if p.isTrans {
+		// 如果会话为空，则创建一个新的会话
 		if p.session == nil {
 			p.session = p.engine.NewSession()
 		}
+		// 返回当前会话
 		return p.session
 	}
+	// 如果不是事务状态，直接创建并返回一个新的会话
 	return p.engine.NewSession()
 }
 
@@ -45,9 +50,10 @@ func (p *trans) IsTransaction() bool {
 }
 
 func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
+	// 获取逻辑函数
 	fn := transaction.GetLogicFunc(fun)
 	if fn == nil || fn.Logic == nil {
-		//return todo error
+		// 返回错误
 		return nil
 	}
 
@@ -57,9 +63,9 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 		err       error
 	)
 
+	// 判断是否是事务
 	if p.IsTransaction() {
-
-		defer func() { _ = p.session.Close() }()
+		defer p.session.Close()
 
 		if err := p.session.Begin(); err != nil {
 			return err
@@ -71,26 +77,21 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 			}
 		}()
 
+		// 设置事务会话
 		for _, repo := range repos {
-			tRepo, ok := repo.(transaction.Repo)
-			if !ok {
-				return errcode.New("not transaction repo, check the repo implement transaction repo")
-			}
-			if err = tRepo.SetSession(p.session); err != nil {
+			if err = setTransactionRepoSession(repo, p.session); err != nil {
 				return err
 			}
-			_newRepos = append(_newRepos, tRepo)
+			_newRepos = append(_newRepos, repo)
 		}
 	} else {
+		// 设置非事务会话
 		for _, repo := range repos {
-			tRepo, ok := repo.(transaction.Repo)
-			if !ok {
-				return errcode.New("not transaction repo, check the repo implement transaction repo")
-			}
-			if err = tRepo.SetSession(p.engine.NewSession()); err != nil {
+			session := p.engine.NewSession()
+			if err = setTransactionRepoSession(repo, session); err != nil {
 				return err
 			}
-			_newRepos = append(_newRepos, tRepo)
+			_newRepos = append(_newRepos, repo)
 		}
 	}
 
@@ -100,25 +101,41 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 		}
 	}()
 
+	// 执行逻辑前的操作
 	if _, err = transaction.CallFunc(fn.BeforeLogic, _newRepos...); err != nil {
 		return err
 	}
 
+	// 执行逻辑操作
 	if _values, err = transaction.CallFunc(fn.Logic, _newRepos...); err != nil {
 		return err
 	}
 
+	// 执行逻辑后的操作
 	if _, err = transaction.CallFunc(fn.AfterLogic, _newRepos...); err != nil {
 		return err
 	}
 
+	// 提交事务
 	if p.isTrans {
-		_ = p.session.Commit()
+		if err = p.session.Commit(); err != nil {
+			return err
+		}
 	}
 
+	// 提交后的操作
 	if _, err = transaction.CallFunc(fn.AfterCommit, _values); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// 设置事务仓库会话
+func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
+	tRepo, ok := repo.(transaction.Repo)
+	if !ok {
+		return errcode.New("not transaction repo, check the repo implement transaction repo")
+	}
+	return tRepo.SetSession(session)
 }

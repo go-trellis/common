@@ -92,6 +92,5 @@ func Sqlite3DSNFactory(conf config.Config) (string, error) {
 	if dsn != "" {
 		return dsn, nil
 	}
-
 	return "", errcode.New("database's name not exist, set param database")
 }

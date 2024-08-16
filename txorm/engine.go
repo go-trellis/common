@@ -28,10 +28,21 @@ import (
 	"trellis.tech/trellis/common.v2/transaction"
 
 	"xorm.io/xorm"
+	"xorm.io/xorm/core"
 	"xorm.io/xorm/log"
 )
 
 var _ transaction.Engine = (*XEngine)(nil)
+
+var (
+	defaultOptions = &Options{
+		maxIdleConns: 5,
+		maxOpenConns: 10,
+		showSQL:      false,
+		logLevel:     log.LOG_INFO,
+		driver:       "mysql",
+	}
+)
 
 type XEngine struct {
 	*xorm.Engine
@@ -41,7 +52,19 @@ var locker = &sync.Mutex{}
 
 type Option func(*Options)
 type Options struct {
-	logger logger.XormLogger
+	logger             logger.XormLogger
+	driver, coreDriver string
+	maxIdleConns       int
+	maxOpenConns       int
+	showSQL            bool
+	logLevel           log.LogLevel
+	isDefault          bool
+}
+
+func OptDriver(d string) Option {
+	return func(o *Options) {
+		o.driver = d
+	}
 }
 
 func OptLogger(l logger.XormLogger) Option {
@@ -50,17 +73,47 @@ func OptLogger(l logger.XormLogger) Option {
 	}
 }
 
+func OptMaxIdleConns(maxIdleConns int) Option {
+	return func(o *Options) {
+		o.maxIdleConns = maxIdleConns
+	}
+}
+
+func OptMaxOpenConns(maxOpenConns int) Option {
+	return func(o *Options) {
+		o.maxOpenConns = maxOpenConns
+	}
+}
+
+func OptLogLevel(lv log.LogLevel) Option {
+	return func(o *Options) {
+		o.logLevel = lv
+	}
+}
+
+func OptShowSQL(showSQL bool) Option {
+	return func(o *Options) {
+		o.showSQL = showSQL
+	}
+}
+
+func OptIsDefault(def bool) Option {
+	return func(o *Options) {
+		o.isDefault = def
+	}
+}
+
 // NewEnginesFromFile initial engines from file
-func NewEnginesFromFile(file string) (map[string]transaction.Engine, error) {
+func NewEnginesFromFile(file string, l logger.Logger) (map[string]transaction.Engine, error) {
 	conf, err := config.NewConfigOptions(config.OptionFile(file))
 	if err != nil {
 		return nil, err
 	}
-	return NewEnginesFromConfig(conf)
+	return NewEnginesWithConfig(conf, l)
 }
 
-// NewEnginesFromConfig initial engines from config
-func NewEnginesFromConfig(cfg config.Config, opts ...Option) (engines map[string]transaction.Engine, err error) {
+// NewEnginesWithConfig initial engines from config
+func NewEnginesWithConfig(cfg config.Config, l logger.Logger) (engines map[string]transaction.Engine, err error) {
 	if cfg == nil {
 		return nil, errcode.New("nil config")
 	}
@@ -78,13 +131,8 @@ func NewEnginesFromConfig(cfg config.Config, opts ...Option) (engines map[string
 		}
 	}()
 
-	options := &Options{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
 	for _, key := range cfg.GetKeys() {
-		engine, err := genXormEngine(cfg, key, options.logger)
+		engine, isDefault, err := newXORMEngineWithConfig(cfg, key, l)
 		if err != nil {
 			return nil, err
 		}
@@ -92,10 +140,9 @@ func NewEnginesFromConfig(cfg config.Config, opts ...Option) (engines map[string
 		if err != nil {
 			return nil, err
 		}
-		if _isD := cfg.GetBoolean(key + ".is_default"); _isD {
+		if isDefault {
 			es[transaction.DefaultDatabase] = xEngine
 		}
-
 		es[key] = xEngine
 	}
 
@@ -104,102 +151,17 @@ func NewEnginesFromConfig(cfg config.Config, opts ...Option) (engines map[string
 
 // NewEngine New XEngine
 // Deprecated: Use NewXEngine
-func NewEngine(driver string, dsn string) (*XEngine, error) {
-	engine, err := NewXORMEngine(driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-	x := &XEngine{
-		Engine: engine,
-	}
-	return x, nil
+func NewEngine(driver, dsn string, ops ...Option) (*XEngine, error) {
+	return NewXEngine(driver, dsn, ops...)
 }
 
-func NewXORMEngine(driver string, dsn string) (*xorm.Engine, error) {
-	return xorm.NewEngine(driver, dsn)
-}
-
-// NewXORMEnginesFromFile initial xorm engine from file
-func NewXORMEnginesFromFile(file string) (map[string]*xorm.Engine, error) {
-	conf, err := config.NewConfigOptions(config.OptionFile(file))
+// NewXEngine New XEngine
+//   - error: 如果创建失败，返回错误信息。
+func NewXEngine(driver, dsn string, ops ...Option) (*XEngine, error) {
+	engine, err := NewXORMEngine(driver, dsn, ops...)
 	if err != nil {
 		return nil, err
 	}
-	return NewXORMEngines(conf, nil)
-}
-
-func NewXORMEngines(cfg config.Config, opts ...Option) (engines map[string]*xorm.Engine, err error) {
-	engines = make(map[string]*xorm.Engine, 0)
-
-	locker.Lock()
-	defer locker.Unlock()
-	defer func() {
-		if err == nil {
-			return
-		}
-		for _, engine := range engines {
-			engine.Close()
-		}
-	}()
-
-	options := &Options{}
-	for _, opt := range opts {
-		opt(options)
-	}
-
-	for _, key := range cfg.GetKeys() {
-		engine, err := genXormEngine(cfg, key, options.logger)
-		if err != nil {
-			return nil, err
-		}
-		if _isD := cfg.GetBoolean(key + ".is_default"); _isD {
-			engines[transaction.DefaultDatabase] = engine
-		}
-		engines[key] = engine
-	}
-	return engines, nil
-}
-
-func genXormEngine(cfg config.Config, key string, logger logger.XormLogger) (*xorm.Engine, error) {
-	dConfig := cfg.GetValuesConfig(key)
-	if dConfig == nil {
-		return nil, errcode.Newf("not found config with key: %s", key)
-	}
-	driver := dConfig.GetString("driver", "mysql")
-
-	f, err := transaction.GetDSNFactory(driver)
-	if err != nil {
-		return nil, err
-	}
-
-	dsn, err := f(dConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	engine, err := NewXORMEngine(driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-
-	engine.SetMaxIdleConns(cfg.GetInt(key+".max_idle_conns", 10))
-	engine.SetMaxOpenConns(cfg.GetInt(key+".max_open_conns", 100))
-
-	if logger != nil {
-		engine.SetLogger(logger.(log.Logger))
-	}
-
-	engine.ShowSQL(cfg.GetBoolean(key + ".show_sql"))
-	engine.Logger().SetLevel(log.LogLevel(cfg.GetInt(key+".log_level", 0)))
-	return engine, nil
-}
-
-func NewXEngine(driver string, dsn string) (*XEngine, error) {
-	engine, err := NewXORMEngine(driver, dsn)
-	if err != nil {
-		return nil, err
-	}
-
 	return newXEngine(engine)
 }
 
@@ -211,6 +173,144 @@ func newXEngine(engine *xorm.Engine) (*XEngine, error) {
 		Engine: engine,
 	}
 	return x, nil
+}
+
+func NewXORMEngine(driver, dsn string, ops ...Option) (*xorm.Engine, error) {
+	return NewXORMEngineWithDB(driver, dsn, nil, ops...)
+}
+
+func NewXORMEngineWithDB(driver, dsn string, db *core.DB, ops ...Option) (*xorm.Engine, error) {
+	options := &Options{}
+	for _, o := range ops {
+		o(options)
+	}
+	options.driver = driver
+	return newXormEngine(dsn, options, db)
+}
+
+// NewXORMEnginesFromFile initial xorm engine from file
+func NewXORMEnginesFromFile(file string, l logger.Logger) (map[string]*xorm.Engine, error) {
+	conf, err := config.NewConfigOptions(config.OptionFile(file))
+	if err != nil {
+		return nil, err
+	}
+	return NewXORMEngineWithConfig(conf, l)
+}
+
+func NewXORMEngineWithConfig(cfg config.Config, l logger.Logger) (engines map[string]*xorm.Engine, err error) {
+	engines = make(map[string]*xorm.Engine, 0)
+	locker.Lock()
+	defer locker.Unlock()
+	defer func() {
+		if err == nil {
+			return
+		}
+		for _, engine := range engines {
+			engine.Close()
+		}
+	}()
+
+	for _, key := range cfg.GetKeys() {
+		engine, isDefault, err := newXORMEngineWithConfig(cfg, key, l)
+		if err != nil {
+			return nil, err
+		}
+		if isDefault {
+			engines[transaction.DefaultDatabase] = engine
+		}
+		engines[key] = engine
+	}
+	return engines, nil
+}
+
+func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm.Engine, bool, error) {
+	dConfig := cfg.GetValuesConfig(key)
+	if dConfig == nil {
+		return nil, false, errcode.Newf("not found config with key: %s", key)
+	}
+	options := configureToOptions(dConfig)
+
+	f, err := transaction.GetDSNFactory(options.driver)
+	if err != nil {
+		return nil, false, err
+	}
+	dsn, err := f(dConfig)
+	if err != nil {
+		return nil, false, err
+	}
+
+	options.logger = l
+
+	engine, err := newXormEngine(dsn, options, nil)
+	if err != nil {
+		return nil, false, err
+	}
+	return engine, options.isDefault, nil
+}
+
+// newXormEngine 创建并返回一个新的 xorm.Engine 实例
+// 参数:
+// - driver: 数据库驱动名称
+// - coreDriver: 核心数据库驱动名称
+// - dsn: 数据库连接字符串
+// - options: 配置选项
+func newXormEngine(dsn string, options *Options, coreDB *core.DB) (*xorm.Engine, error) {
+	// 如果 options 为 nil，则使用默认配置
+	if options == nil {
+		options = defaultOptions
+	}
+	var err error
+	// 如果 coreDriver 不为空，则打开核心数据库连接
+	if coreDB == nil && options.coreDriver != "" {
+		coreDB, err = core.Open(options.coreDriver, dsn)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// 创建 XORM 引擎
+	var engine *xorm.Engine
+	if coreDB != nil {
+		engine, err = xorm.NewEngineWithDB(options.driver, dsn, coreDB)
+	} else {
+		engine, err = xorm.NewEngine(options.driver, dsn)
+	}
+	if err != nil {
+		return nil, err
+	}
+	// 设置引擎的连接池配置
+	configureEngine(engine, options)
+
+	return engine, nil
+}
+
+// configureEngine 配置 xorm.Engine 的连接池和日志选项
+// 参数:
+// - engine: xorm.Engine 实例
+// - options: 配置选项
+func configureEngine(engine *xorm.Engine, options *Options) {
+	engine.SetMaxIdleConns(options.maxIdleConns)
+	engine.SetMaxOpenConns(options.maxOpenConns)
+	engine.ShowSQL(options.showSQL)
+	engine.Logger().SetLevel(options.logLevel)
+
+	// 如果提供了自定义日志器，则设置自定义日志器
+	if options.logger != nil {
+		engine.SetLogger(options.logger)
+	}
+}
+
+// - *Options: 配置生成的 Options 对象
+func configureToOptions(cfg config.Config) *Options {
+	return &Options{
+		maxIdleConns: cfg.GetInt("max_idle_conns", defaultOptions.maxIdleConns),
+		maxOpenConns: cfg.GetInt("max_open_conns", defaultOptions.maxOpenConns),
+		showSQL:      cfg.GetBoolean("show_sql"),
+		logLevel:     log.LogLevel(cfg.GetInt("log_level")),
+		isDefault:    cfg.GetBoolean("is_default"),
+		driver:       cfg.GetString("driver", defaultOptions.driver),
+		coreDriver:   cfg.GetString("core_driver"),
+	}
 }
 
 func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {

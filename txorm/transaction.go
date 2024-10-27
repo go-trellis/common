@@ -139,3 +139,31 @@ func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
 	}
 	return tRepo.SetSession(session)
 }
+
+// Do to do transaction with customer function
+func Do(engine *xorm.Engine, fn func(*xorm.Session) error) error {
+	session := engine.NewSession()
+	defer session.Close()
+	return fn(session)
+}
+
+// TransactionDo to do transaction with customer function
+func TransactionDo(engine *xorm.Engine, fn func(*xorm.Session) error) error {
+	return TransactionDoWithSession(engine.NewSession(), fn)
+}
+
+// TransactionDoWithSession to do transaction with customer function
+func TransactionDoWithSession(s *xorm.Session, fn func(*xorm.Session) error) (err error) {
+	if err = s.Begin(); err != nil {
+		return
+	}
+	defer func() {
+		if err != nil {
+			_ = s.Rollback()
+			return
+		}
+		err = s.Commit()
+	}()
+	err = fn(s)
+	return
+}

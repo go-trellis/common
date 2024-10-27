@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transaction
 
 import (
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -56,10 +57,15 @@ func GetDSNFactory(name string) (DSNFactory, error) {
 	return dsnF, nil
 }
 
+// RegisterTLSConfig registers a custom tls.Config to be used with sql.Open.
+// Use the key as a value in the DSN where tls=value.
+func RegisterTLSConfig(key string, config *tls.Config) error {
+	return mysql.RegisterTLSConfig(key, config)
+}
+
 // MysqlDSNFactory get mysql dsn from config
 func MysqlDSNFactory(conf config.Config) (string, error) {
-	dsn := conf.GetString("dsn")
-	if dsn != "" {
+	if dsn := conf.GetString("dsn"); dsn != "" {
 		return dsn, nil
 	}
 
@@ -69,19 +75,50 @@ func MysqlDSNFactory(conf config.Config) (string, error) {
 	}
 
 	dsnConf := mysql.Config{
-		DBName:  name,
-		Net:     "tcp",
-		Timeout: conf.GetTimeDuration("timeout", time.Second*5),
+		DBName:       name,
+		Net:          conf.GetString("net", "tcp"),
+		Timeout:      conf.GetTimeDuration("timeout", time.Second*5),
+		ReadTimeout:  conf.GetTimeDuration("write_timeout", time.Minute),
+		WriteTimeout: conf.GetTimeDuration("write_timeout", time.Second*30),
 
 		User:   conf.GetString("user", "root"),
 		Passwd: conf.GetString("password", ""),
 		Addr:   fmt.Sprintf("%s:%d", conf.GetString("host", "localhost"), conf.GetInt("port", 3306)),
 		Params: map[string]string{
-			"charset":              conf.GetString("charset", "utf8"),
-			"parseTime":            conf.GetString("parseTime", "True"),
-			"loc":                  conf.GetString("location", "Local"),
-			"allowNativePasswords": conf.GetString("allowNativePasswords", "true"),
+			"loc":     conf.GetString("location", "Local"),
+			"charset": conf.GetString("charset", "utf8"),
 		},
+		// Max packet size allowed
+		MaxAllowedPacket: conf.GetInt("max_allowed_packet", 0),
+		// Server public key name
+		ServerPubKey: conf.GetString("server_pub_key"),
+		// TLS configuration name
+		TLSConfig: conf.GetString("tls_config"),
+		// Connection collation
+		Collation: conf.GetString("collation"),
+		// Allow all files to be used with LOAD DATA LOCAL INFILE
+		AllowAllFiles: conf.GetBoolean("allowAllFiles", false),
+		// Allows the cleartext client side plugin
+		AllowCleartextPasswords: conf.GetBoolean("allowCleartextPasswords", false),
+		// Allows fallback to unencrypted connection if server does not support TLS
+		AllowFallbackToPlaintext: conf.GetBoolean("allowFallbackToPlaintext", false),
+		// Allows the native password authentication method
+		AllowNativePasswords: conf.GetBoolean("allowNativePasswords", false),
+		// Allows the old insecure password method
+		AllowOldPasswords: conf.GetBoolean("allowOldPasswords", false),
+		CheckConnLiveness: conf.GetBoolean("checkConnLiveness", false),
+		// Return number of matching rows instead of rows changed
+		ClientFoundRows: conf.GetBoolean("clientFoundRows", false),
+		// Prepend table alias to column names
+		ColumnsWithAlias: conf.GetBoolean("columnsWithAlias", false),
+		// Interpolate placeholders into query string
+		InterpolateParams: conf.GetBoolean("interpolateParams", false),
+		// Allow multiple statements in one query
+		MultiStatements: conf.GetBoolean("multiStatements", false),
+		// Parse time values to time.Time
+		ParseTime: conf.GetBoolean("parseTime", false),
+		// RejectReadOnly           bool // Reject read-only connections
+		RejectReadOnly: conf.GetBoolean("rejectReadOnly", false),
 	}
 	return dsnConf.FormatDSN(), nil
 }

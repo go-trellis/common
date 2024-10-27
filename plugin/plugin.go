@@ -20,10 +20,9 @@ package plugin
 import (
 	"fmt"
 	"os"
-	"time"
 
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/client_golang/prometheus"
+
 	"trellis.tech/trellis/common.v2/errcode"
 	"trellis.tech/trellis/common.v2/logger"
 	"trellis.tech/trellis/common.v2/shell"
@@ -93,23 +92,31 @@ func init() {
 	)
 }
 
-type Worker interface {
-	Start() error
-	Stop()
+func OptionCronConfig(cronConfig string) OptionConfig {
+	return func(c *Config) {
+		c.CronConfig = cronConfig
+	}
 }
+
+func OptionInterval(interval types.Duration) OptionConfig {
+	return func(c *Config) {
+		c.Interval = interval
+	}
+}
+
+type OptionConfig func(*Config)
 
 type Plugin struct {
 	config *Config
 	logger logger.KitLogger
-
-	ticker   *time.Ticker
-	stopChan chan struct{}
 }
 
 type Config struct {
-	Name       string         `yaml:"name" json:"name"`
-	ScriptFile string         `yaml:"script_file" json:"script_file"`
-	ScriptArgs []string       `yaml:"script_args" json:"script_args"`
+	Name       string   `yaml:"name" json:"name"`
+	ScriptFile string   `yaml:"script_file" json:"script_file"`
+	ScriptArgs []string `yaml:"script_args" json:"script_args"`
+
+	CronConfig string         `yaml:"cron_config" json:"cron_config"`
 	Interval   types.Duration `yaml:"interval" json:"interval"`
 
 	FN func() error `yaml:"-" json:"-"`
@@ -122,46 +129,30 @@ func (p *Config) check() error {
 	if p.Name == "" {
 		return fmt.Errorf("empty plugin's name")
 	}
-	if p.Interval < 0 {
-		p.Interval = 0
+
+	if p.ScriptFile == "" && p.FN == nil {
+		return errcode.New("not set script file or function")
+	}
+
+	if p.Interval <= 0 && p.CronConfig == "" {
+		return fmt.Errorf("not set cron config or executor interval")
 	}
 	return nil
 }
 
-type ConfigOption = func(*Config)
-
-func Interval(i time.Duration) ConfigOption {
-	interval := types.Duration(i)
-	if interval <= 0 {
-		interval = types.Duration(time.Minute)
+func NewPlugin(c *Config, l logger.KitLogger) (*Plugin, error) {
+	if err := c.check(); err != nil {
+		return nil, err
 	}
-	return func(c *Config) {
-		c.Interval = interval
-	}
-}
-
-var mapPluginConfigs = map[string]*Config{}
-
-func RegisterPlugin(name string, w func() error, opts ...ConfigOption) {
-	_, ok := mapPluginConfigs[name]
-	if ok {
-		panic(fmt.Errorf("plugin already exist: %s", name))
-	}
-	c := &Config{
-		Name: name,
-		FN:   w,
-	}
-	for _, opt := range opts {
-		opt(c)
+	p := &Plugin{
+		config: c,
+		logger: l,
 	}
 
-	mapPluginConfigs[name] = c
-}
-
-func NewPlugin(c *Config, l logger.KitLogger) (Worker, error) {
-	if c.ScriptFile == "" && c.FN == nil {
-		return nil, errcode.New("not set script file or function")
+	if p.logger == nil {
+		p.logger = logger.Noop()
 	}
+
 	if c.ScriptFile != "" {
 		if _, err := os.Stat(c.ScriptFile); err != nil {
 			return nil, errcode.NewErrors(
@@ -172,62 +163,5 @@ func NewPlugin(c *Config, l logger.KitLogger) (Worker, error) {
 		}
 	}
 
-	if l == nil {
-		l = logger.Noop()
-	}
-
-	p := &Plugin{
-		config: c,
-		logger: l,
-	}
-	if p.config.Interval > 0 {
-		p.ticker = time.NewTicker(time.Duration(p.config.Interval))
-		p.stopChan = make(chan struct{})
-	}
-
 	return p, nil
-}
-
-func (p *Plugin) Start() error {
-	go p.do()
-	return nil
-}
-
-func (p *Plugin) do() {
-	intervalsGauge.WithLabelValues(p.config.Name).Set(float64(time.Duration(p.config.Interval) / time.Second))
-	p.doRun(time.Now())
-	if p.config.Interval <= 0 {
-		return
-	}
-	for {
-		select {
-		case t := <-p.ticker.C:
-			p.doRun(t)
-		case <-p.stopChan:
-			return
-		}
-	}
-}
-
-func (p *Plugin) doRun(t time.Time) {
-	pluginLastDurationGauge.WithLabelValues(p.config.Name).Set(float64(t.Unix()))
-	evalTotalCounter.WithLabelValues(p.config.Name).Add(1)
-	err := p.config.FN()
-	if err != nil {
-		level.Error(p.logger).Log("msg", "eval_function_failed", "error", err)
-		evalFailureTotalCounter.WithLabelValues(p.config.Name).Add(1)
-	} else {
-		evalSuccessTotalCounter.WithLabelValues(p.config.Name).Add(1)
-	}
-	pluginExecuteSecondsSummary.WithLabelValues(p.config.Name).Observe(float64(time.Since(t) / 1e9))
-}
-
-func (p *Plugin) Stop() {
-	if p.stopChan != nil {
-		p.stopChan <- struct{}{}
-		close(p.stopChan)
-	}
-	if p.ticker != nil {
-		p.ticker.Stop()
-	}
 }

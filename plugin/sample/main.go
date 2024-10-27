@@ -21,7 +21,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/robfig/cron/v3"
+	"trellis.tech/trellis/common.v2/logger"
 	"trellis.tech/trellis/common.v2/plugin"
+	"trellis.tech/trellis/common.v2/types"
 )
 
 type T struct{}
@@ -31,32 +34,42 @@ func (p *T) Do() error {
 	return nil
 }
 
-func main() {
-	worker := &T{}
-	plugin.RegisterPlugin("test", worker.Do, plugin.Interval(time.Second))
+var _ logger.KitLogger = (*Logger)(nil)
 
-	//runner()
+type Logger struct{}
+
+func (*Logger) Log(kvs ...interface{}) error {
+	kvs = append([]interface{}{"haha"}, kvs...)
+	fmt.Println(kvs...)
+	return nil
+}
+
+func main() {
+	t := &T{}
+	plugin.RegisterPlugin("test", t.Do, plugin.OptionInterval(types.Duration(time.Second*10)))
+
+	runner()
 	configure()
 }
 
 func configure() {
-	p, err := plugin.NewPlugins(plugin.ConfigFile("./sample.yaml"))
+	p, err := plugin.NewPlugins(plugin.ConfigFile("./sample.yaml"), plugin.CronOptions(cron.WithSeconds()))
 	if err != nil {
 		panic(err)
 	}
 	p.Start()
-	time.Sleep(time.Second * 4)
+	time.Sleep(time.Minute * 5)
 	p.Stop()
-	time.Sleep(time.Second * 5)
 }
 
 func runner() {
-	p, err := plugin.NewPlugins()
+	l := &Logger{}
+	p, err := plugin.NewPlugins(plugin.Logger(l))
 	if err != nil {
 		panic(err)
 	}
 	p.Start()
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Minute)
 	p.Stop()
 	time.Sleep(time.Second * 5)
 }

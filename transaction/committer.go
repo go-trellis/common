@@ -100,7 +100,6 @@ func (p *committer) createNewInstance(origin interface{}) (interface{}, error) {
 }
 
 func (p *committer) doCommit(fn interface{}, name string, isTransaction bool, repos ...Repo) (err error) {
-
 	engine, ok := p.engines[name]
 	if !ok {
 		return ErrNotFoundEngine

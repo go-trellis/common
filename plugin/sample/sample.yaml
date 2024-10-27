@@ -4,9 +4,10 @@ plugins:
   - name: test1
     script_file: ./test1.sh
     interval: 0s
+    cron_config: "*/10 * * * * *"
   - name: test2
     script_file: ./test2.sh
-    interval: 2s
+    interval: 60s
   - name: test3
     script_file: ./test3.sh
-    interval: 3s
+    interval: 60s

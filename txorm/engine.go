@@ -292,12 +292,11 @@ func configureEngine(engine *xorm.Engine, options *Options) {
 	engine.SetMaxIdleConns(options.maxIdleConns)
 	engine.SetMaxOpenConns(options.maxOpenConns)
 	engine.ShowSQL(options.showSQL)
-	engine.Logger().SetLevel(options.logLevel)
-
 	// 如果提供了自定义日志器，则设置自定义日志器
 	if options.logger != nil {
 		engine.SetLogger(options.logger)
 	}
+	engine.Logger().SetLevel(options.logLevel)
 }
 
 // - *Options: 配置生成的 Options 对象

@@ -36,5 +36,5 @@ test2:
   password: "123456"              ## default 3306
   charset:  utf8                  ## default utf8
   location: "Asia/Shanghai"       ## default "Local"
-  parseTime: "True"               ## default "True"
-  allowNativePasswords: "true"    ## default "true"
+  parseTime: true                 ## default "false"
+  allowNativePasswords: true      ## default "false"

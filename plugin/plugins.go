@@ -145,13 +145,13 @@ func (p *Plugins) init() error {
 	p.crons = cron.New(p.cronOptions...)
 
 	for _, pConfig := range p.configs.Plugins {
-		if _, err := p.registerPlugin(pConfig); err != nil {
+		if _, err := p.RegisterPlugin(pConfig); err != nil {
 			return err
 		}
 	}
 
 	for _, pConfig := range mapPluginConfigs {
-		if _, err := p.registerPlugin(pConfig); err != nil {
+		if _, err := p.RegisterPlugin(pConfig); err != nil {
 			return err
 		}
 	}
@@ -159,7 +159,7 @@ func (p *Plugins) init() error {
 	return nil
 }
 
-func (p *Plugins) registerPlugin(c *Config) (cron.EntryID, error) {
+func (p *Plugins) RegisterPlugin(c *Config) (cron.EntryID, error) {
 	if _, ok := p.plugins[c.Name]; ok {
 		return 0, errcode.Newf("plugin is already exists: %s", c.Name)
 	}

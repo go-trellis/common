@@ -19,7 +19,7 @@ package types
 
 import (
 	"bytes"
-	"io/ioutil"
+	"io"
 	"strconv"
 	"unicode/utf8"
 
@@ -30,7 +30,7 @@ import (
 // GbkToUtf8 gbk to utf8
 func GbkToUtf8(s []byte) ([]byte, error) {
 	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewDecoder())
-	d, e := ioutil.ReadAll(reader)
+	d, e := io.ReadAll(reader)
 	if e != nil {
 		return nil, e
 	}
@@ -40,7 +40,7 @@ func GbkToUtf8(s []byte) ([]byte, error) {
 // Utf8ToGbk utf8 to gbk
 func Utf8ToGbk(s []byte) ([]byte, error) {
 	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewEncoder())
-	d, e := ioutil.ReadAll(reader)
+	d, e := io.ReadAll(reader)
 	if e != nil {
 		return nil, e
 	}

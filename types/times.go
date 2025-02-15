@@ -50,11 +50,11 @@ const (
 )
 
 const (
-	// WeekStartDay 一周的开始时间
+	// WeekStartDay start day of week
 	WeekStartDay = time.Sunday
 )
 
-// FormatLayoutTime 格式化自定义的时间
+// FormatLayoutTime format layout time to string time.
 func FormatLayoutTime(t time.Time, layout string) string {
 	return t.Format(layout)
 }
@@ -62,22 +62,22 @@ func FormatLayoutTime(t time.Time, layout string) string {
 ///// 中文的显示格式 /////
 ///// Format time to chinese string time /////
 
-// FormatChineseDate 格式化中国日期
+// FormatChineseDate format layout chinese date to string date.
 func FormatChineseDate(t time.Time) string {
 	return FormatLayoutTime(t, ChineseDate)
 }
 
-// FormatChineseZDate 格式化中文缩写日期
+// FormatChineseZDate format layout chinese zdate to string zdate.
 func FormatChineseZDate(t time.Time) string {
 	return FormatLayoutTime(t, ChineseZDate)
 }
 
-// FormatChineseDateTime 格式化中国日期时间
+// FormatChineseDateTime format layout chinese datetime to string datetime.
 func FormatChineseDateTime(t time.Time) string {
 	return FormatLayoutTime(t, ChineseDateTime)
 }
 
-// FormatChineseZDateTime 格式化去0的中国日期时间
+// FormatChineseZDateTime format layout chinese zdatetime to string zdatetime.
 func FormatChineseZDateTime(t time.Time) string {
 	return FormatLayoutTime(t, ChineseZDateTime)
 }
@@ -85,12 +85,12 @@ func FormatChineseZDateTime(t time.Time) string {
 ///// 英文的显示格式 /////
 ///// Format time to string /////
 
-// FormatDate 格式化日期
+// FormatDate format date string.
 func FormatDate(t time.Time) string {
 	return FormatLayoutTime(t, Date)
 }
 
-// FormatZDate 格式化不含0的日期
+// FormatZDate format zdate string.
 func FormatZDate(t time.Time) string {
 	return FormatLayoutTime(t, ZDate)
 }
@@ -164,22 +164,22 @@ func StringToDateTime(t string) (time.Time, error) {
 	return time.Parse(DateTime, t)
 }
 
-// ParseDate 转换日期格式为cacheLocation的时间
+// ParseDate parse string to date using layout.
 func ParseDate(t string) (time.Time, error) {
 	return ParseLayoutTime(Date, t)
 }
 
-// ParseDateTime 转换时间格式为cacheLocation的时间
+// ParseDateTime parse string to datetime using layout.
 func ParseDateTime(t string) (time.Time, error) {
 	return ParseLayoutTime(DateTime, t)
 }
 
-// ParseChineseDate 转换中文日期格式为cacheLocation的时间
+// ParseChineseDate parse string to chinese date using layout.
 func ParseChineseDate(t string) (time.Time, error) {
 	return ParseLayoutTime(Date, t)
 }
 
-// ParseChineseDateTime 转换中文时间格式为cacheLocation的时间
+// ParseChineseDateTime parse string to chinese datetime using layout.
 func ParseChineseDateTime(t string) (time.Time, error) {
 	return ParseLayoutTime(ChineseDateTime, t)
 }

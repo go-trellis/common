@@ -21,16 +21,15 @@ import (
 	"fmt"
 )
 
-// Subscriber 消费者
+// Subscriber subscribe interface for event subscription.
 type Subscriber interface {
 	GetID() string
 	Publish(values ...interface{}) error
 	Stop()
 }
 
-// NewDefSubscriber 生成默认的消费者
+// NewDefSubscriber creates a new default subscriber.
 func NewDefSubscriber(sub interface{}) (Subscriber, error) {
-
 	var subscriber Subscriber
 	switch s := sub.(type) {
 	case func(...interface{}) error:
@@ -54,12 +53,12 @@ type defSubscriber struct {
 	fn func(values ...interface{}) error
 }
 
-// GetID return Subscriber's id
+// GetID returns the ID of the subscriber.
 func (p *defSubscriber) GetID() string {
 	return p.id
 }
 
-// Publish 发布信息
+// Publish publishes a message to the subscriber.
 func (p *defSubscriber) Publish(values ...interface{}) error {
 	return p.fn(values...)
 }

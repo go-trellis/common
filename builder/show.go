@@ -109,14 +109,14 @@ func Show(opts ...Option) {
 	banner.Init(colorable.NewColorableStdout(), options.OnShow, options.OnColor, strings.NewReader(newBanner))
 }
 
-// Version 版本信息
+// Version info of the program.
 func Version() string {
 	return fmt.Sprintf("%s, version: %s (branch: %s, revision: %s)",
 		ProgramName, ProgramVersion, ProgramBranch, ProgramRevision,
 	)
 }
 
-// BuildInfo returns goVersion, Author and buildTime information.
+// BuildInfo returns build information.
 func BuildInfo() string {
 	return fmt.Sprintf("(go=%s, user=%s, date=%s)", CompilerVersion, Author, BuildTime)
 }

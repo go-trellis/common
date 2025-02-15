@@ -21,7 +21,7 @@ import (
 	"github.com/codegangsta/inject"
 )
 
-// Inject 注入函数
+// Inject applies the given parameters to the target object.
 func Inject(a interface{}, params ...interface{}) error {
 	ior := inject.New()
 	for _, v := range params {

@@ -21,6 +21,7 @@ import (
 	"reflect"
 )
 
+// Reduplicate removes duplicate elements from a slice or array.
 func Reduplicate(data interface{}) interface{} {
 	inArr := reflect.ValueOf(data)
 	if inArr.Kind() != reflect.Slice && inArr.Kind() != reflect.Array {

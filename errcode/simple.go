@@ -39,12 +39,12 @@ type Error struct {
 	message   string
 }
 
-// New 生成简单对象
+// New new error object
 func New(text string) SimpleError {
 	return new("ERR", uuid.New().String(), text)
 }
 
-// Newf 生成简单对象
+// Newf new error object with format text and params
 func Newf(text string, params ...interface{}) SimpleError {
 	return New(fmt.Sprintf(text, params...))
 }
@@ -57,22 +57,22 @@ func (p *Error) Error() string {
 	return p.message
 }
 
-// FullError 全部错误信息
+// FullError full error message with namespace and id.
 func (p *Error) FullError() string {
 	return fmt.Sprintf("%s#%s:%s", p.namespace, p.id, p.message)
 }
 
-// ID 返回ID
+// ID return error id.
 func (p *Error) ID() string {
 	return p.id
 }
 
-// Namespace 错误的域
+// Namespace return error namespace.
 func (p *Error) Namespace() string {
 	return p.namespace
 }
 
-// Message 信息
+// Message return error message.
 func (p *Error) Message() string {
 	return p.message
 }

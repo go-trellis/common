@@ -25,7 +25,7 @@ import (
 // Errors error slice
 type Errors []error
 
-// NewErrors 生成错误数据对象
+// NewErrors new errors slice
 func NewErrors(errs ...error) Errors {
 	var e Errors
 	return e.Append(errs...)
@@ -35,12 +35,12 @@ func (p Errors) Error() string {
 	return strings.Join(errorsString(p...), ";")
 }
 
-// Append 增补错误对象
+// Append append errors slice
 func (p Errors) Append(errs ...error) Errors {
 	return append(p, errs...)
 }
 
-// Errors 判断是否为空
+// Errors returns error slice as error.
 func (p Errors) Errors() error {
 	if len(p) == 0 {
 		return nil

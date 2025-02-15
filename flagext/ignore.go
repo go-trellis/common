@@ -12,7 +12,7 @@ type ignoredFlag struct {
 }
 
 func (p ignoredFlag) String() string {
-	return fmt.Sprintf("ignored:" + p.name)
+	return fmt.Sprintf("ignored: %s", p.name)
 }
 
 func (ignoredFlag) Set(string) error {

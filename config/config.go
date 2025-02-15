@@ -22,17 +22,17 @@ import (
 	"time"
 )
 
-// OptionFunc 处理函数
+// OptionFunc configuration option function type.
 type OptionFunc func(*AdapterConfig)
 
-// OptionFile 解析配置文件Option函数
+// OptionFile option function to set configuration file.
 func OptionFile(filename string) OptionFunc {
 	return func(c *AdapterConfig) {
 		c.ConfigFile = filename
 	}
 }
 
-// OptionString 字符串解析配置Option函数
+// OptionString option function to set configuration string.
 func OptionString(rt ReaderType, cStr string) OptionFunc {
 	return func(c *AdapterConfig) {
 		c.readerType = rt
@@ -40,7 +40,7 @@ func OptionString(rt ReaderType, cStr string) OptionFunc {
 	}
 }
 
-// OptionStruct 结构体解析配置Option函数
+// OptionStruct option function to set configuration struct.
 func OptionStruct(rt ReaderType, st interface{}) OptionFunc {
 	return func(c *AdapterConfig) {
 		c.readerType = rt
@@ -48,14 +48,14 @@ func OptionStruct(rt ReaderType, st interface{}) OptionFunc {
 	}
 }
 
-// OptionENVAllowed 允许获取系统环境变量
+// OptionENVAllowed option function to allow environment variables.
 func OptionENVAllowed() OptionFunc {
 	return func(c *AdapterConfig) {
 		c.EnvAllowed = true
 	}
 }
 
-// OptionENVPrefix 设置环境变量已自定义字符串开始
+// OptionENVPrefix option function to set environment variable prefix.
 func OptionENVPrefix(prefix string) OptionFunc {
 	return func(c *AdapterConfig) {
 		c.EnvPrefix = prefix
@@ -130,7 +130,7 @@ func NewConfig(name string) (Config, error) {
 	return NewConfigOptions(OptionFile(name))
 }
 
-// NewConfigOptions 从操作函数解析Config
+// NewConfigOptions return Config by options.
 func NewConfigOptions(opts ...OptionFunc) (Config, error) {
 	c := &AdapterConfig{}
 	err := c.init(opts...)

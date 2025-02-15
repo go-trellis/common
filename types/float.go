@@ -28,6 +28,7 @@ import (
 
 var _ flag.Value = (*Found)(nil)
 
+// Found represents a found value with precision up to two decimal places.
 type Found float64
 
 // String implements flag.Value

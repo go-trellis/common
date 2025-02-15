@@ -17,18 +17,19 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package files
 
+const (
+	// DefaultReadBufferLength is the default read buffer length.
+	DefaultReadBufferLength = 1024
+)
+
 type Option func(*Options)
 type Options struct {
 	ReadBufferLength int64
 }
 
+// ReadBufferLength sets the read buffer length.
 func ReadBufferLength(len int64) Option {
 	return func(o *Options) {
 		o.ReadBufferLength = len
 	}
 }
-
-// DefaultReadBufferLength default reader buffer length
-const (
-	DefaultReadBufferLength = 1024
-)

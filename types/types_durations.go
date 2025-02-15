@@ -43,6 +43,7 @@ func (p *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	return nil
 }
 
+// String implements the fmt.Stringer interface.
 func (p Duration) String() string {
 	var (
 		ds   = int64(p)
@@ -88,8 +89,19 @@ func (p Duration) String() string {
 	return fmt.Sprintf("%v%v", ds/factors[unit], unit)
 }
 
+// Seconds returns the duration in seconds.
 func (p Duration) Seconds() int64 {
 	return int64(time.Duration(p) / time.Second)
+}
+
+// Microseconds returns the duration in microseconds.
+func (p Duration) Microseconds() int64 {
+	return int64(time.Duration(p) / time.Microsecond)
+}
+
+// Milliseconds returns the duration in milliseconds.
+func (p Duration) Milliseconds() int64 {
+	return int64(time.Duration(p) / time.Millisecond)
 }
 
 // Set implements flag.Value

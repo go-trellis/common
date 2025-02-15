@@ -21,7 +21,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"flag"
-	"io/ioutil"
+	"os"
 
 	"trellis.tech/trellis/common.v3/errcode"
 	"trellis.tech/trellis/common.v3/flagext"
@@ -70,7 +70,7 @@ func (cfg *Config) GetTLSConfig() (*tls.Config, error) {
 	// read ca certificates
 	if cfg.CAPath != "" {
 		var caCertPool *x509.CertPool
-		caCert, err := ioutil.ReadFile(cfg.CAPath)
+		caCert, err := os.ReadFile(cfg.CAPath)
 		if err != nil {
 			return nil, errcode.NewErrors(err, errcode.Newf("error loading ca cert: %s", cfg.CAPath))
 		}

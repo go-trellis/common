@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"trellis.tech/trellis/common.v3/flagext"
@@ -45,7 +45,7 @@ func (c *Config) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 
 func main() {
 	fs := flag.NewFlagSet("", flag.ContinueOnError)
-	fs.SetOutput(ioutil.Discard)
+	fs.SetOutput(io.Discard)
 	fs.StringVar(&configFile, configFileOption, "", "")
 
 	args := os.Args[1:]
@@ -62,7 +62,7 @@ func main() {
 	flag.CommandLine.Init(flag.CommandLine.Name(), flag.ContinueOnError)
 
 	flag.CommandLine.Parse(os.Args[1:])
-	buf, err := ioutil.ReadFile(configFile)
+	buf, err := os.ReadFile(configFile)
 	if err != nil {
 		panic(err)
 	}

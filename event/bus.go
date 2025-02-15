@@ -35,27 +35,27 @@ const DefaultEventCenterName = "trellis::event::default-center"
 
 var defBus = NewEventCenter(DefaultEventCenterName)
 
-// RegistEvent 注册事件
+// RegistEvent regist event name to bus
 func RegistEvent(eventNames ...string) error {
 	return defBus.RegistEvent(eventNames...)
 }
 
-// Subscribe 监听
+// Subscribe listen to an event name and return a subscriber.
 func Subscribe(eventName string, fn func(...interface{})) (Subscriber, error) {
 	return defBus.Subscribe(eventName, fn)
 }
 
-// Unsubscribe 取消监听
+// Unsubscribe cancel listen to an event name.
 func Unsubscribe(eventName string, ids ...string) error {
 	return defBus.Unsubscribe(eventName, ids...)
 }
 
-// Publish 发布消息
+// Publish publish an event to bus.
 func Publish(eventName string, event ...interface{}) {
 	defBus.Publish(eventName, event...)
 }
 
-// ListEvents 全部事件
+// ListEvents list all events in the bus.
 func ListEvents() (events []string) {
 	return defBus.ListEvents()
 }

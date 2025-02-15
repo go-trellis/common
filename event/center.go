@@ -23,16 +23,16 @@ import (
 	"sync"
 )
 
-// Center xxx
+// Center is a event center.
 type Center struct {
 	locker *sync.RWMutex
 	name   string
 	groups map[string]SubscriberGroup
 }
 
-// NewEventCenter xxx
+// NewEventCenter creates a new event center.
 func NewEventCenter(name string) Bus {
-	if 0 == len(name) {
+	if len(name) == 0 {
 		panic(errors.New("center name is empty"))
 	}
 	return &Center{
@@ -41,12 +41,12 @@ func NewEventCenter(name string) Bus {
 	}
 }
 
-// Name center name
+// Name returns the name of this event center.
 func (p *Center) Name() string {
 	return p.name
 }
 
-// RegistEvent 注册事件
+// RegistEvent registers events.
 func (p *Center) RegistEvent(eventNames ...string) error {
 	if len(eventNames) == 0 {
 		return nil
@@ -68,7 +68,7 @@ func (p *Center) RegistEvent(eventNames ...string) error {
 	return nil
 }
 
-// Subscribe 监听
+// Subscribe listens to events.
 func (p *Center) Subscribe(eventName string, fn func(...interface{})) (Subscriber, error) {
 	if len(eventName) == 0 {
 		return nil, errors.New("event name is empty")
@@ -82,7 +82,7 @@ func (p *Center) Subscribe(eventName string, fn func(...interface{})) (Subscribe
 	return group.Subscriber(fn)
 }
 
-// Unsubscribe 取消监听
+// Unsubscribe unsubscribes from events.
 func (p *Center) Unsubscribe(eventName string, ids ...string) error {
 	if len(eventName) == 0 {
 		return errors.New("event name is empty")
@@ -97,7 +97,7 @@ func (p *Center) Unsubscribe(eventName string, ids ...string) error {
 	return group.RemoveSubscriber(ids...)
 }
 
-// UnsubscribeAll 取消全部监听
+// UnsubscribeAll unsubscribes all subscribers from an event.
 func (p *Center) UnsubscribeAll(eventName string) {
 	p.locker.Lock()
 	defer p.locker.Unlock()
@@ -108,7 +108,7 @@ func (p *Center) UnsubscribeAll(eventName string) {
 	group.ClearSubscribers()
 }
 
-// Publish 分发
+// Publish publishes events to subscribers.
 func (p *Center) Publish(eventName string, evts ...interface{}) {
 	if len(eventName) == 0 {
 		return
@@ -124,7 +124,7 @@ func (p *Center) Publish(eventName string, evts ...interface{}) {
 	group.Publish(evts...)
 }
 
-// ListEvents 全部事件
+// ListEvents lists all events.
 func (p *Center) ListEvents() (events []string) {
 	p.locker.RLock()
 	defer p.locker.RUnlock()

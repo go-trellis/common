@@ -22,7 +22,7 @@ import (
 	"os"
 )
 
-// FileMode
+// FileMode defines the file mode for reading and writing.
 const (
 	FileModeReadOnly  os.FileMode = 0444
 	FileModeReadWrite os.FileMode = 0666
@@ -31,6 +31,7 @@ const (
 	FileFlagReadWrite = os.O_RDWR | os.O_APPEND | os.O_CREATE
 )
 
+// Read reads the entire contents of a file into memory.
 func Read(name string, opts ...Option) (b []byte, n int64, err error) {
 	fi, err := OpenReadFile(name)
 	if err != nil {
@@ -63,14 +64,17 @@ func Read(name string, opts ...Option) (b []byte, n int64, err error) {
 	return
 }
 
+// OpenReadFile opens a file for reading.
 func OpenReadFile(name string) (*os.File, error) {
 	return OpenFile(name, FileFlagReadOnly, FileModeReadOnly)
 }
 
+// OpenWriteFile opens a file for writing.
 func OpenWriteFile(name string) (*os.File, error) {
 	return OpenFile(name, FileFlagReadWrite, FileModeReadWrite)
 }
 
+// OpenFile opens a file with the specified flags and mode.
 func OpenFile(name string, flag int, fileMode os.FileMode) (*os.File, error) {
 	return os.OpenFile(name, flag, fileMode)
 }

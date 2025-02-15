@@ -28,7 +28,7 @@ var _ Times = (*Now)(nil)
 	More Time functions
 */
 
-// Times 时间处理函数
+// Times executes the function with a specific time.
 type Times interface {
 	Now() time.Time
 	Monday() time.Time
@@ -54,31 +54,31 @@ type Times interface {
 	SetTime(t time.Time) Times
 }
 
-// NowOption 执行函数
+// NowOption options for Now function.
 type NowOption func(*Now)
 
-// NowTime 获取当前时间
+// NowTime gets current time with options.
 func NowTime(t *time.Time) NowOption {
 	return func(n *Now) {
 		n.Time = t
 	}
 }
 
-// NowWeekStartDay 设置一周开始时间
+// NowWeekStartDay sets the start day of week for Now function.
 func NowWeekStartDay(d time.Weekday) NowOption {
 	return func(n *Now) {
 		n.Config.WeekStartDay = d
 	}
 }
 
-// NowLocation 设置时间Location
+// NowLocation sets the location for Now function.
 func NowLocation(loc *time.Location) NowOption {
 	return func(n *Now) {
 		n.Config.Location = loc
 	}
 }
 
-// NowConfig 设置时间的配置
+// NowConfig sets the configuration for Now function.
 func NowConfig(cfg Config) NowOption {
 	return func(n *Now) {
 		n.Config = cfg
@@ -103,8 +103,7 @@ func initConfig() Config {
 	}
 }
 
-// GetNow initialise by input time
-// 初始化当前时间
+// GetNow initialises a new Now instance with the provided options. If no options are provided, it uses the default configuration and current time.
 func GetNow(opts ...NowOption) Times {
 	n := &Now{
 		Config: initConfig(),
@@ -122,94 +121,94 @@ func GetNow(opts ...NowOption) Times {
 	return n
 }
 
-// BeginOfDuration 以当前的时间作为起始时间，抹掉一部分时间
+// BeginOfDuration begins the duration from now.
 func BeginOfDuration(d time.Duration) time.Time {
 	return GetNow().BeginOfDuration(d)
 }
 
-// ParseLayoutTime 解析时间
+// ParseLayoutTime parses a time string according to the given layout.
 func ParseLayoutTime(layout, timestring string) (time.Time, error) {
 	return GetNow().ParseLayoutTime(layout, timestring)
 }
 
-// ParseInLocation 解析时间
+// ParseInLocation parses a time string in the given location according to the given layout.
 func ParseInLocation(layout, timestring string, loc *time.Location) (time.Time, error) {
 	return GetNow().ParseInLocation(layout, timestring, loc)
 }
 
-// BeginOfHour 当前小时的起始时间
+// BeginOfHour begins the hour from now.
 func BeginOfHour() time.Time {
 	return GetNow().BeginOfHour()
 }
 
-// EndOfDay 当前小时的结束时间
+// EndOfDay ends the day from now.
 func EndOfHour() time.Time {
 	return GetNow().EndOfHour()
 }
 
-// BeginOfDay 当前日期的起始时间
+// BeginOfDay begins the day from now.
 func BeginOfDay() time.Time {
 	return GetNow().BeginOfDay()
 }
 
-// EndOfDay 当前日期的终止时间
+// EndOfDay ends the day from now.
 func EndOfDay() time.Time {
 	return GetNow().EndOfDay()
 }
 
-// BeginOfWeek 当前日期的起始时间
+// BeginOfWeek begins the week from now.
 func BeginOfWeek() time.Time {
 	return GetNow().BeginOfWeek()
 }
 
-// EndOfWeek 当前日期的终止时间
+// EndOfWeek ends the week from now.
 func EndOfWeek() time.Time {
 	return GetNow().EndOfWeek()
 }
 
-// BeginOfMonth 当前月的起始时间
+// BeginOfMonth begins the month from now.
 func BeginOfMonth() time.Time {
 	return GetNow().BeginOfMonth()
 }
 
-// EndOfMonth 当前月的终止时间
+// EndOfMonth ends the month from now.
 func EndOfMonth() time.Time {
 	return GetNow().EndOfMonth()
 }
 
-// BeginOfYear 当前年的起始时间
+// BeginOfYear begins the year from now.
 func BeginOfYear() time.Time {
 	return GetNow().BeginOfYear()
 }
 
-// EndOfYear 当前年的终止时间
+// EndOfYear ends the year from now.
 func EndOfYear() time.Time {
 	return GetNow().EndOfYear()
 }
 
-// WithLocation 返回带自定义Location的时间
+// WithLocation gets the current time with a specific location.
 func WithLocation(loc *time.Location) Times {
 	return GetNow(NowLocation(loc))
 }
 
 ///// Times functions /////
 
-// BeginOfDuration 获取当前时间，并抹掉一部分时间
+// BeginOfDuration begins the duration from now.
 func (p *Now) BeginOfDuration(d time.Duration) time.Time {
 	return p.Time.Truncate(d)
 }
 
-// WithLocation 设置时区
+// WithLocation sets the location for the current time.
 func (p *Now) WithLocation(loc *time.Location) {
 	p.Config.Location = loc
 }
 
-// Now 当前时间
+// Now returns the current time.
 func (p *Now) Now() time.Time {
 	return *p.Time
 }
 
-// ParseLayoutTime 解析时间
+// ParseLayoutTime parses a time string according to the given layout.
 func (p *Now) ParseLayoutTime(layout, s string) (time.Time, error) {
 	if p.Config.Location == nil {
 		return p.ParseInLocation(layout, s, p.Time.Location())
@@ -217,12 +216,12 @@ func (p *Now) ParseLayoutTime(layout, s string) (time.Time, error) {
 	return p.ParseInLocation(layout, s, p.Config.Location)
 }
 
-// ParseInLocation 解析时间
+// ParseInLocation parses a time string in the given location.
 func (*Now) ParseInLocation(layout, timestring string, loc *time.Location) (time.Time, error) {
 	return time.ParseInLocation(layout, timestring, loc)
 }
 
-// Monday get monday
+// Monday gets monday.
 func (p *Now) Monday() time.Time {
 	t := p.BeginOfDay()
 	weekday := int(t.Weekday())
@@ -232,7 +231,7 @@ func (p *Now) Monday() time.Time {
 	return t.AddDate(0, 0, -weekday+1)
 }
 
-// Sunday get sunday
+// Sunday gets sunday.
 func (p *Now) Sunday() time.Time {
 	t := p.BeginOfDay()
 	weekday := int(t.Weekday())
@@ -242,7 +241,7 @@ func (p *Now) Sunday() time.Time {
 	return t.AddDate(0, 0, 7-weekday)
 }
 
-// BeginOfHour begin of hour
+// BeginOfHour begin of hour.
 func (p *Now) BeginOfHour() time.Time {
 	y, m, d := p.Date()
 	return time.Date(y, m, d, p.Time.Hour(), 0, 0, 0, p.Time.Location())

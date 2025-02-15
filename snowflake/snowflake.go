@@ -177,7 +177,7 @@ func NodesBits(nodesBits uint8) Option {
 	}
 }
 
-// NewWorker 生产工作对象
+// NewWorker creates a new worker with the given options.
 func NewWorker(opts ...Option) (*Worker, error) {
 
 	c := &Config{
@@ -218,23 +218,21 @@ func NewWorker(opts ...Option) (*Worker, error) {
 	return w, nil
 }
 
-// Next 获取下一个ID值
-// 统一时刻只能被调用一次
+// Next get the next id
 func (p *Worker) Next() ID {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	return p.next(false)
 }
 
-// NextSleep 获取下一个ID值
-// 时间戳一样，则沉睡1个单位时间
-// 统一时刻只能被调用一次
+// NextSleep get the next id and sleep
 func (p *Worker) NextSleep() ID {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	return p.next(true)
 }
 
+// next generate the next id based on the current time and sequence number. If sleep is true, it will sleep for a short duration if the timestamp is not incremented.
 func (p *Worker) next(sleep bool) ID {
 	timestamp := p.timeGen()
 
@@ -258,17 +256,9 @@ func (p *Worker) next(sleep bool) ID {
 	return ID((timestamp << p.timeShift) | p.nodeIDMask | p.sequence)
 }
 
-// GetEpochTime 获取开始时间
+// GetEpochTime get the epoch time in nanoseconds.
 func (p *Worker) GetEpochTime() int64 {
 	return p.epoch.UnixNano()
-}
-
-func (p *Worker) tilNextTimestamp() int64 {
-	timestamp := p.timeGen()
-	for timestamp <= p.lastTimestamp {
-		timestamp = p.timeGen()
-	}
-	return timestamp
 }
 
 func (p *Worker) timeGen() int64 {

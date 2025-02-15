@@ -19,7 +19,7 @@ package logger
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -156,7 +156,7 @@ func (p *fileLogger) removeOldFiles() error {
 	}
 
 	// 获取日志文件列表
-	dirLis, err := ioutil.ReadDir(p.options.FileDir)
+	dirLis, err := os.ReadDir(p.options.FileDir)
 	if err != nil {
 		return err
 	}
@@ -186,17 +186,20 @@ func (p *fileLogger) removeOldFiles() error {
 	return nil
 }
 
-// FileSort 文件排序
-type FileSort []os.FileInfo
+// FileSort implements sort.Interface for sorting os.DirEntry by name.
+type FileSort []fs.DirEntry
 
+// Len implements sort.Interface
 func (fs FileSort) Len() int {
 	return len(fs)
 }
 
+// Less implements sort.Interface
 func (fs FileSort) Less(i, j int) bool {
 	return fs[i].Name() > fs[j].Name()
 }
 
+// Swap implements sort.Interface
 func (fs FileSort) Swap(i, j int) {
 	fs[i], fs[j] = fs[j], fs[i]
 }

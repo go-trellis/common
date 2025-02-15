@@ -24,15 +24,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// SubscriberModel 消费者模式
+// SubscriberModel the subscriber model
 const (
-	// SubscriberModelNormal 普通模式
+	// SubscriberModelNormal conventional mode
 	SubscriberModelNormal = iota
-	// SubscriberModelGoroutine 并发模式
+	// SubscriberModelGoroutine concurrent mode
 	SubscriberModelGoroutine
 )
 
-// SubscriberGroup 消费者组
+// SubscriberGroup the subscriber group interface
 type SubscriberGroup interface {
 	Subscriber(interface{}) (Subscriber, error)
 	RemoveSubscriber(ids ...string) error
@@ -46,17 +46,17 @@ type defSubscriberGroup struct {
 	model       int
 }
 
-// GroupOption 操作配置函数
+// GroupOption the subscriber group option function type
 type GroupOption func(*defSubscriberGroup)
 
-// GroupSubscriberModel 组的分享类型
+// GroupSubscriberModel set the subscriber group model
 func GroupSubscriberModel(model int) GroupOption {
 	return func(g *defSubscriberGroup) {
 		g.model = model
 	}
 }
 
-// NewSubscriberGroup xxx
+// NewSubscriberGroup new a subscriber group instance with options.
 func NewSubscriberGroup(opts ...GroupOption) SubscriberGroup {
 	g := &defSubscriberGroup{
 		locker:      &sync.RWMutex{},
@@ -69,7 +69,7 @@ func NewSubscriberGroup(opts ...GroupOption) SubscriberGroup {
 	return g
 }
 
-// Subscriber 注册消费者
+// Subscriber the subscriber interface
 func (p *defSubscriberGroup) Subscriber(sub interface{}) (Subscriber, error) {
 	subscriber, err := NewDefSubscriber(sub)
 	if err != nil {
@@ -82,19 +82,19 @@ func (p *defSubscriberGroup) Subscriber(sub interface{}) (Subscriber, error) {
 	return subscriber, nil
 }
 
-// GenSubscriberID 生成消费者ID
+// GenSubscriberID generate a subscriber id.
 func GenSubscriberID() string {
 	return uuid.NewString()
 }
 
-// RemoveSubscriber xxx
+// RemoveSubscriber remove a subscriber by id.
 func (p *defSubscriberGroup) RemoveSubscriber(ids ...string) error {
-	if 0 == len(ids) {
+	if len(ids) == 0 {
 		return errors.New("empty input sub ids")
 	}
 
 	for _, v := range ids {
-		if 0 == len(v) {
+		if len(v) == 0 {
 			return errors.New("empty sub id")
 		}
 		p.locker.RLock()
@@ -112,7 +112,7 @@ func (p *defSubscriberGroup) RemoveSubscriber(ids ...string) error {
 	return nil
 }
 
-// Publish 发布消息
+// Publish messages to all subscribers.
 func (p *defSubscriberGroup) Publish(values ...interface{}) error {
 	var subscribers []Subscriber
 	p.locker.RLock()
@@ -135,7 +135,7 @@ func (p *defSubscriberGroup) Publish(values ...interface{}) error {
 	return nil
 }
 
-// ClearSubscribers 全部清理
+// ClearSubscribers removes all subscribers and stops them.
 func (p *defSubscriberGroup) ClearSubscribers() {
 	p.locker.Lock()
 	defer p.locker.Unlock()

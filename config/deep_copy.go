@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package config
 
-// DeepCopy 深度拷贝
+// DeepCopy deep copies a value. It supports copying of maps and Options.
 func DeepCopy(value interface{}) interface{} {
 	switch valueType := value.(type) {
 	case map[string]interface{}:

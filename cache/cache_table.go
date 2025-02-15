@@ -51,7 +51,7 @@ type TableCache interface {
 	SetExpire(key interface{}, expire time.Duration) bool
 }
 
-// OptionFunc 参数处理函数
+// OptionFunc configure cache options.
 type OptionFunc func(*Options)
 
 // Options configure

@@ -30,7 +30,7 @@ const (
 	namespace = "E"
 )
 
-// ErrorCode Error functions
+// ErrorCode represents an error with a unique code and context.
 type ErrorCode interface {
 	SimpleError
 	Code() uint64

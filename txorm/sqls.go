@@ -24,47 +24,60 @@ import (
 	"xorm.io/xorm"
 )
 
-/// Get Execute
-
-func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (bool, error) {
+// Get retrieves a single record from the database.
+func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (ok bool, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
 	}
 
-	return getOptions.Session(session).Get(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "get", func() {
+		ok, err = getOptions.Session(session).Get(bean)
+	})
+	return
 }
 
-func Find(session *xorm.Session, bean interface{}, opts ...GetOption) error {
+// Find retrieves multiple records from the database.
+func Find(session *xorm.Session, bean interface{}, opts ...GetOption) (err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
 	}
 
-	return getOptions.Session(session).Find(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "find", func() {
+		err = getOptions.Session(session).Find(bean)
+	})
+	return
 }
 
-func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+// FindAndCount retrieves multiple records from the database and counts them.
+func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (c int64, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
 	}
 
-	return getOptions.Session(session).FindAndCount(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "find_and_count", func() {
+		c, err = getOptions.Session(session).FindAndCount(bean)
+	})
+	return
 }
 
-func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+// Count counts the number of records in the database.
+func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (c int64, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
 	}
 
-	return getOptions.Session(session).Count(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "count", func() {
+		c, err = getOptions.Session(session).Count(bean)
+	})
+	return
 }
 
-// Update Execute
-
-func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int64, error) {
+// Update updates records in the database.
+func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (c int64, err error) {
 	updateOptions := &UpdateOptions{}
 	for _, opt := range opts {
 		opt(updateOptions)
@@ -89,11 +102,13 @@ func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int6
 		session = session.AllCols()
 	}
 
-	return session.Update(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "update", func() {
+		c, err = session.Update(bean)
+	})
+	return
 }
 
-/// InsertMulti Execute
-
+// InsertMultiOptions defines options for inserting multiple records.
 type InsertMultiOption func(*InsertMultiOptions)
 type InsertMultiOptions struct {
 	StepNumber  int
@@ -115,46 +130,57 @@ func InsertMultiCheckNumber(check ...bool) InsertMultiOption {
 	}
 }
 
-func Insert(session *xorm.Session, beans ...interface{}) (int64, error) {
-	return session.Insert(beans...)
+// Insert insert data
+func Insert(session *xorm.Session, beans ...interface{}) (c int64, err error) {
+	instrumentQuery(reflect.TypeOf(beans).Name(), "insert", func() {
+		c, err = session.Insert(beans...)
+	})
+	return
 }
 
-// InsertMulti insert multi seperated slice data in a big slice with every step number
-// default to insert the slice with no seperated.
-func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (int64, error) {
+// InsertMulti insert data in batches with step number and check number
+func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (c int64, err error) {
 	// 初始化选项
 	options := &InsertMultiOptions{}
 	for _, opt := range opts {
 		opt(options)
 	}
+	instrumentQuery(reflect.TypeOf(ones).Name(), "insert_multi", func() {
+		c, err = insertMulti(session, ones, options)
+	})
+	return
+}
 
-	// 如果步长小于等于0，直接插入
+// insertMulti is the internal implementation of InsertMulti
+func insertMulti(session *xorm.Session, ones interface{}, options *InsertMultiOptions) (int64, error) {
+
+	// Extract the step number from the options if provided, otherwise use 1
 	if options.StepNumber <= 0 {
 		return session.InsertMulti(ones)
 	}
 
-	// 获取ones的反射值
+	// get the length of the slice or array
 	sliceOnes := reflect.Indirect(reflect.ValueOf(ones))
 	kind := sliceOnes.Kind()
 
-	// 处理slice或array类型
+	// handle different types of slices or arrays
 	if kind == reflect.Slice || kind == reflect.Array {
 		onesLen := sliceOnes.Len()
 		if onesLen == 0 {
 			return 0, nil
 		}
 
-		// 如果第一个元素是接口类型，禁用自动时间
+		// if the first element is an interface, disable auto-time
 		if sliceOnes.Index(0).Kind() == reflect.Interface {
 			session = session.NoAutoTime()
 		}
 
-		// 如果长度小于等于步长，直接插入
+		// if the length of the slice or array is less than or equal to the step number, insert all at once
 		if onesLen <= options.StepNumber {
 			return session.InsertMulti(ones)
 		}
 
-		// 分批插入
+		// divide the slice or array into multiple batches and insert each batch separately
 		var count int
 		for i := 0; i < onesLen; i += options.StepNumber {
 			end := i + options.StepNumber
@@ -162,13 +188,13 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 				end = onesLen
 			}
 
-			// 构建当前批次的插入数据
+			// rebuild the slice or array for the current batch
 			var multi []interface{}
 			for j := i; j < end; j++ {
 				multi = append(multi, sliceOnes.Index(j).Interface())
 			}
 
-			// 插入当前批次数据
+			// insert the current batch separately
 			session = session.NoAutoTime()
 			n, err := session.InsertMulti(multi)
 			if err != nil {
@@ -177,20 +203,18 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 			count += int(n)
 		}
 
-		// 检查插入数量是否一致
+		// check if the number of inserted rows matches the expected number
 		if options.CheckNumber && count != onesLen {
 			return 0, fmt.Errorf("insert number not %d, but %d", onesLen, count)
 		}
 		return int64(count), nil
 	}
 
-	// 默认处理
 	return session.InsertMulti(ones)
 }
 
-/// Delete Execute
-
-func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (int64, error) {
+// Delete deletes the specified bean from the database. It supports various options such as WHERE conditions and batch size. The function returns the number of rows deleted and an error if any occurred.
+func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (c int64, err error) {
 	deleteOptions := &DeleteOptions{}
 	for _, opt := range opts {
 		opt(deleteOptions)
@@ -210,5 +234,8 @@ func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (int6
 		session = session.Where(deleteOptions.Wheres, deleteOptions.Args...)
 	}
 
-	return session.Delete(bean)
+	instrumentQuery(reflect.TypeOf(bean).Name(), "delete", func() {
+		c, err = session.Delete(bean)
+	})
+	return
 }

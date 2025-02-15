@@ -17,6 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package transaction
 
+// Transaction interface for transaction management. It provides methods to commit transactions and manage sessions.
 type Transaction interface {
 	Session() interface{}
 	IsTransaction() bool
@@ -28,12 +29,12 @@ type Repo interface {
 	SetSession(interface{}) error
 }
 
-// Derivative derive function
+// Derivative interface for derivation
 type Derivative interface {
 	Derive() (repo interface{}, err error)
 }
 
-// Derive derive from developer function
+// Derive function to derive a new repository from an origin repository. If the origin repository implements the Derivative interface, it will be called to derive a new repository. Otherwise, it will return nil and no error.
 func Derive(origin interface{}) (interface{}, error) {
 	if d, ok := origin.(Derivative); ok {
 		return d.Derive()
@@ -41,12 +42,12 @@ func Derive(origin interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-// Inheritor inherit function
+// Inheritor interface for inheritance
 type Inheritor interface {
 	Inherit(repo interface{}) error
 }
 
-// Inherit new repository from origin repository
+// Inherit function to inherit a repository from an origin repository. If the new repository implements the Inheritor interface, it will be called to inherit the origin repository. Otherwise, it will return nil and no error.
 func Inherit(new, origin interface{}) error {
 	if inheritor, ok := new.(Inheritor); ok {
 		return inheritor.Inherit(origin)

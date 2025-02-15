@@ -33,7 +33,7 @@ type LogicFunc struct {
 	AfterCommit interface{}
 }
 
-// TXFunc Transaction function
+// TXFunc transaction function type
 type TXFunc func(repos ...interface{}) error
 
 // Function Flags
@@ -45,17 +45,17 @@ const (
 	AfterCommit
 )
 
-// MapErrorTypes 可以支持的返回的错误类型
+// MapErrorTypes supported error types
 var mapErrorTypes = map[reflect.Type]bool{
-	// 普通错误类型
+	// common error
 	reflect.TypeOf((*error)(nil)).Elem(): true,
-	// common error错误类型
+	// extended errors
 	reflect.TypeOf((*errcode.ErrorCode)(nil)).Elem():   true,
 	reflect.TypeOf((*errcode.SimpleError)(nil)).Elem(): true,
 	reflect.TypeOf((*errcode.Errors)(nil)).Elem():      true,
 }
 
-// AddErrorTypes 增加支持的错误类型
+// AddErrorTypes add new error types to supported list.
 func AddErrorTypes(errType reflect.Type) {
 	mapErrorTypes[errType] = true
 }
@@ -80,7 +80,7 @@ func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
 	}
 }
 
-// GetLogicFunc reflect logic function
+// GetLogicFunc get logic function from input interface{}
 func GetLogicFunc(input interface{}) *LogicFunc {
 	if input == nil {
 		return nil
@@ -123,8 +123,8 @@ func call(fn interface{}, args ...interface{}) ([]interface{}, error) {
 	if typ.Kind() != reflect.Func {
 		return nil, fmt.Errorf("non-function of type %s", typ)
 	}
-	if !goodFunc(typ) {
-		return nil, fmt.Errorf("the last return value should be an error type")
+	if err := goodFunc(typ); err != nil {
+		return nil, err
 	}
 	numIn := typ.NumIn()
 	var dddType reflect.Type
@@ -178,19 +178,21 @@ func call(fn interface{}, args ...interface{}) ([]interface{}, error) {
 	return nil, nil
 }
 
-func goodFunc(typ reflect.Type) bool {
+// goodFunc checks if the function has a single return value or multiple return values where the last one is an error.
+func goodFunc(typ reflect.Type) error {
 	if typ.NumOut() == 0 ||
 		(typ.NumOut() > 0 && mapErrorTypes[typ.Out(typ.NumOut()-1)]) {
-		return true
+		return nil
 	}
 
-	return false
+	return errcode.New("function must have a single return value or multiple return values where the last one is an error")
 }
 
+// prepareArg prepares the argument for the function call. It ensures that the argument is valid and assignable to the expected type.
 func prepareArg(value reflect.Value, argType reflect.Type) (reflect.Value, error) {
 	if !value.IsValid() {
-		if !canBeNil(argType) {
-			return reflect.Value{}, fmt.Errorf("value is nil; should be of type %s", argType)
+		if err := canBeNil(argType); err != nil {
+			return reflect.Value{}, err
 		}
 		value = reflect.Zero(argType)
 	}
@@ -200,10 +202,11 @@ func prepareArg(value reflect.Value, argType reflect.Type) (reflect.Value, error
 	return value, nil
 }
 
-func canBeNil(typ reflect.Type) bool {
+// canBeNil checks if the value can be nil.
+func canBeNil(typ reflect.Type) error {
 	switch typ.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-		return true
+		return nil
 	}
-	return false
+	return fmt.Errorf("value is nil; should be of type %s", typ.String())
 }

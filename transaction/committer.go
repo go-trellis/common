@@ -23,12 +23,12 @@ import (
 	"trellis.tech/trellis/common.v3"
 )
 
-// DefaultDatabase default database key
 var (
+	// DefaultDatabase is the default database name for xorm_ext.
 	DefaultDatabase = common.FormatNamespaceString("xorm_ext:database")
 )
 
-// Committer 事务处理者
+// Committer interface for committing transactions. It provides methods to perform transactions and non-transactional operations on repositories.
 type Committer interface {
 	TX(fn interface{}, repos ...Repo) error
 	TXWithName(fn interface{}, name string, repos ...Repo) error
@@ -36,6 +36,7 @@ type Committer interface {
 	NonTXWithName(fn interface{}, name string, repos ...Repo) error
 }
 
+// NewCommitter create a new Committer instance
 func NewCommitter(engines map[string]Engine) Committer {
 	return &committer{
 		engines: engines,

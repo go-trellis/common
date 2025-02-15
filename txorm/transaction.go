@@ -30,31 +30,32 @@ type trans struct {
 	session *xorm.Session
 }
 
-// Session 返回一个会话对象。如果当前是事务状态且会话为空，则创建一个新的会话。
+// Session returns the current session. If there is no active session, a new one will be created.
 func (p *trans) Session() interface{} {
-	// 如果当前是事务状态
+	// check if the session is already created and active
 	if p.isTrans {
-		// 如果会话为空，则创建一个新的会话
+		// session already exists and active, return it directly
 		if p.session == nil {
 			p.session = p.engine.NewSession()
 		}
-		// 返回当前会话
+		// return the existing session
 		return p.session
 	}
-	// 如果不是事务状态，直接创建并返回一个新的会话
+	// if there is no active session, create a new one and return it
 	return p.engine.NewSession()
 }
 
+// IsTransaction returns true if there is an active transaction.
 func (p *trans) IsTransaction() bool {
 	return p.isTrans
 }
 
+// Commit executes the logic function and commits the transaction. If there is an error during the execution of the logic function, the transaction will be rolled back. Otherwise, the transaction will be committed.
 func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
-	// 获取逻辑函数
+	// get the logic function
 	fn := transaction.GetLogicFunc(fun)
 	if fn == nil || fn.Logic == nil {
-		// 返回错误
-		return nil
+		return errcode.New("logic function is not found")
 	}
 
 	var (
@@ -63,7 +64,6 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 		err       error
 	)
 
-	// 判断是否是事务
 	if p.IsTransaction() {
 		defer p.session.Close()
 
@@ -77,7 +77,6 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 			}
 		}()
 
-		// 设置事务会话
 		for _, repo := range repos {
 			if err = setTransactionRepoSession(repo, p.session); err != nil {
 				return err
@@ -85,7 +84,6 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 			_newRepos = append(_newRepos, repo)
 		}
 	} else {
-		// 设置非事务会话
 		for _, repo := range repos {
 			session := p.engine.NewSession()
 			if err = setTransactionRepoSession(repo, session); err != nil {
@@ -101,29 +99,29 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 		}
 	}()
 
-	// 执行逻辑前的操作
+	// execute before logic
 	if _, err = transaction.CallFunc(fn.BeforeLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 执行逻辑操作
+	// execute logic
 	if _values, err = transaction.CallFunc(fn.Logic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 执行逻辑后的操作
+	// execute after logic
 	if _, err = transaction.CallFunc(fn.AfterLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 提交事务
+	// commit transaction
 	if p.isTrans {
 		if err = p.session.Commit(); err != nil {
 			return err
 		}
 	}
 
-	// 提交后的操作
+	// call after commit logic
 	if _, err = transaction.CallFunc(fn.AfterCommit, _values); err != nil {
 		return err
 	}
@@ -131,7 +129,7 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 	return nil
 }
 
-// 设置事务仓库会话
+// setTransactionRepoSession sets the session for a transaction repo. It returns an error if the repository does not implement the transaction.Repo interface.
 func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
 	tRepo, ok := repo.(transaction.Repo)
 	if !ok {

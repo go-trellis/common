@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"sync"
 
-	"trellis.tech/trellis/common.v2/config"
-	"trellis.tech/trellis/common.v2/errcode"
-	"trellis.tech/trellis/common.v2/logger"
-	"trellis.tech/trellis/common.v2/transaction"
+	"trellis.tech/trellis/common.v3/config"
+	"trellis.tech/trellis/common.v3/errcode"
+	"trellis.tech/trellis/common.v3/logger"
+	"trellis.tech/trellis/common.v3/transaction"
 
 	"xorm.io/xorm"
 	"xorm.io/xorm/core"

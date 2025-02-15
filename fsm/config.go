@@ -18,33 +18,58 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package fsm
 
 import (
-	"trellis.tech/trellis/common.v2/config"
+	"sync"
+
+	"trellis.tech/trellis/common.v3/config"
 )
 
-// NewTransactionFromConfig new transactions from config file
-func NewTransactionFromConfig(filepath string) error {
-	cfg, err := config.NewConfigOptions(config.OptionFile(filepath))
-	if err != nil {
-		return err
-	}
-	return NewTransactions(cfg)
+type Config struct {
+	// map[namespace]map[name]*Transition
+	Namespaces map[string]*Namespace `json:"fsm" yaml:"fsm"`
 }
 
-// NewTransactions new transactions
-func NewTransactions(cfg config.Config) (err error) {
-	f := New()
-	fsmConfig := cfg.GetValuesConfig("fsm")
-	for _, namespace := range fsmConfig.GetKeys() {
-		nsConfig := fsmConfig.GetValuesConfig(namespace)
-		for _, key := range nsConfig.GetKeys() {
-			obj := nsConfig.GetValuesConfig(key)
-			f.Add(&Transaction{
-				Namespace:     namespace,
-				CurrentStatus: obj.GetString("current"),
-				Event:         obj.GetString("event"),
-				TargetStatus:  obj.GetString("target"),
-			})
+type Namespace struct {
+	Name        string        `json:"-" yaml:"-"`
+	InitStatus  string        `json:"init_status" yaml:"init_status"`
+	Transitions []*Transition `json:"transitions" yaml:"transitions"`
+}
+
+// NewFSMRepoFromConfigFile new Transitions from config file
+func NewFSMRepoFromConfigFile(filepath string) (Repo, error) {
+	cfg, err := config.NewConfigOptions(config.OptionFile(filepath))
+	if err != nil {
+		return nil, err
+	}
+	return NewRepo(cfg.GetConfig("fsm"))
+}
+
+// NewRepo new Transitions
+func NewRepo(cfg config.Config) (Repo, error) {
+	config := &Config{}
+	if err := cfg.Object(config); err != nil {
+		return nil, err
+	}
+	return newFSMFromConfig(config)
+}
+
+// newFSMFromConfig new FSM from config
+func newFSMFromConfig(cfg *Config) (*FSM, error) {
+	fsm := &FSM{transitions: make(map[string]*NamespaceTransitions), mu: &sync.RWMutex{}}
+	for name, namespace := range cfg.Namespaces {
+		if err := fsm.AddNamespace(name); err != nil {
+			return nil, err
+		}
+		for _, transition := range namespace.Transitions {
+			transition.Namespace = name
+			if err := fsm.addTransition(transition); err != nil {
+				return nil, err
+			}
+		}
+		// set initial status for each namespace
+		if err := fsm.SetCurrentStatus(name, namespace.InitStatus); err != nil {
+			return nil, err
 		}
 	}
-	return
+
+	return fsm, nil
 }

@@ -9,7 +9,7 @@ Finite-state machine in go
 ## Installation
 
 ```go
-go get -u trellis.tech/trellis/common.v2/fsm
+go get -u trellis.tech/trellis/common.v3/fsm
 ```
 
 ## Usage
@@ -17,39 +17,45 @@ go get -u trellis.tech/trellis/common.v2/fsm
 ### fsm repo
 
 ```go
-// FSMRepo the functions of fsm interface
-type FSMRepo interface {
-	// add a transction into cache
-	Add(*Transaction)
-	// remove all transactions
+// Repo is the interface for managing namespace's transitions in cache
+type Repo interface {
+	// AddTransition add a transition into cache
+	AddTransition(*Transition) error
+	// RemoveTransition remove a transaction by information
+	RemoveTransition(*Transition) error
+	// ChangeCurrentStatus change namespace's current status by namespace and event
+	ChangeCurrentStatus(namespace string, event string) (string, error)
+	// GetTargetTransition get target transition by current information
+	GetTargetTransition(namespace, curStatus, event string) (*Transition, error)
+	// Remove remove all namespaces from cache
 	Remove()
-	// remove namespace's transactions
+	// AddNamespace add a namespace into cache
+	AddNamespace(namespace string) error
+	// RemoveNamespace remove namespace's Transitions
 	RemoveNamespace(namespace string)
-	// remove a transaction by information
-	RemoveByTransaction(*Transaction)
-	// get target transaction by current information
-	GetTargetTranstion(namespace, curStatus, event string) *Transaction
+}
+
+// TransitionRepo is the interface for managing transitions in cache
+type TransitionRepo interface {
+	// Add a transaction into cache
+	AddTransaction(trans *Transition) error
+	// RemoveNamespace remove namespace's Transitions
+	RemoveTransition(status, event string) error
+	// RemoveByTransaction remove a transaction by information
+	ChangeStatus(event string) (string, error)
+	// GetTargetTransition get target transition by current information
+	GetTargetTransition(status, event string) (*Transition, error)
+	// SetCurrentStatus set current status
+	SetCurrentStatus(status string) error
+	// GetCurrentStatus get current status
+	GetCurrentStatus() string
 }
 ```
 
 ### new and input a namespace's transaction
 
-```go
-	f := fsm.New()
+* [main.go](example/main.go)
 
-	f.Add(&fsm.Transaction{
-			Namespace:     "namespace",
-			CurrentStatus: "status1",
-			Event:         "event1",
-			TargetStatus:  "status2",
-		})
-	fmt.Println(f.GetTargetTranstion("namespace", "status1", "event1"))
+### Sample Config
 
-	f.Remove()
-
-	fmt.Println(f.GetTargetTranstion("namespace", "status1", "event1"))
-```
-
-## Config
-
-* [sample.yaml](sample.yaml)
+* [sample.yaml](example/sample.yaml)

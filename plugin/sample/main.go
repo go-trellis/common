@@ -22,9 +22,9 @@ import (
 	"time"
 
 	"github.com/robfig/cron/v3"
-	"trellis.tech/trellis/common.v2/logger"
-	"trellis.tech/trellis/common.v2/plugin"
-	"trellis.tech/trellis/common.v2/types"
+	"trellis.tech/trellis/common.v3/logger"
+	"trellis.tech/trellis/common.v3/plugin"
+	"trellis.tech/trellis/common.v3/types"
 )
 
 type T struct{}

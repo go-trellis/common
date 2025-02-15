@@ -23,10 +23,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
-	"trellis.tech/trellis/common.v2/errcode"
-	"trellis.tech/trellis/common.v2/logger"
-	"trellis.tech/trellis/common.v2/shell"
-	"trellis.tech/trellis/common.v2/types"
+	"trellis.tech/trellis/common.v3/errcode"
+	"trellis.tech/trellis/common.v3/logger"
+	"trellis.tech/trellis/common.v3/shell"
+	"trellis.tech/trellis/common.v3/types"
 )
 
 var (

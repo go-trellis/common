@@ -1,6 +1,6 @@
-## 
+##
 ## Copyright © 2016 Henry Huang <hhh@rutcode.com>
-## 
+##
 ## This program is free software: you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
 ## the Free Software Foundation, either version 3 of the License, or
@@ -15,17 +15,21 @@
 ## along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 fsm:
-    namespace3:
-        trans1:
-            current: status1
-            event: event1
-            target: target1
-        trans2:
-            current: status1
-            event: event2
-            target: target2
-    namespace4:
-        trans3:
-            current: status1
-            event: event1
-            target: target1
+    namespace1:
+        init_status: status1
+        transitions:
+            - current: status1
+              event: event1
+              target: status11
+              description: "trans1 description"
+            - current: status1
+              event: event2
+              target: status21
+              description: "trans2 description"
+    namespace2:
+        init_status: status41
+        transitions:
+            - current: status41
+              event: event41
+              target: status42
+              description: "status41 description"

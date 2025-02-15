@@ -22,8 +22,8 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v2"
-	"trellis.tech/trellis/common.v2/json"
+	"trellis.tech/trellis/common.v3"
+	"trellis.tech/trellis/common.v3/json"
 )
 
 const (

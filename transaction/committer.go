@@ -20,7 +20,7 @@ package transaction
 import (
 	"reflect"
 
-	"trellis.tech/trellis/common.v2"
+	"trellis.tech/trellis/common.v3"
 )
 
 // DefaultDatabase default database key

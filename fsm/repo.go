@@ -17,16 +17,40 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package fsm
 
-// Repo the functions of fsm interface
+// Repo is the interface for managing namespace's transitions in cache
 type Repo interface {
-	// Add a transaction into cache
-	Add(*Transaction)
-	// Remove all transactions
+	// AddTransition add a transition into cache
+	AddTransition(*Transition) error
+	// RemoveTransition remove a transaction by information
+	RemoveTransition(*Transition) error
+	// ChangeCurrentStatus change namespace's current status by namespace and event
+	ChangeCurrentStatus(namespace, event string) (string, error)
+	// SetCurrentStatus set namespace's current status
+	SetCurrentStatus(namespace, status string) error
+	// GetCurrentStatus get current status
+	GetCurrentStatus(namespace string) string
+	// GetTargetTransition get target transition by current information
+	GetTargetTransition(namespace, curStatus, event string) (*Transition, error)
+	// Remove remove all namespaces from cache
 	Remove()
-	// RemoveNamespace remove namespace's transactions
+	// AddNamespace add a namespace into cache
+	AddNamespace(namespace string) error
+	// RemoveNamespace remove namespace's Transitions
 	RemoveNamespace(namespace string)
+}
+
+// TransitionRepo is the interface for managing transitions in cache
+type TransitionRepo interface {
+	// Add a transaction into cache
+	AddTransaction(trans *Transition) error
+	// RemoveNamespace remove namespace's Transitions
+	RemoveTransition(status, event string) error
 	// RemoveByTransaction remove a transaction by information
-	RemoveByTransaction(*Transaction)
-	// GetTargetTransaction get target transaction by current information
-	GetTargetTransaction(namespace, curStatus, event string) *Transaction
+	ChangeStatus(event string) (string, error)
+	// GetTargetTransition get target transition by current information
+	GetTargetTransition(status, event string) (*Transition, error)
+	// SetCurrentStatus set current status
+	SetCurrentStatus(status string) error
+	// GetCurrentStatus get current status
+	GetCurrentStatus() string
 }

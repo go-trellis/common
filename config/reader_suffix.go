@@ -20,7 +20,7 @@ package config
 import (
 	"strings"
 
-	"trellis.tech/trellis/common.v2/files"
+	"trellis.tech/trellis/common.v3/files"
 )
 
 type defSuffixReader struct {

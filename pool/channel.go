@@ -36,7 +36,7 @@ type channelPool struct {
 }
 
 type idleConn struct {
-	conn interface{}
+	conn any
 	t    time.Time
 }
 
@@ -72,7 +72,7 @@ func (p *channelPool) getConns() chan *idleConn {
 	return conns
 }
 
-func (p *channelPool) Get() (interface{}, error) {
+func (p *channelPool) Get() (any, error) {
 	conns := p.getConns()
 	if conns == nil {
 		return nil, ErrPoolClosed
@@ -128,7 +128,7 @@ func (p *channelPool) Get() (interface{}, error) {
 	}
 }
 
-func (p *channelPool) Put(c interface{}) error {
+func (p *channelPool) Put(c any) error {
 	if c == nil {
 		return ErrNilConnection
 	}
@@ -162,7 +162,7 @@ func (p *channelPool) Put(c interface{}) error {
 	}
 }
 
-func (p *channelPool) Close(c interface{}) error {
+func (p *channelPool) Close(c any) error {
 	if c == nil {
 		return ErrNilConnection
 	}
@@ -175,7 +175,7 @@ func (p *channelPool) Close(c interface{}) error {
 	return p.options.close(c)
 }
 
-func (p *channelPool) Ping(c interface{}) error {
+func (p *channelPool) Ping(c any) error {
 	if c == nil {
 		return ErrNilConnection
 	}

@@ -148,7 +148,7 @@ func (p *LogConfig) ParseFlagsWithPrefix(prefix string, f *flag.FlagSet) {
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for LogConfig.
-func (p *LogConfig) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *LogConfig) UnmarshalYAML(unmarshal func(any) error) error {
 	type plain LogConfig
 	return unmarshal((*plain)(p))
 }

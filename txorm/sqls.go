@@ -25,7 +25,7 @@ import (
 )
 
 // Get retrieves a single record from the database.
-func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (ok bool, err error) {
+func Get(session *xorm.Session, bean any, opts ...GetOption) (ok bool, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -38,7 +38,7 @@ func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (ok bool, e
 }
 
 // Find retrieves multiple records from the database.
-func Find(session *xorm.Session, bean interface{}, opts ...GetOption) (err error) {
+func Find(session *xorm.Session, bean any, opts ...GetOption) (err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -51,7 +51,7 @@ func Find(session *xorm.Session, bean interface{}, opts ...GetOption) (err error
 }
 
 // FindAndCount retrieves multiple records from the database and counts them.
-func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (c int64, err error) {
+func FindAndCount(session *xorm.Session, bean any, opts ...GetOption) (c int64, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -64,7 +64,7 @@ func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (c
 }
 
 // Count counts the number of records in the database.
-func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (c int64, err error) {
+func Count(session *xorm.Session, bean any, opts ...GetOption) (c int64, err error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -77,7 +77,7 @@ func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (c int64,
 }
 
 // Update updates records in the database.
-func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (c int64, err error) {
+func Update(session *xorm.Session, bean any, opts ...UpdateOption) (c int64, err error) {
 	updateOptions := &UpdateOptions{}
 	for _, opt := range opts {
 		opt(updateOptions)
@@ -131,7 +131,7 @@ func InsertMultiCheckNumber(check ...bool) InsertMultiOption {
 }
 
 // Insert insert data
-func Insert(session *xorm.Session, beans ...interface{}) (c int64, err error) {
+func Insert(session *xorm.Session, beans ...any) (c int64, err error) {
 	instrumentQuery(reflect.TypeOf(beans).Name(), "insert", func() {
 		c, err = session.Insert(beans...)
 	})
@@ -139,7 +139,7 @@ func Insert(session *xorm.Session, beans ...interface{}) (c int64, err error) {
 }
 
 // InsertMulti insert data in batches with step number and check number
-func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (c int64, err error) {
+func InsertMulti(session *xorm.Session, ones any, opts ...InsertMultiOption) (c int64, err error) {
 	// 初始化选项
 	options := &InsertMultiOptions{}
 	for _, opt := range opts {
@@ -152,7 +152,7 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 }
 
 // insertMulti is the internal implementation of InsertMulti
-func insertMulti(session *xorm.Session, ones interface{}, options *InsertMultiOptions) (int64, error) {
+func insertMulti(session *xorm.Session, ones any, options *InsertMultiOptions) (int64, error) {
 
 	// Extract the step number from the options if provided, otherwise use 1
 	if options.StepNumber <= 0 {
@@ -189,7 +189,7 @@ func insertMulti(session *xorm.Session, ones interface{}, options *InsertMultiOp
 			}
 
 			// rebuild the slice or array for the current batch
-			var multi []interface{}
+			var multi []any
 			for j := i; j < end; j++ {
 				multi = append(multi, sliceOnes.Index(j).Interface())
 			}
@@ -214,7 +214,7 @@ func insertMulti(session *xorm.Session, ones interface{}, options *InsertMultiOp
 }
 
 // Delete deletes the specified bean from the database. It supports various options such as WHERE conditions and batch size. The function returns the number of rows deleted and an error if any occurred.
-func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (c int64, err error) {
+func Delete(session *xorm.Session, bean any, opts ...DeleteOption) (c int64, err error) {
 	deleteOptions := &DeleteOptions{}
 	for _, opt := range opts {
 		opt(deleteOptions)

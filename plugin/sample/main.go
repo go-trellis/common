@@ -38,8 +38,8 @@ var _ logger.KitLogger = (*Logger)(nil)
 
 type Logger struct{}
 
-func (*Logger) Log(kvs ...interface{}) error {
-	kvs = append([]interface{}{"haha"}, kvs...)
+func (*Logger) Log(kvs ...any) error {
+	kvs = append([]any{"haha"}, kvs...)
 	fmt.Println(kvs...)
 	return nil
 }

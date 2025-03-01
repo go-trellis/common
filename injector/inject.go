@@ -22,7 +22,7 @@ import (
 )
 
 // Inject applies the given parameters to the target object.
-func Inject(a interface{}, params ...interface{}) error {
+func Inject(a any, params ...any) error {
 	ior := inject.New()
 	for _, v := range params {
 		ior.Map(v)

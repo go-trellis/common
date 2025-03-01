@@ -19,23 +19,23 @@ package transaction
 
 // Transaction interface for transaction management. It provides methods to commit transactions and manage sessions.
 type Transaction interface {
-	Session() interface{}
+	Session() any
 	IsTransaction() bool
 
-	Commit(fn interface{}, repos ...interface{}) error
+	Commit(fn any, repos ...any) error
 }
 
 type Repo interface {
-	SetSession(interface{}) error
+	SetSession(any) error
 }
 
 // Derivative interface for derivation
 type Derivative interface {
-	Derive() (repo interface{}, err error)
+	Derive() (repo any, err error)
 }
 
 // Derive function to derive a new repository from an origin repository. If the origin repository implements the Derivative interface, it will be called to derive a new repository. Otherwise, it will return nil and no error.
-func Derive(origin interface{}) (interface{}, error) {
+func Derive(origin any) (any, error) {
 	if d, ok := origin.(Derivative); ok {
 		return d.Derive()
 	}
@@ -44,11 +44,11 @@ func Derive(origin interface{}) (interface{}, error) {
 
 // Inheritor interface for inheritance
 type Inheritor interface {
-	Inherit(repo interface{}) error
+	Inherit(repo any) error
 }
 
 // Inherit function to inherit a repository from an origin repository. If the new repository implements the Inheritor interface, it will be called to inherit the origin repository. Otherwise, it will return nil and no error.
-func Inherit(new, origin interface{}) error {
+func Inherit(new, origin any) error {
 	if inheritor, ok := new.(Inheritor); ok {
 		return inheritor.Inherit(origin)
 	}

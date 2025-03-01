@@ -16,7 +16,7 @@ import [gopkg.in/yaml.v3](https://github.com/go-yaml/yaml/tree/v3)
 
 ### Config
 
-> not supported "*.xml": now go encoding/xml is not supported map[string]interface{}
+> not supported "*.xml": now go encoding/xml is not supported map[string]any
 
 * dot separator to get values, and if return nil, you should set default value
 * A: ${X.Y.Z} for finding out X.Y.Z's value and setting into A. [See copy example](config_test.go#L20):[See config](example.json#14)
@@ -35,7 +35,7 @@ c.GetString("a.b.c")
 // Config manager data functions
 type Config interface {
 	// get a object
-	GetInterface(key string, defValue ...interface{}) (res interface{})
+	GetInterface(key string, defValue ...any) (res any)
 	// get a string
 	GetString(key string, defValue ...string) (res string)
 	// get a bool
@@ -45,7 +45,7 @@ type Config interface {
 	// get a float
 	GetFloat(key string, defValue ...float64) (res float64)
 	// get list of objects
-	GetList(key string) (res []interface{})
+	GetList(key string) (res []any)
 	// get list of strings
 	GetStringList(key string) []string
 	// get list of bools
@@ -65,7 +65,7 @@ type Config interface {
 	// get key's values if values can be Config, or panic
 	GetValuesConfig(key string) Config
 	// set key's value into config
-	SetKeyValue(key string, value interface{}) (err error)
+	SetKeyValue(key string, value any) (err error)
 	// get all config
 	Dump() (bs []byte, err error)
 	// get all keys
@@ -88,11 +88,11 @@ type Config interface {
 // Reader reader repo
 type Reader interface {
 	// read file into model
-	Read(model interface{}) error
+	Read(model any) error
 	// dump configs' cache
-	Dump(model interface{}) ([]byte, error)
+	Dump(model any) ([]byte, error)
 	// parse data to model
-	ParseData(data []byte, model interface{}) error
+	ParseData(data []byte, model any) error
 }
 ```
 

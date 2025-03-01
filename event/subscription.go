@@ -24,15 +24,15 @@ import (
 // Subscriber subscribe interface for event subscription.
 type Subscriber interface {
 	GetID() string
-	Publish(values ...interface{}) error
+	Publish(values ...any) error
 	Stop()
 }
 
 // NewDefSubscriber creates a new default subscriber.
-func NewDefSubscriber(sub interface{}) (Subscriber, error) {
+func NewDefSubscriber(sub any) (Subscriber, error) {
 	var subscriber Subscriber
 	switch s := sub.(type) {
-	case func(...interface{}) error:
+	case func(...any) error:
 		subscriber = &defSubscriber{
 			id: GenSubscriberID(),
 			fn: s,
@@ -50,7 +50,7 @@ func NewDefSubscriber(sub interface{}) (Subscriber, error) {
 // This value and can be passed to Unsubscribe when the observer is no longer interested in receiving messages
 type defSubscriber struct {
 	id string
-	fn func(values ...interface{}) error
+	fn func(values ...any) error
 }
 
 // GetID returns the ID of the subscriber.
@@ -59,7 +59,7 @@ func (p *defSubscriber) GetID() string {
 }
 
 // Publish publishes a message to the subscriber.
-func (p *defSubscriber) Publish(values ...interface{}) error {
+func (p *defSubscriber) Publish(values ...any) error {
 	return p.fn(values...)
 }
 

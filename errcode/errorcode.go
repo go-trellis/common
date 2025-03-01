@@ -36,7 +36,7 @@ type ErrorCode interface {
 	Code() uint64
 	Context() ErrorContext
 	Append(err ...error) ErrorCode
-	WithContext(k string, v interface{}) ErrorCode
+	WithContext(k string, v any) ErrorCode
 }
 
 // OptionFunc set params
@@ -51,7 +51,7 @@ type ErrorOptions struct {
 
 	errs []error
 
-	ctx map[string]interface{}
+	ctx map[string]any
 }
 
 // NewSimpleError new simple errcode by options
@@ -95,7 +95,7 @@ func OptionErrs(errs ...error) OptionFunc {
 }
 
 // OptionContext set error context into options
-func OptionContext(ctx map[string]interface{}) OptionFunc {
+func OptionContext(ctx map[string]any) OptionFunc {
 	return func(p *ErrorOptions) {
 		p.ctx = ctx
 	}
@@ -105,7 +105,7 @@ type errorCode struct {
 	err  SimpleError
 	code uint64
 
-	context map[string]interface{}
+	context map[string]any
 	errors  []error
 }
 
@@ -123,7 +123,7 @@ func NewErrorCode(ofs ...OptionFunc) ErrorCode {
 	}
 
 	if opts.ctx == nil {
-		opts.ctx = make(map[string]interface{})
+		opts.ctx = make(map[string]any)
 	}
 
 	ec := &errorCode{
@@ -178,13 +178,13 @@ func (p *errorCode) Namespace() string {
 	return p.err.Namespace()
 }
 
-func (p *errorCode) WithContext(key string, value interface{}) ErrorCode {
+func (p *errorCode) WithContext(key string, value any) ErrorCode {
 	p.context[key] = value
 	return p
 }
 
 // ErrorContext map contexts
-type ErrorContext map[string]interface{}
+type ErrorContext map[string]any
 
 func (p ErrorContext) Error() string {
 	if p == nil {

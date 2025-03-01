@@ -34,17 +34,17 @@ const (
 // Reader reader repo
 type Reader interface {
 	// Read file into model
-	Read(model interface{}) error
+	Read(model any) error
 	// Dump configs' cache
-	Dump(model interface{}) ([]byte, error)
+	Dump(model any) ([]byte, error)
 	// ParseData parse data to model
-	ParseData(data []byte, model interface{}) error
+	ParseData(data []byte, model any) error
 }
 
 // ReaderOptionFunc declare reader option function
 type ReaderOptionFunc func(*ReaderOptions)
 
-//ReaderOptions reader options
+// ReaderOptions reader options
 type ReaderOptions struct {
 	filename string
 }

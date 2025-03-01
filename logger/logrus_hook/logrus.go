@@ -32,7 +32,7 @@ type LogrusConfig struct {
 	DefaultWirter io.Writer
 	Formatter     logrus.Formatter
 
-	WriterInfo interface{}
+	WriterInfo any
 }
 
 type TextFormatter = logrus.TextFormatter

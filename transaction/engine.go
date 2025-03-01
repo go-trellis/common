@@ -22,9 +22,9 @@ import "database/sql"
 // Engine transaction engine interface.
 type Engine interface {
 	// NewSession creates a new session for transaction.
-	NewSession() (interface{}, error)
+	NewSession() (any, error)
 	// Exec executes the SQL statement.
-	Exec(sql string, args ...interface{}) (sql.Result, error)
+	Exec(sql string, args ...any) (sql.Result, error)
 	// BeginTransaction starts a new transaction.
 	BeginTransaction() (Transaction, error)
 	// BeginNonTransaction starts a non-transactional session.

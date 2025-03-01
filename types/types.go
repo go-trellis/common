@@ -22,13 +22,13 @@ import (
 )
 
 // Reduplicate removes duplicate elements from a slice or array.
-func Reduplicate(data interface{}) interface{} {
+func Reduplicate(data any) any {
 	inArr := reflect.ValueOf(data)
 	if inArr.Kind() != reflect.Slice && inArr.Kind() != reflect.Array {
 		return data
 	}
 
-	existMap := make(map[interface{}]bool)
+	existMap := make(map[any]bool)
 	outArr := reflect.MakeSlice(inArr.Type(), 0, inArr.Len())
 	for i := 0; i < inArr.Len(); i++ {
 		iVal := inArr.Index(i)

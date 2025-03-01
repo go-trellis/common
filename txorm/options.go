@@ -20,19 +20,19 @@ package txorm
 // In represents an input parameter for a query. It contains the column name and the arguments to be passed to the database.
 type In struct {
 	Column string
-	Args   []interface{}
+	Args   []any
 }
 
 // InOpts returns a new In with the given column and arguments.
-func InOpts(column string, args ...interface{}) *In {
+func InOpts(column string, args ...any) *In {
 	if column == "" {
 		return nil
 	}
 	return &In{column, args}
 }
 
-// Args returns a slice of interface{} with the given arguments.
-func Args(args ...interface{}) []interface{} {
-	var bs []interface{}
+// Args returns a slice of any with the given arguments.
+func Args(args ...any) []any {
+	var bs []any
 	return append(bs, args...)
 }

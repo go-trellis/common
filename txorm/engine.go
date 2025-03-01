@@ -305,7 +305,7 @@ func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {
 	return TransactionDoWithSession(p.Engine.NewSession(), fn)
 }
 
-func (p *XEngine) NewSession() (interface{}, error) {
+func (p *XEngine) NewSession() (any, error) {
 	return p.NewXORMSession()
 }
 
@@ -313,8 +313,8 @@ func (p *XEngine) NewXORMSession() (*xorm.Session, error) {
 	return p.Engine.NewSession(), nil
 }
 
-func (p *XEngine) Exec(sql string, args ...interface{}) (sql.Result, error) {
-	sqlOrArgs := append([]interface{}{sql}, args...)
+func (p *XEngine) Exec(sql string, args ...any) (sql.Result, error) {
+	sqlOrArgs := append([]any{sql}, args...)
 	return p.Engine.Exec(sqlOrArgs...)
 }
 

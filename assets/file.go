@@ -78,4 +78,4 @@ func (p FileInfo) ModTime() time.Time { return p.fi.ModTime() }
 func (p FileInfo) IsDir() bool { return p.fi.IsDir() }
 
 // Sys implements the fs.FileInfo interface.
-func (p FileInfo) Sys() interface{} { return nil }
+func (p FileInfo) Sys() any { return nil }

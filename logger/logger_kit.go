@@ -25,9 +25,9 @@ import (
 
 var _ log.Logger = (*ZapLogger)(nil)
 
-type zapSugarLogger func(msg string, keysAndValues ...interface{})
+type zapSugarLogger func(msg string, keysAndValues ...any)
 
-func (l zapSugarLogger) Log(kv ...interface{}) error {
+func (l zapSugarLogger) Log(kv ...any) error {
 	l("msg", kv...)
 	return nil
 }

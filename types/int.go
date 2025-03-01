@@ -61,7 +61,7 @@ func (x Int64s) Less(i, j int) bool { return x[i] < x[j] }
 func (x Int64s) Swap(i, j int) { x[i], x[j] = x[j], x[i] }
 
 // ToInt64 parse value to int64
-func ToInt64(value interface{}) (int64, error) {
+func ToInt64(value any) (int64, error) {
 	if value == nil {
 		return 0, nil
 	}
@@ -84,7 +84,7 @@ func ToInt64(value interface{}) (int64, error) {
 }
 
 // ToInt parse value to int
-func ToInt(value interface{}) (int, error) {
+func ToInt(value any) (int, error) {
 	if value == nil {
 		return 0, nil
 	}

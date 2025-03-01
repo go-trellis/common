@@ -48,15 +48,15 @@ func NewSuffixReader(opts ...ReaderOptionFunc) (reader Reader, err error) {
 	return r, nil
 }
 
-func (p *defSuffixReader) Read(model interface{}) (err error) {
+func (p *defSuffixReader) Read(model any) (err error) {
 	return p.reader.Read(model)
 }
 
-func (p *defSuffixReader) Dump(v interface{}) ([]byte, error) {
+func (p *defSuffixReader) Dump(v any) ([]byte, error) {
 	return p.reader.Dump(v)
 }
 
-func (p *defSuffixReader) ParseData(data []byte, model interface{}) error {
+func (p *defSuffixReader) ParseData(data []byte, model any) error {
 	return p.reader.ParseData(data, model)
 }
 

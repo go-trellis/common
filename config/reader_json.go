@@ -27,7 +27,7 @@ type defJSONReader struct {
 	opts ReaderOptions
 }
 
-// NewJSONReader return a json reader
+// NewJSONReader creates a new JSON reader with optional configuration.
 func NewJSONReader(opts ...ReaderOptionFunc) Reader {
 	r := &defJSONReader{}
 	for _, o := range opts {
@@ -36,20 +36,23 @@ func NewJSONReader(opts ...ReaderOptionFunc) Reader {
 	return r
 }
 
-func (p *defJSONReader) Read(model interface{}) error {
+// Read reads a JSON file and parses it into the model.
+func (p *defJSONReader) Read(model any) error {
 	return ReadJSONFileToModel(p.opts.filename, model)
 }
 
-func (*defJSONReader) Dump(v interface{}) ([]byte, error) {
+// Dump dumps the given value to JSON format.
+func (*defJSONReader) Dump(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (*defJSONReader) ParseData(data []byte, model interface{}) error {
+// ParseData parses JSON data into the model.
+func (*defJSONReader) ParseData(data []byte, model any) error {
 	return ParseJSONData(data, model)
 }
 
-// ReadJSONFileToModel 读取Json文件数据到Models
-func ReadJSONFileToModel(filepath string, model interface{}) error {
+// ReadJSONFileToModel reads a json file and parses it into the model.
+func ReadJSONFileToModel(filepath string, model any) error {
 	data, err := ReadFile(filepath)
 	if err != nil {
 		return err
@@ -57,8 +60,8 @@ func ReadJSONFileToModel(filepath string, model interface{}) error {
 	return ParseJSONData(data, model)
 }
 
-// ParseJSONData 解析Json配置
-func ParseJSONData(data []byte, model interface{}) error {
+// ParseJSONData parses json data into the model.
+func ParseJSONData(data []byte, model any) error {
 	var escaped bool // string value flag, " appear times, odd is false, even is true
 	var comments int // 0 nothing; 1 line; 2 multi line
 	var result []byte

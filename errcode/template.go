@@ -31,19 +31,19 @@ const (
 	errorCodeExecuteTemplate = 2
 )
 
-// ErrorCodeTmpl error code template
+// ErrorCodeTmpl struct for error code template.
 type ErrorCodeTmpl struct {
 	namespace string
 	code      uint64
 	message   string
 }
 
-// Params template params
-type Params map[string]interface{}
+// Params error code params map
+type Params map[string]any
 
 var tmplDefined = make(map[string]bool)
 
-// TN returns a new error code template
+// TN creates a new ErrorCodeTmpl instance.
 func TN(namespace string, code uint64, message string) *ErrorCodeTmpl {
 	eKey := fmt.Sprintf("%s:%d", namespace, code)
 	if tmplDefined[eKey] {
@@ -76,7 +76,7 @@ func Callers(c int) Option {
 	}
 }
 
-// New ErrorCodeTmpl new error code by template
+// New returns a new error code
 func (p *ErrorCodeTmpl) New(opts ...Option) ErrorCode {
 	options := &Options{}
 	for _, o := range opts {
@@ -84,12 +84,12 @@ func (p *ErrorCodeTmpl) New(opts ...Option) ErrorCode {
 	}
 
 	if options.Params == nil {
-		options.Params = make(map[string]interface{})
+		options.Params = make(map[string]any)
 	}
 
 	eCode := &errorCode{
 		code:    p.code,
-		context: make(map[string]interface{}),
+		context: make(map[string]any),
 	}
 
 	errID := hash.NewCRCIEEE().Sum(fmt.Sprintf("%s.%d.%s.%d",

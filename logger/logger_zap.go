@@ -153,7 +153,7 @@ func (p *ZapLogger) GetZapLogger() *zap.Logger {
 }
 
 // With (fields ...Field)
-func (p *ZapLogger) With(kvs ...interface{}) Logger {
+func (p *ZapLogger) With(kvs ...any) Logger {
 	newZL := &ZapLogger{
 		options: p.options,
 	}
@@ -162,7 +162,7 @@ func (p *ZapLogger) With(kvs ...interface{}) Logger {
 	var fields []zap.Field
 	for i := 0; i < lenFields; i += 2 {
 		k := kvs[i]
-		var v interface{} = errors.New("MISSING VALUE")
+		var v any = errors.New("MISSING VALUE")
 		if i+1 < lenFields {
 			v = kvs[i+1]
 		}
@@ -174,108 +174,108 @@ func (p *ZapLogger) With(kvs ...interface{}) Logger {
 }
 
 // Log print log with kvs
-func (p *ZapLogger) Log(kvs ...interface{}) error {
+func (p *ZapLogger) Log(kvs ...any) error {
 	p.Info(kvs...)
 	return nil
 }
 
 // Debug 打印debug信息
-func (p *ZapLogger) Debug(kvs ...interface{}) {
+func (p *ZapLogger) Debug(kvs ...any) {
 	p.DebugM("msg", kvs...)
 }
 
 // Debugf format打印debug信息
-func (p *ZapLogger) Debugf(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Debugf(msg string, kvs ...any) {
 	p.DebugM(fmt.Sprintf(msg, kvs...))
 }
 
 // DebugM 打印debug信息
-func (p *ZapLogger) DebugM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) DebugM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Debug(msg, fields...)
 }
 
 // Info 打印Info信息
-func (p *ZapLogger) Info(kvs ...interface{}) {
+func (p *ZapLogger) Info(kvs ...any) {
 	p.InfoM("msg", kvs...)
 }
 
 // Infof format打印info信息
-func (p *ZapLogger) Infof(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Infof(msg string, kvs ...any) {
 	p.InfoM(fmt.Sprintf(msg, kvs...))
 }
 
 // InfoM 打印info信息
-func (p *ZapLogger) InfoM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) InfoM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Info(msg, fields...)
 }
 
 // Warn 打印warn信息
-func (p *ZapLogger) Warn(kvs ...interface{}) {
+func (p *ZapLogger) Warn(kvs ...any) {
 	p.WarnM("msg", kvs...)
 }
 
 // Warnf format打印warn信息
-func (p *ZapLogger) Warnf(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Warnf(msg string, kvs ...any) {
 	p.WarnM(fmt.Sprintf(msg, kvs...))
 }
 
 // WarnM 打印warn信息
-func (p *ZapLogger) WarnM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) WarnM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Warn(msg, fields...)
 }
 
 // Error 打印error信息
-func (p *ZapLogger) Error(kvs ...interface{}) {
+func (p *ZapLogger) Error(kvs ...any) {
 	p.ErrorM("msg", kvs...)
 }
 
 // Errorf format打印error信息
-func (p *ZapLogger) Errorf(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Errorf(msg string, kvs ...any) {
 	p.ErrorM(fmt.Sprintf(msg, kvs...))
 }
 
 // ErrorM 打印error信息
-func (p *ZapLogger) ErrorM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) ErrorM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Error(msg, fields...)
 }
 
 // Panic 打印panic信息
-func (p *ZapLogger) Panic(kvs ...interface{}) {
+func (p *ZapLogger) Panic(kvs ...any) {
 	p.PanicM("msg", kvs...)
 }
 
 // Panicf format打印panic信息
-func (p *ZapLogger) Panicf(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Panicf(msg string, kvs ...any) {
 	p.PanicM(fmt.Sprintf(msg, kvs...))
 }
 
 // PanicM 打印info信息
-func (p *ZapLogger) PanicM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) PanicM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Panic(msg, fields...)
 }
 
 // Fatal 打印panic信息
-func (p *ZapLogger) Fatal(kvs ...interface{}) {
+func (p *ZapLogger) Fatal(kvs ...any) {
 	p.PanicM("msg", kvs...)
 }
 
 // Fatalf format打印panic信息
-func (p *ZapLogger) Fatalf(msg string, kvs ...interface{}) {
+func (p *ZapLogger) Fatalf(msg string, kvs ...any) {
 	p.PanicM(fmt.Sprintf(msg, kvs...))
 }
 
 // FatalM 打印info信息
-func (p *ZapLogger) FatalM(msg string, kvs ...interface{}) {
+func (p *ZapLogger) FatalM(msg string, kvs ...any) {
 	fields := p.genKVs(kvs...)
 	p.logger.Fatal(msg, fields...)
 }
 
-func (p *ZapLogger) genKVs(kvs ...interface{}) []zap.Field {
+func (p *ZapLogger) genKVs(kvs ...any) []zap.Field {
 	lenFields := len(kvs)
 	if lenFields == 0 {
 		return nil
@@ -286,7 +286,7 @@ func (p *ZapLogger) genKVs(kvs ...interface{}) []zap.Field {
 
 	for i := 0; i < lenFields; i += 2 {
 		k := kvs[i]
-		var v interface{} = errors.New("MISSING VALUE")
+		var v any = errors.New("MISSING VALUE")
 		if i+1 < lenFields {
 			v = kvs[i+1]
 		}

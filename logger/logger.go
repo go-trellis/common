@@ -32,12 +32,12 @@ type KitLogger = kLog.Logger
 type XormLogger = log.Logger
 
 type MessageLogger interface {
-	DebugM(msg string, kvs ...interface{})
-	InfoM(msg string, kvs ...interface{})
-	WarnM(msg string, kvs ...interface{})
-	ErrorM(msg string, kvs ...interface{})
-	PanicM(msg string, kvs ...interface{})
-	FatalM(msg string, kvs ...interface{})
+	DebugM(msg string, kvs ...any)
+	InfoM(msg string, kvs ...any)
+	WarnM(msg string, kvs ...any)
+	ErrorM(msg string, kvs ...any)
+	PanicM(msg string, kvs ...any)
+	FatalM(msg string, kvs ...any)
 }
 
 // Logger 日志对象
@@ -46,7 +46,7 @@ type Logger interface {
 	XormLogger
 	MessageLogger
 
-	With(kvs ...interface{}) Logger
+	With(kvs ...any) Logger
 	Writer() io.Writer
 }
 
@@ -133,7 +133,7 @@ func ToLevelName(lvl Level) string {
 	}
 }
 
-func toString(v interface{}) string {
+func toString(v any) string {
 	switch reflect.TypeOf(v).Kind() {
 	case reflect.Ptr, reflect.Struct, reflect.Map:
 		bs, err := json.Marshal(v)

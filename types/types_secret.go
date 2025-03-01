@@ -37,15 +37,15 @@ func (p *Secret) Set(s string) error {
 }
 
 // MarshalYAML implements the yaml.Marshaler interface for Secret.
-func (p Secret) MarshalYAML() (interface{}, error) {
+func (p Secret) MarshalYAML() (any, error) {
 	if len(p) == 0 {
 		return "", nil
 	}
 	return Hidden, nil
 }
 
-//UnmarshalYAML implements the yaml.Unmarshaler interface for Secret.
-func (p *Secret) UnmarshalYAML(unmarshal func(interface{}) error) error {
+// UnmarshalYAML implements the yaml.Unmarshaler interface for Secret.
+func (p *Secret) UnmarshalYAML(unmarshal func(any) error) error {
 	var v string
 	if err := unmarshal(&v); err != nil {
 		return err

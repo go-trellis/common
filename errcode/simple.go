@@ -45,7 +45,7 @@ func New(text string) SimpleError {
 }
 
 // Newf new error object with format text and params
-func Newf(text string, params ...interface{}) SimpleError {
+func Newf(text string, params ...any) SimpleError {
 	return New(fmt.Sprintf(text, params...))
 }
 

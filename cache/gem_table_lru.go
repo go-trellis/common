@@ -31,7 +31,7 @@ type LRU struct {
 	locker    sync.RWMutex
 	size      int
 	evictList *list.List
-	items     map[interface{}]*list.Element
+	items     map[any]*list.Element
 	onEvict   EvictCallback
 
 	valueMode ValueMode
@@ -61,7 +61,7 @@ func NewLRU(name string, opts Options) (*LRU, error) {
 		name:      name,
 		size:      opts.Size,
 		evictList: list.New(),
-		items:     make(map[interface{}]*list.Element),
+		items:     make(map[any]*list.Element),
 		onEvict:   opts.Evict,
 		valueMode: opts.ValueMode,
 	}
@@ -70,7 +70,7 @@ func NewLRU(name string, opts Options) (*LRU, error) {
 
 // DeleteObject deletes the provided key from the cache, returning if the
 // key was contained.
-func (p *LRU) DeleteObject(key interface{}) (present bool) {
+func (p *LRU) DeleteObject(key any) (present bool) {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	if ent, ok := p.items[key]; ok {
@@ -95,7 +95,7 @@ func (p *LRU) DeleteObjects() {
 }
 
 // InsertExpire insert a value to the cache. Returns true if insert kv successful.
-func (p *LRU) InsertExpire(key, value interface{}, expire time.Duration) bool {
+func (p *LRU) InsertExpire(key, value any, expire time.Duration) bool {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 
@@ -105,12 +105,12 @@ func (p *LRU) InsertExpire(key, value interface{}, expire time.Duration) bool {
 	entry, ok := p.items[key]
 	if ok {
 		if _, ok := p.isElementExpired(entry); ok {
-			dv = &DataValues{Key: key, Exists: make(map[interface{}]bool)}
+			dv = &DataValues{Key: key, Exists: make(map[any]bool)}
 		} else {
 			dv = entry.Value.(*DataValues)
 		}
 	} else {
-		dv = &DataValues{Key: key, Exists: make(map[interface{}]bool)}
+		dv = &DataValues{Key: key, Exists: make(map[any]bool)}
 	}
 
 	switch p.valueMode {
@@ -124,7 +124,7 @@ func (p *LRU) InsertExpire(key, value interface{}, expire time.Duration) bool {
 	case ValueModeUnique:
 		fallthrough
 	default:
-		dv.Values = []interface{}{value}
+		dv.Values = []any{value}
 	}
 
 	// set expired time
@@ -151,12 +151,12 @@ func (p *LRU) InsertExpire(key, value interface{}, expire time.Duration) bool {
 }
 
 // Insert a value to the cache. Returns true if an eviction occurred.
-func (p *LRU) Insert(key, value interface{}) (evicted bool) {
+func (p *LRU) Insert(key, value any) (evicted bool) {
 	return p.InsertExpire(key, value, 0)
 }
 
 // Lookup Look up values with key: Key.
-func (p *LRU) Lookup(key interface{}) ([]interface{}, bool) {
+func (p *LRU) Lookup(key any) ([]any, bool) {
 	p.locker.RLock()
 	entry, ok := p.items[key]
 	if ok {
@@ -172,7 +172,7 @@ func (p *LRU) Lookup(key interface{}) ([]interface{}, bool) {
 	return nil, false
 }
 
-func (p *LRU) isElementExpired(e *list.Element) ([]interface{}, bool) {
+func (p *LRU) isElementExpired(e *list.Element) ([]any, bool) {
 	dv := e.Value.(*DataValues)
 	if dv.Expire != nil && dv.Expire.UnixNano() < time.Now().UnixNano() {
 		return nil, true
@@ -181,7 +181,7 @@ func (p *LRU) isElementExpired(e *list.Element) ([]interface{}, bool) {
 }
 
 // LookupAll Look up all key-value pairs.
-func (p *LRU) LookupAll() (items map[interface{}][]interface{}, ok bool) {
+func (p *LRU) LookupAll() (items map[any][]any, ok bool) {
 	p.locker.RLock()
 	for k, v := range p.items {
 		values, ok := p.isElementExpired(v)
@@ -190,7 +190,7 @@ func (p *LRU) LookupAll() (items map[interface{}][]interface{}, ok bool) {
 		}
 
 		if items == nil {
-			items = make(map[interface{}][]interface{})
+			items = make(map[any][]any)
 		}
 
 		items[k] = values
@@ -200,7 +200,7 @@ func (p *LRU) LookupAll() (items map[interface{}][]interface{}, ok bool) {
 }
 
 // Member Returns true if one or more elements in the table has key: Key, otherwise false.
-func (p *LRU) Member(key interface{}) bool {
+func (p *LRU) Member(key any) bool {
 	p.locker.RLock()
 	entry, ok := p.items[key]
 	p.locker.RUnlock()
@@ -213,7 +213,7 @@ func (p *LRU) Member(key interface{}) bool {
 }
 
 // Members Returns all keys in the table Tab.
-func (p *LRU) Members() (keys []interface{}, ok bool) {
+func (p *LRU) Members() (keys []any, ok bool) {
 	p.locker.RLock()
 	for k, v := range p.items {
 		if _, ok := p.isElementExpired(v); ok {
@@ -227,7 +227,7 @@ func (p *LRU) Members() (keys []interface{}, ok bool) {
 }
 
 // SetExpire Set Key Expire time
-func (p *LRU) SetExpire(key interface{}, expire time.Duration) bool {
+func (p *LRU) SetExpire(key any, expire time.Duration) bool {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	entry, ok := p.items[key]
@@ -247,14 +247,14 @@ func (p *LRU) SetExpire(key interface{}, expire time.Duration) bool {
 }
 
 // RemoveOldest removes the oldest item from the cache.
-func (p *LRU) RemoveOldest() (key, value interface{}, ok bool) {
+func (p *LRU) RemoveOldest() (key, value any, ok bool) {
 	p.locker.Lock()
 	defer p.locker.Unlock()
 	return p.removeOldest()
 }
 
 // removeOldest removes the oldest item from the cache.
-func (p *LRU) removeOldest() (key, value interface{}, ok bool) {
+func (p *LRU) removeOldest() (key, value any, ok bool) {
 	ent := p.evictList.Back()
 	if ent != nil {
 		p.removeElement(ent)

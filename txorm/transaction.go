@@ -31,7 +31,7 @@ type trans struct {
 }
 
 // Session returns the current session. If there is no active session, a new one will be created.
-func (p *trans) Session() interface{} {
+func (p *trans) Session() any {
 	// check if the session is already created and active
 	if p.isTrans {
 		// session already exists and active, return it directly
@@ -51,7 +51,7 @@ func (p *trans) IsTransaction() bool {
 }
 
 // Commit executes the logic function and commits the transaction. If there is an error during the execution of the logic function, the transaction will be rolled back. Otherwise, the transaction will be committed.
-func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
+func (p *trans) Commit(fun any, repos ...any) error {
 	// get the logic function
 	fn := transaction.GetLogicFunc(fun)
 	if fn == nil || fn.Logic == nil {
@@ -59,8 +59,8 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 	}
 
 	var (
-		_values   []interface{}
-		_newRepos []interface{}
+		_values   []any
+		_newRepos []any
 		err       error
 	)
 
@@ -130,7 +130,7 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 }
 
 // setTransactionRepoSession sets the session for a transaction repo. It returns an error if the repository does not implement the transaction.Repo interface.
-func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
+func setTransactionRepoSession(repo any, session *xorm.Session) error {
 	tRepo, ok := repo.(transaction.Repo)
 	if !ok {
 		return errcode.New("not transaction repo, check the repo implement transaction repo")
@@ -139,15 +139,35 @@ func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
 }
 
 // Do to do transaction with customer function
-func Do(engine *xorm.Engine, fn func(*xorm.Session) error) error {
-	session := engine.NewSession()
+func Do(engine transaction.Engine, fn func(*xorm.Session) error) error {
+	xEngine, err := assertXormEngine(engine)
+	if err != nil {
+		return err
+	}
+	session := xEngine.Engine.NewSession()
 	defer session.Close()
 	return fn(session)
 }
 
 // TransactionDo to do transaction with customer function
-func TransactionDo(engine *xorm.Engine, fn func(*xorm.Session) error) error {
-	return TransactionDoWithSession(engine.NewSession(), fn)
+func TransactionDo(engine transaction.Engine, fn func(*xorm.Session) error) error {
+	xEngine, err := assertXormEngine(engine)
+	if err != nil {
+		return err
+	}
+	return TransactionDoWithSession(xEngine.Engine.NewSession(), fn)
+}
+
+func assertXormEngine(engine transaction.Engine) (*XEngine, error) {
+	if engine == nil {
+		return nil, errcode.New("nil transaction engine")
+	}
+	xEngine, ok := engine.(*XEngine)
+	if !ok {
+		return nil, errcode.New("not txorm XEngine")
+	}
+
+	return xEngine, nil
 }
 
 // TransactionDoWithSession to do transaction with customer function

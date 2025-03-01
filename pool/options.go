@@ -23,8 +23,8 @@ import (
 	"trellis.tech/trellis/common.v3/errcode"
 )
 
-type Factory func() (interface{}, error)
-type Executor func(interface{}) error
+type Factory func() (any, error)
+type Executor func(any) error
 
 type Option func(*Options)
 

@@ -33,8 +33,8 @@ var (
 	MaximumCap     = 30
 	network        = "tcp"
 	address        = "127.0.0.1:7777"
-	factory        = func() (interface{}, error) { return net.Dial(network, address) }
-	close          = func(c interface{}) error {
+	factory        = func() (any, error) { return net.Dial(network, address) }
+	close          = func(c any) error {
 		cc, ok := c.(net.Conn)
 		if !ok {
 			return errcode.New("not net connection")
@@ -187,7 +187,7 @@ func TestPool_Close(t *testing.T) {
 
 func TestPoolConcurrent(t *testing.T) {
 	p, _ := newChannelPool()
-	pipe := make(chan interface{}, 0)
+	pipe := make(chan any, 0)
 
 	go func() {
 		p.Release()

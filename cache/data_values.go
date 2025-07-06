@@ -36,8 +36,8 @@ const (
 
 // DataValues define k-vs struct
 type DataValues struct {
-	Key    interface{}
-	Values []interface{}
-	Exists map[interface{}]bool
+	Key    any
+	Values []any
+	Exists map[any]bool
 	Expire *time.Time
 }

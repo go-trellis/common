@@ -25,19 +25,19 @@ import (
 // Queue functions for manager datas in queue
 type Queue interface {
 	// Push a data into queue
-	Push(v interface{})
+	Push(v any)
 	// PushMany many data into queue
-	PushMany(vs ...interface{})
+	PushMany(vs ...any)
 	// Pop first data
-	Pop() (interface{}, bool)
+	Pop() (any, bool)
 	// PopMany pop many of data
-	PopMany(count int64) ([]interface{}, bool)
+	PopMany(count int64) ([]any, bool)
 	// PopAll pop all data
-	PopAll() ([]interface{}, bool)
+	PopAll() ([]any, bool)
 	// Front peek first data
-	Front() (interface{}, bool)
+	Front() (any, bool)
 	// End peek end data
-	End() (interface{}, bool)
+	End() (any, bool)
 	// Length get length of queue
 	Length() int64
 	// IsEmpty judge queue's lenght if 0
@@ -47,7 +47,7 @@ type Queue interface {
 type defaultQueue struct {
 	sync.Mutex
 	length int64
-	queue  []interface{}
+	queue  []any
 }
 
 // New get queue functions manager
@@ -55,11 +55,11 @@ func New() Queue {
 	return &defaultQueue{}
 }
 
-func (p *defaultQueue) Push(v interface{}) {
+func (p *defaultQueue) Push(v any) {
 	p.PushMany(v)
 }
 
-func (p *defaultQueue) PushMany(vs ...interface{}) {
+func (p *defaultQueue) PushMany(vs ...any) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -67,7 +67,7 @@ func (p *defaultQueue) PushMany(vs ...interface{}) {
 	p.length += int64(len(vs))
 }
 
-func (p *defaultQueue) Pop() (v interface{}, exist bool) {
+func (p *defaultQueue) Pop() (v any, exist bool) {
 	if p.IsEmpty() {
 		return
 	}
@@ -81,7 +81,7 @@ func (p *defaultQueue) Pop() (v interface{}, exist bool) {
 	return
 }
 
-func (p *defaultQueue) PopMany(count int64) (vs []interface{}, exist bool) {
+func (p *defaultQueue) PopMany(count int64) (vs []any, exist bool) {
 	if count < 1 {
 		return nil, false
 	}
@@ -101,7 +101,7 @@ func (p *defaultQueue) PopMany(count int64) (vs []interface{}, exist bool) {
 	return
 }
 
-func (p *defaultQueue) PopAll() (all []interface{}, exist bool) {
+func (p *defaultQueue) PopAll() (all []any, exist bool) {
 	if p.IsEmpty() {
 		return
 	}
@@ -113,7 +113,7 @@ func (p *defaultQueue) PopAll() (all []interface{}, exist bool) {
 	return
 }
 
-func (p *defaultQueue) Front() (interface{}, bool) {
+func (p *defaultQueue) Front() (any, bool) {
 	if p.IsEmpty() {
 		return nil, false
 	}
@@ -122,7 +122,7 @@ func (p *defaultQueue) Front() (interface{}, bool) {
 	return p.queue[0], true
 }
 
-func (p *defaultQueue) End() (interface{}, bool) {
+func (p *defaultQueue) End() (any, bool) {
 	if p.IsEmpty() {
 		return nil, false
 	}

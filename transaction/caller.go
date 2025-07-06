@@ -26,15 +26,15 @@ import (
 
 // LogicFunc logic functions
 type LogicFunc struct {
-	BeforeLogic interface{}
-	AfterLogic  interface{}
-	OnError     interface{}
-	Logic       interface{}
-	AfterCommit interface{}
+	BeforeLogic any
+	AfterLogic  any
+	OnError     any
+	Logic       any
+	AfterCommit any
 }
 
 // TXFunc Transaction function
-type TXFunc func(repos ...interface{}) error
+type TXFunc func(repos ...any) error
 
 // Function Flags
 const (
@@ -61,7 +61,7 @@ func AddErrorTypes(errType reflect.Type) {
 }
 
 // CallFunc execute transaction function with logic functions and args
-func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
+func CallFunc(input any, args ...any) ([]any, error) {
 	if input == nil {
 		return nil, nil
 	}
@@ -71,7 +71,7 @@ func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
 		{
 			return nil, _logicFunc(args...)
 		}
-	case func(repos ...interface{}) (err error):
+	case func(repos ...any) (err error):
 		{
 			return nil, _logicFunc(args...)
 		}
@@ -81,17 +81,17 @@ func CallFunc(input interface{}, args ...interface{}) ([]interface{}, error) {
 }
 
 // GetLogicFunc reflect logic function
-func GetLogicFunc(input interface{}) *LogicFunc {
+func GetLogicFunc(input any) *LogicFunc {
 	if input == nil {
 		return nil
 	}
 	lFunc := &LogicFunc{}
 	switch fn := input.(type) {
-	case TXFunc, func(repos []interface{}) (err error):
+	case TXFunc, func(repos []any) (err error):
 		{
 			lFunc.Logic = fn
 		}
-	case map[int]interface{}:
+	case map[int]any:
 		if hookBeforeFn, exist := fn[BeforeLogic]; exist {
 			lFunc.BeforeLogic = hookBeforeFn
 		}
@@ -114,7 +114,7 @@ func GetLogicFunc(input interface{}) *LogicFunc {
 	return lFunc
 }
 
-func call(fn interface{}, args ...interface{}) ([]interface{}, error) {
+func call(fn any, args ...any) ([]any, error) {
 	v := reflect.ValueOf(fn)
 	if !v.IsValid() {
 		return nil, fmt.Errorf("call of nil")
@@ -158,7 +158,7 @@ func call(fn interface{}, args ...interface{}) ([]interface{}, error) {
 	result := v.Call(argv)
 	resultLen := len(result)
 
-	var resultValues []interface{}
+	var resultValues []any
 
 	for _, v := range result {
 		resultValues = append(resultValues, v.Interface())

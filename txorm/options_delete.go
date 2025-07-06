@@ -23,14 +23,14 @@ import (
 
 type DeleteOption func(*DeleteOptions)
 type DeleteOptions struct {
-	Wheres interface{}
-	Args   []interface{}
+	Wheres any
+	Args   []any
 
 	InWheres    []*In
 	NotInWheres []*In
 }
 
-func DeleteWheres(wheres interface{}) DeleteOption {
+func DeleteWheres(wheres any) DeleteOption {
 	return func(options *DeleteOptions) {
 		switch ts := wheres.(type) {
 		case []string:
@@ -41,7 +41,7 @@ func DeleteWheres(wheres interface{}) DeleteOption {
 	}
 }
 
-func DeleteArgs(args ...interface{}) DeleteOption {
+func DeleteArgs(args ...any) DeleteOption {
 	return func(options *DeleteOptions) {
 		options.Args = args
 	}

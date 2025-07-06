@@ -27,19 +27,19 @@ import (
 var _ BaseRepository = (*BaseRepo)(nil)
 
 type BaseRepository interface {
-	Get(bean interface{}, opts ...GetOption) (bool, error)
-	Find(beans interface{}, opts ...GetOption) error
-	FindAndCount(beans interface{}, opts ...GetOption) (int64, error)
-	Count(beans interface{}, opts ...GetOption) (int64, error)
+	Get(bean any, opts ...GetOption) (bool, error)
+	Find(beans any, opts ...GetOption) error
+	FindAndCount(beans any, opts ...GetOption) (int64, error)
+	Count(beans any, opts ...GetOption) (int64, error)
 
 	ExecRepository
 }
 
 type ExecRepository interface {
-	Insert(...interface{}) (int64, error)
-	InsertMulti(beans interface{}, opts ...InsertMultiOption) (int64, error)
-	Update(bean interface{}, opts ...UpdateOption) (int64, error)
-	Delete(bean interface{}, opts ...DeleteOption) (int64, error)
+	Insert(...any) (int64, error)
+	InsertMulti(beans any, opts ...InsertMultiOption) (int64, error)
+	Update(bean any, opts ...UpdateOption) (int64, error)
+	Delete(bean any, opts ...DeleteOption) (int64, error)
 
 	transaction.Repo
 }
@@ -68,7 +68,7 @@ func (p *BaseRepo) SetSession(x any) error {
 	return nil
 }
 
-func CheckSession(x interface{}) (*xorm.Session, error) {
+func CheckSession(x any) (*xorm.Session, error) {
 	switch t := x.(type) {
 	case *xorm.Session:
 		return t, nil
@@ -79,34 +79,34 @@ func CheckSession(x interface{}) (*xorm.Session, error) {
 	}
 }
 
-func (p *BaseRepo) Insert(beans ...interface{}) (int64, error) {
+func (p *BaseRepo) Insert(beans ...any) (int64, error) {
 	return Insert(p.session, beans...)
 }
 
-func (p *BaseRepo) InsertMulti(beans interface{}, opts ...InsertMultiOption) (int64, error) {
+func (p *BaseRepo) InsertMulti(beans any, opts ...InsertMultiOption) (int64, error) {
 	return InsertMulti(p.session, beans, opts...)
 }
 
-func (p *BaseRepo) Update(bean interface{}, opts ...UpdateOption) (int64, error) {
+func (p *BaseRepo) Update(bean any, opts ...UpdateOption) (int64, error) {
 	return Update(p.session, bean, opts...)
 }
 
-func (p *BaseRepo) Delete(bean interface{}, opts ...DeleteOption) (int64, error) {
+func (p *BaseRepo) Delete(bean any, opts ...DeleteOption) (int64, error) {
 	return Delete(p.session, bean, opts...)
 }
 
-func (p *BaseRepo) Get(bean interface{}, opts ...GetOption) (bool, error) {
+func (p *BaseRepo) Get(bean any, opts ...GetOption) (bool, error) {
 	return Get(p.session, bean, opts...)
 }
 
-func (p *BaseRepo) Find(beans interface{}, opts ...GetOption) error {
+func (p *BaseRepo) Find(beans any, opts ...GetOption) error {
 	return Find(p.session, beans, opts...)
 }
 
-func (p *BaseRepo) FindAndCount(beans interface{}, opts ...GetOption) (int64, error) {
+func (p *BaseRepo) FindAndCount(beans any, opts ...GetOption) (int64, error) {
 	return FindAndCount(p.session, beans, opts...)
 }
 
-func (p *BaseRepo) Count(beans interface{}, opts ...GetOption) (int64, error) {
+func (p *BaseRepo) Count(beans any, opts ...GetOption) (int64, error) {
 	return Count(p.session, beans, opts...)
 }

@@ -34,25 +34,25 @@ func NewYAMLReader(opts ...ReaderOptionFunc) Reader {
 	return r
 }
 
-func (p *defYamlReader) Read(model interface{}) error {
+func (p *defYamlReader) Read(model any) error {
 	return ParseYAMLFileToModel(p.opts.filename, model)
 }
 
-func (*defYamlReader) Dump(v interface{}) ([]byte, error) {
+func (*defYamlReader) Dump(v any) ([]byte, error) {
 	return yaml.Marshal(v)
 }
 
-func (*defYamlReader) ParseData(data []byte, model interface{}) error {
+func (*defYamlReader) ParseData(data []byte, model any) error {
 	return ParseYAMLData(data, model)
 }
 
 // ParseYAMLData 解析yaml的配置信息
-func ParseYAMLData(data []byte, model interface{}) error {
+func ParseYAMLData(data []byte, model any) error {
 	return yaml.Unmarshal(data, model)
 }
 
 // ParseYAMLFileToModel 读取yaml文件的配置信息
-func ParseYAMLFileToModel(name string, model interface{}) error {
+func ParseYAMLFileToModel(name string, model any) error {
 	data, err := ReadFile(name)
 	if err != nil {
 		return err

@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/sirupsen/logrus"
 	"trellis.tech/trellis/common.v2/config"
 	"trellis.tech/trellis/common.v2/errcode"
 	"trellis.tech/trellis/common.v2/logger"
@@ -73,6 +74,12 @@ func OptLogger(l logger.XormLogger) Option {
 	}
 }
 
+func OptLogrusLogger(l *logrus.Logger) Option {
+	return func(o *Options) {
+		o.logger = logger.ToXormLogger(l)
+	}
+}
+
 func OptMaxIdleConns(maxIdleConns int) Option {
 	return func(o *Options) {
 		o.maxIdleConns = maxIdleConns
@@ -91,9 +98,14 @@ func OptLogLevel(lv log.LogLevel) Option {
 	}
 }
 
-func OptShowSQL(showSQL bool) Option {
+func OptShowSQL(showSQL ...bool) Option {
 	return func(o *Options) {
-		o.showSQL = showSQL
+		if condition := len(showSQL); condition > 0 {
+			o.showSQL = showSQL[0]
+		} else {
+			o.showSQL = true
+		}
+
 	}
 }
 
@@ -104,7 +116,7 @@ func OptIsDefault(def bool) Option {
 }
 
 // NewEnginesFromFile initial engines from file
-func NewEnginesFromFile(file string, l logger.Logger) (map[string]transaction.Engine, error) {
+func NewEnginesFromFile(file string, l logger.XormLogger) (map[string]transaction.Engine, error) {
 	conf, err := config.NewConfigOptions(config.OptionFile(file))
 	if err != nil {
 		return nil, err
@@ -113,7 +125,7 @@ func NewEnginesFromFile(file string, l logger.Logger) (map[string]transaction.En
 }
 
 // NewEnginesWithConfig initial engines from config
-func NewEnginesWithConfig(cfg config.Config, l logger.Logger) (engines map[string]transaction.Engine, err error) {
+func NewEnginesWithConfig(cfg config.Config, l logger.XormLogger) (engines map[string]transaction.Engine, err error) {
 	if cfg == nil {
 		return nil, errcode.New("nil config")
 	}
@@ -189,7 +201,7 @@ func NewXORMEngineWithDB(driver, dsn string, db *core.DB, ops ...Option) (*xorm.
 }
 
 // NewXORMEnginesFromFile initial xorm engine from file
-func NewXORMEnginesFromFile(file string, l logger.Logger) (map[string]*xorm.Engine, error) {
+func NewXORMEnginesFromFile(file string, l logger.XormLogger) (map[string]*xorm.Engine, error) {
 	conf, err := config.NewConfigOptions(config.OptionFile(file))
 	if err != nil {
 		return nil, err
@@ -197,7 +209,7 @@ func NewXORMEnginesFromFile(file string, l logger.Logger) (map[string]*xorm.Engi
 	return NewXORMEngineWithConfig(conf, l)
 }
 
-func NewXORMEngineWithConfig(cfg config.Config, l logger.Logger) (engines map[string]*xorm.Engine, err error) {
+func NewXORMEngineWithConfig(cfg config.Config, l logger.XormLogger) (engines map[string]*xorm.Engine, err error) {
 	engines = make(map[string]*xorm.Engine, 0)
 	locker.Lock()
 	defer locker.Unlock()
@@ -223,7 +235,7 @@ func NewXORMEngineWithConfig(cfg config.Config, l logger.Logger) (engines map[st
 	return engines, nil
 }
 
-func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm.Engine, bool, error) {
+func newXORMEngineWithConfig(cfg config.Config, key string, l logger.XormLogger) (*xorm.Engine, bool, error) {
 	dConfig := cfg.GetValuesConfig(key)
 	if dConfig == nil {
 		return nil, false, errcode.Newf("not found config with key: %s", key)
@@ -316,7 +328,7 @@ func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {
 	return TransactionDoWithSession(p.Engine.NewSession(), fn)
 }
 
-func (p *XEngine) NewSession() (interface{}, error) {
+func (p *XEngine) NewSession() (any, error) {
 	return p.NewXORMSession()
 }
 
@@ -324,8 +336,8 @@ func (p *XEngine) NewXORMSession() (*xorm.Session, error) {
 	return p.Engine.NewSession(), nil
 }
 
-func (p *XEngine) Exec(sql string, args ...interface{}) (sql.Result, error) {
-	sqlOrArgs := append([]interface{}{sql}, args...)
+func (p *XEngine) Exec(sql string, args ...any) (sql.Result, error) {
+	sqlOrArgs := append([]any{sql}, args...)
 	return p.Engine.Exec(sqlOrArgs...)
 }
 

@@ -34,16 +34,6 @@ func (p *T) Do() error {
 	return nil
 }
 
-var _ logger.KitLogger = (*Logger)(nil)
-
-type Logger struct{}
-
-func (*Logger) Log(kvs ...interface{}) error {
-	kvs = append([]interface{}{"haha"}, kvs...)
-	fmt.Println(kvs...)
-	return nil
-}
-
 func main() {
 	t := &T{}
 	plugin.RegisterPlugin("test", t.Do, plugin.OptionInterval(types.Duration(time.Second*10)))
@@ -63,7 +53,7 @@ func configure() {
 }
 
 func runner() {
-	l := &Logger{}
+	l := logger.Noop()
 	p, err := plugin.NewPlugins(plugin.Logger(l))
 	if err != nil {
 		panic(err)

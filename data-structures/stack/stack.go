@@ -25,17 +25,17 @@ import (
 // Stack functions for manager datas in stack
 type Stack interface {
 	// Push a data into stack
-	Push(v interface{})
+	Push(v any)
 	// PushMany many data into stack
-	PushMany(vs ...interface{})
+	PushMany(vs ...any)
 	// Pop last data
-	Pop() (interface{}, bool)
+	Pop() (any, bool)
 	// PopMany pop many of data
-	PopMany(count int64) ([]interface{}, bool)
+	PopMany(count int64) ([]any, bool)
 	// PopAll pop all data
-	PopAll() ([]interface{}, bool)
+	PopAll() ([]any, bool)
 	// Peek last data
-	Peek() (interface{}, bool)
+	Peek() (any, bool)
 	// Length get length of stack
 	Length() int64
 	// IsEmpty judge stack's length if 0
@@ -45,7 +45,7 @@ type Stack interface {
 type defaultStack struct {
 	sync.Mutex
 	length int64
-	stack  []interface{}
+	stack  []any
 }
 
 // New get stack functions manager
@@ -53,26 +53,24 @@ func New() Stack {
 	return &defaultStack{}
 }
 
-func (p *defaultStack) Push(v interface{}) {
+func (p *defaultStack) Push(v any) {
 	p.PushMany(v)
 }
 
-func (p *defaultStack) PushMany(vs ...interface{}) {
+func (p *defaultStack) PushMany(vs ...any) {
 	p.Lock()
 	defer p.Unlock()
 
 	lenVS := len(vs)
 
-	prepend := make([]interface{}, lenVS)
-	for i, v := range vs {
-		prepend[i] = v
-	}
+	prepend := make([]any, lenVS)
+	copy(prepend, vs)
 
 	p.stack = append(prepend, p.stack...)
 	p.length += int64(lenVS)
 }
 
-func (p *defaultStack) Pop() (v interface{}, exist bool) {
+func (p *defaultStack) Pop() (v any, exist bool) {
 	if p.IsEmpty() {
 		return
 	}
@@ -86,7 +84,7 @@ func (p *defaultStack) Pop() (v interface{}, exist bool) {
 	return
 }
 
-func (p *defaultStack) PopMany(count int64) (vs []interface{}, exist bool) {
+func (p *defaultStack) PopMany(count int64) (vs []any, exist bool) {
 
 	if p.IsEmpty() {
 		return
@@ -104,7 +102,7 @@ func (p *defaultStack) PopMany(count int64) (vs []interface{}, exist bool) {
 	return
 }
 
-func (p *defaultStack) PopAll() (all []interface{}, exist bool) {
+func (p *defaultStack) PopAll() (all []any, exist bool) {
 	if p.IsEmpty() {
 		return
 	}
@@ -116,7 +114,7 @@ func (p *defaultStack) PopAll() (all []interface{}, exist bool) {
 	return
 }
 
-func (p *defaultStack) Peek() (v interface{}, exist bool) {
+func (p *defaultStack) Peek() (v any, exist bool) {
 	if p.IsEmpty() {
 		return
 	}

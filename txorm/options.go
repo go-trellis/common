@@ -17,17 +17,17 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package txorm
 
-func Args(args ...interface{}) []interface{} {
-	var bs []interface{}
+func Args(args ...any) []any {
+	var bs []any
 	return append(bs, args...)
 }
 
 type In struct {
 	Column string
-	Args   []interface{}
+	Args   []any
 }
 
-func InOpts(column string, args ...interface{}) *In {
+func InOpts(column string, args ...any) *In {
 	if column == "" {
 		return nil
 	}

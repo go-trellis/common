@@ -31,7 +31,7 @@ type trans struct {
 }
 
 // Session 返回一个会话对象。如果当前是事务状态且会话为空，则创建一个新的会话。
-func (p *trans) Session() interface{} {
+func (p *trans) Session() any {
 	// 如果当前是事务状态
 	if p.isTrans {
 		// 如果会话为空，则创建一个新的会话
@@ -49,7 +49,7 @@ func (p *trans) IsTransaction() bool {
 	return p.isTrans
 }
 
-func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
+func (p *trans) Commit(fun any, repos ...any) error {
 	// 获取逻辑函数
 	fn := transaction.GetLogicFunc(fun)
 	if fn == nil || fn.Logic == nil {
@@ -58,8 +58,8 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 	}
 
 	var (
-		_values   []interface{}
-		_newRepos []interface{}
+		_values   []any
+		_newRepos []any
 		err       error
 	)
 
@@ -132,7 +132,7 @@ func (p *trans) Commit(fun interface{}, repos ...interface{}) error {
 }
 
 // 设置事务仓库会话
-func setTransactionRepoSession(repo interface{}, session *xorm.Session) error {
+func setTransactionRepoSession(repo any, session *xorm.Session) error {
 	tRepo, ok := repo.(transaction.Repo)
 	if !ok {
 		return errcode.New("not transaction repo, check the repo implement transaction repo")

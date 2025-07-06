@@ -30,10 +30,10 @@ var (
 
 // Committer 事务处理者
 type Committer interface {
-	TX(fn interface{}, repos ...Repo) error
-	TXWithName(fn interface{}, name string, repos ...Repo) error
-	NonTX(fn interface{}, repos ...Repo) error
-	NonTXWithName(fn interface{}, name string, repos ...Repo) error
+	TX(fn any, repos ...Repo) error
+	TXWithName(fn any, name string, repos ...Repo) error
+	NonTX(fn any, repos ...Repo) error
+	NonTXWithName(fn any, name string, repos ...Repo) error
 }
 
 func NewCommitter(engines map[string]Engine) Committer {
@@ -47,26 +47,26 @@ type committer struct {
 }
 
 // TX do transaction function by default database
-func (p *committer) TX(fn interface{}, repos ...Repo) error {
+func (p *committer) TX(fn any, repos ...Repo) error {
 	return p.TXWithName(fn, DefaultDatabase, repos...)
 }
 
 // TXWithName do transaction function with name of database
-func (p *committer) TXWithName(fn interface{}, name string, repos ...Repo) error {
+func (p *committer) TXWithName(fn any, name string, repos ...Repo) error {
 	return p.doCommit(fn, name, true, repos...)
 }
 
 // NonTX do non transaction function by default database
-func (p *committer) NonTX(fn interface{}, repos ...Repo) error {
+func (p *committer) NonTX(fn any, repos ...Repo) error {
 	return p.NonTXWithName(fn, DefaultDatabase, repos...)
 }
 
 // NonTXWithName do non transaction function with name of database
-func (p *committer) NonTXWithName(fn interface{}, name string, repos ...Repo) error {
+func (p *committer) NonTXWithName(fn any, name string, repos ...Repo) error {
 	return p.doCommit(fn, name, false, repos...)
 }
 
-func (p *committer) checkRepos(txFunc interface{}, originRepos []Repo) error {
+func (p *committer) checkRepos(txFunc any, originRepos []Repo) error {
 	if txFunc == nil {
 		return ErrNotFoundFunction
 	}
@@ -78,7 +78,7 @@ func (p *committer) checkRepos(txFunc interface{}, originRepos []Repo) error {
 	return nil
 }
 
-func (p *committer) createNewInstance(origin interface{}) (interface{}, error) {
+func (p *committer) createNewInstance(origin any) (any, error) {
 	if repo, err := Derive(origin); err != nil {
 		return nil, err
 	} else if repo != nil {
@@ -99,7 +99,7 @@ func (p *committer) createNewInstance(origin interface{}) (interface{}, error) {
 	return newRepoI, nil
 }
 
-func (p *committer) doCommit(fn interface{}, name string, isTransaction bool, repos ...Repo) (err error) {
+func (p *committer) doCommit(fn any, name string, isTransaction bool, repos ...Repo) (err error) {
 	engine, ok := p.engines[name]
 	if !ok {
 		return ErrNotFoundEngine
@@ -123,7 +123,7 @@ func (p *committer) doCommit(fn interface{}, name string, isTransaction bool, re
 	}
 
 	var (
-		_newRepos []interface{}
+		_newRepos []any
 	)
 	for _, origin := range repos {
 

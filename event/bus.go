@@ -21,11 +21,11 @@ package event
 type Bus interface {
 	RegistEvent(eventNames ...string) error
 
-	Subscribe(eventName string, fn func(...interface{})) (Subscriber, error)
+	Subscribe(eventName string, fn func(...any)) (Subscriber, error)
 	Unsubscribe(eventName string, ids ...string) error
 	UnsubscribeAll(eventName string)
 
-	Publish(eventName string, evt ...interface{})
+	Publish(eventName string, evt ...any)
 
 	ListEvents() (events []string)
 }
@@ -41,7 +41,7 @@ func RegistEvent(eventNames ...string) error {
 }
 
 // Subscribe 监听
-func Subscribe(eventName string, fn func(...interface{})) (Subscriber, error) {
+func Subscribe(eventName string, fn func(...any)) (Subscriber, error) {
 	return defBus.Subscribe(eventName, fn)
 }
 
@@ -51,7 +51,7 @@ func Unsubscribe(eventName string, ids ...string) error {
 }
 
 // Publish 发布消息
-func Publish(eventName string, event ...interface{}) {
+func Publish(eventName string, event ...any) {
 	defBus.Publish(eventName, event...)
 }
 

@@ -18,10 +18,10 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 // DeepCopy 深度拷贝
-func DeepCopy(value interface{}) interface{} {
+func DeepCopy(value any) any {
 	switch valueType := value.(type) {
-	case map[string]interface{}:
-		newMap := make(map[string]interface{})
+	case map[string]any:
+		newMap := make(map[string]any)
 		for k, v := range valueType {
 			newMap[k] = DeepCopy(v)
 		}
@@ -38,14 +38,14 @@ func DeepCopy(value interface{}) interface{} {
 			newMap[k] = v
 		}
 		return newMap
-	case map[interface{}]interface{}:
-		newMap := make(map[interface{}]interface{})
+	case map[any]any:
+		newMap := make(map[any]any)
 		for k, v := range valueType {
 			newMap[k] = DeepCopy(v)
 		}
 		return newMap
-	case []interface{}:
-		newSlice := make([]interface{}, len(valueType))
+	case []any:
+		newSlice := make([]any, len(valueType))
 		for k, v := range valueType {
 			newSlice[k] = DeepCopy(v)
 		}

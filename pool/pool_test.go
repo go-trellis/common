@@ -33,14 +33,16 @@ var (
 	MaximumCap     = 30
 	network        = "tcp"
 	address        = "127.0.0.1:7777"
-	factory        = func() (interface{}, error) { return net.Dial(network, address) }
-	close          = func(c interface{}) error {
+	factory        = func() (any, error) { return net.Dial(network, address) }
+	close          = func(c any) error {
 		cc, ok := c.(net.Conn)
 		if !ok {
 			return errcode.New("not net connection")
 		}
 		return cc.Close()
 	}
+
+	r *rand.Rand
 )
 
 func init() {
@@ -48,7 +50,7 @@ func init() {
 	go simpleTCPServer()
 	time.Sleep(time.Millisecond * 300) // wait until tcp server has been settled
 
-	rand.Seed(time.Now().UTC().UnixNano())
+	r = rand.New(rand.NewSource(time.Now().Unix()))
 }
 
 func TestNew(t *testing.T) {
@@ -187,7 +189,7 @@ func TestPool_Close(t *testing.T) {
 
 func TestPoolConcurrent(t *testing.T) {
 	p, _ := newChannelPool()
-	pipe := make(chan interface{}, 0)
+	pipe := make(chan any)
 
 	go func() {
 		p.Release()
@@ -234,11 +236,11 @@ func TestPoolConcurrent2(t *testing.T) {
 	var wg sync.WaitGroup
 
 	go func() {
-		for i := 0; i < 10; i++ {
+		for i := range 10 {
 			wg.Add(1)
 			go func(i int) {
 				conn, _ := p.Get()
-				time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+				time.Sleep(time.Millisecond * time.Duration(r.Intn(100)))
 				cc, ok := conn.(net.Conn)
 				if ok {
 					cc.Close()
@@ -248,11 +250,11 @@ func TestPoolConcurrent2(t *testing.T) {
 		}
 	}()
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		wg.Add(1)
 		go func(i int) {
 			conn, _ := p.Get()
-			time.Sleep(time.Millisecond * time.Duration(rand.Intn(100)))
+			time.Sleep(time.Millisecond * time.Duration(r.Intn(100)))
 			cc, ok := conn.(net.Conn)
 			if ok {
 				cc.Close()

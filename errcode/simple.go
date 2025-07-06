@@ -45,7 +45,7 @@ func New(text string) SimpleError {
 }
 
 // Newf 生成简单对象
-func Newf(text string, params ...interface{}) SimpleError {
+func Newf(text string, params ...any) SimpleError {
 	return New(fmt.Sprintf(text, params...))
 }
 

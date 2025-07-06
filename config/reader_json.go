@@ -36,20 +36,20 @@ func NewJSONReader(opts ...ReaderOptionFunc) Reader {
 	return r
 }
 
-func (p *defJSONReader) Read(model interface{}) error {
+func (p *defJSONReader) Read(model any) error {
 	return ReadJSONFileToModel(p.opts.filename, model)
 }
 
-func (*defJSONReader) Dump(v interface{}) ([]byte, error) {
+func (*defJSONReader) Dump(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func (*defJSONReader) ParseData(data []byte, model interface{}) error {
+func (*defJSONReader) ParseData(data []byte, model any) error {
 	return ParseJSONData(data, model)
 }
 
 // ReadJSONFileToModel 读取Json文件数据到Models
-func ReadJSONFileToModel(filepath string, model interface{}) error {
+func ReadJSONFileToModel(filepath string, model any) error {
 	data, err := ReadFile(filepath)
 	if err != nil {
 		return err
@@ -58,7 +58,7 @@ func ReadJSONFileToModel(filepath string, model interface{}) error {
 }
 
 // ParseJSONData 解析Json配置
-func ParseJSONData(data []byte, model interface{}) error {
+func ParseJSONData(data []byte, model any) error {
 	var escaped bool // string value flag, " appear times, odd is false, even is true
 	var comments int // 0 nothing; 1 line; 2 multi line
 	var result []byte

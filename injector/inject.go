@@ -22,7 +22,7 @@ import (
 )
 
 // Inject 注入函数
-func Inject(a interface{}, params ...interface{}) error {
+func Inject(a any, params ...any) error {
 	ior := inject.New()
 	for _, v := range params {
 		ior.Map(v)

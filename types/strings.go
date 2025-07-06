@@ -25,7 +25,7 @@ import (
 )
 
 // IntToString parse int to string
-func IntToString(value interface{}) (string, error) {
+func IntToString(value any) (string, error) {
 	if value == nil {
 		return "", nil
 	}

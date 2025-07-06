@@ -35,25 +35,25 @@ type Cache interface {
 	// Creates a new table.
 	New(tab string, options ...OptionFunc) error
 	// Inserts the object or all of the objects in list.
-	Insert(tab string, key, value interface{}) bool
+	Insert(tab string, key, value any) bool
 	// Inserts the object or all of the objects with expired time in list.
-	InsertExpire(tab string, key, value interface{}, expire time.Duration) bool
+	InsertExpire(tab string, key, value any, expire time.Duration) bool
 	// Deletes the entire table Tab.
 	Delete(tab string) bool
 	// Deletes all objects with key, Key from table Tab.
-	DeleteObject(tab string, key interface{}) bool
+	DeleteObject(tab string, key any) bool
 	// Delete all objects in the table Tab. Remain table in cache.
 	DeleteObjects(tab string)
 	// Look up values with key, Key from table Tab.
-	Lookup(tab string, key interface{}) ([]interface{}, bool)
+	Lookup(tab string, key any) ([]any, bool)
 	// Look up all values in the Tab.
-	LookupAll(tab string) (map[interface{}][]interface{}, bool)
+	LookupAll(tab string) (map[any][]any, bool)
 	// Returns true if one or more elements in the table has key Key, otherwise false.
-	Member(tab string, key interface{}) bool
+	Member(tab string, key any) bool
 	// Retruns all keys in the table Tab.
-	Members(tab string) ([]interface{}, bool)
+	Members(tab string) ([]any, bool)
 	// Set key Key expire time in the table Tab.
-	SetExpire(tab string, key interface{}, expire time.Duration) bool
+	SetExpire(tab string, key any, expire time.Duration) bool
 }
 ```
 
@@ -65,23 +65,23 @@ table cache is manager for k-vs
 // TableCache
 type TableCache interface {
 	// Inserts the object or all of the objects in list.
-	Insert(key, values interface{}) bool
+	Insert(key, values any) bool
 	// Inserts the object or all of the objects with expired time in list.
-	InsertExpire(key, value interface{}, expire time.Duration) bool
+	InsertExpire(key, value any, expire time.Duration) bool
 	// Deletes all objects with key: Key.
-	DeleteObject(key interface{}) bool
+	DeleteObject(key any) bool
 	// Delete all objects in the table Tab. Remain table in cache.
 	DeleteObjects()
 	// Returns true if one or more elements in the table has key: Key, otherwise false.
-	Member(key interface{}) bool
+	Member(key any) bool
 	// Retruns all keys in the table Tab.
-	Members() ([]interface{}, bool)
+	Members() ([]any, bool)
 	// Look up values with key: Key.
-	Lookup(key interface{}) ([]interface{}, bool)
+	Lookup(key any) ([]any, bool)
 	// Look up all values in the Tab.
-	LookupAll() (map[interface{}][]interface{}, bool)
+	LookupAll() (map[any][]any, bool)
 	// Set Key Expire time
-	SetExpire(key interface{}, expire time.Duration) bool
+	SetExpire(key any, expire time.Duration) bool
 }
 ```
 

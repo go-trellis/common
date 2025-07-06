@@ -25,17 +25,13 @@ import (
 // AddFlags adds the flags used by this package to the Kingpin application.
 // To use the default Kingpin application, call AddFlags(kingpin.CommandLine)
 func AddFlags(a *kingpin.Application, config *prometheus.Config) {
-	a.Flag("log.level", "Only log messages with the given severity or above. One of: [debug, info, warn, error]").
-		Default("info").StringVar(&config.Level)
+	a.Flag("log.level", "Only log messages with the given severity or above. One of: [trace, debug, info, warn, error, fatal, panic]").Default("info").StringVar(&config.Level)
 	a.Flag("log.file-name", "Path to the log directory.").Default("").StringVar(&config.FileName)
-	a.Flag("log.move-file-type", "Move file type.[0-Never move files, 1-Move files every minute, 2-Move files every hour, 3-Move files every day]").
+	a.Flag("log.move-file-type", "Move file type.[1-Move files every minute, 2-Move files every hour, 3-Move files every day]").
 		Default("3").IntVar(&config.MoveFileType)
 	a.Flag("log.max-length", "The size of one file, 0-Undivided file.").
 		Default("0").Int64Var(&config.MaxLength)
 	a.Flag("log.max-backups", "The maximum number of saved files, 0-Save all files.").
-		Default("10").IntVar(&config.MaxBackups)
-	a.Flag("log.std_printers", "The standard printers: stderr, stdout").StringsVar(&config.StdPrinters)
-	a.Flag("log.time_format", "The time format").Default("").StringVar(&config.TimeFormat)
+		Default("10").UintVar(&config.MaxBackups)
 	a.Flag("log.caller", "caller").Default("false").BoolVar(&config.Caller)
-	a.Flag("log.caller_skip", "caller skip").Default("3").IntVar(&config.CallerSkip)
 }

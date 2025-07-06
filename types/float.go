@@ -46,7 +46,7 @@ func (p *Found) Set(f string) error {
 }
 
 // UnmarshalYAML implements yaml.Unmarshaler.
-func (p *Found) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *Found) UnmarshalYAML(unmarshal func(any) error) error {
 	var f float64
 	if err := unmarshal(&f); err != nil {
 		return err
@@ -55,7 +55,7 @@ func (p *Found) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 // MarshalYAML implements yaml.Marshaler.
-func (p *Found) MarshalYAML() (interface{}, error) {
+func (p *Found) MarshalYAML() (any, error) {
 	if p == nil {
 		return 0, nil
 	}
@@ -63,7 +63,7 @@ func (p *Found) MarshalYAML() (interface{}, error) {
 }
 
 // ToFloat64 covert any type to float64
-func ToFloat64(value interface{}) (float64, error) {
+func ToFloat64(value any) (float64, error) {
 	if value == nil {
 		return 0, nil
 	}

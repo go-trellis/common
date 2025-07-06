@@ -28,12 +28,12 @@ var _ flag.Value = (*Duration)(nil)
 type Duration time.Duration
 
 // MarshalYAML implements the yaml.Marshaler interface.
-func (p Duration) MarshalYAML() (interface{}, error) {
+func (p Duration) MarshalYAML() (any, error) {
 	return p.String(), nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface.
-func (p *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err

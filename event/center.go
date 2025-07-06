@@ -69,7 +69,7 @@ func (p *Center) RegistEvent(eventNames ...string) error {
 }
 
 // Subscribe 监听
-func (p *Center) Subscribe(eventName string, fn func(...interface{})) (Subscriber, error) {
+func (p *Center) Subscribe(eventName string, fn func(...any)) (Subscriber, error) {
 	if len(eventName) == 0 {
 		return nil, errors.New("event name is empty")
 	}
@@ -109,7 +109,7 @@ func (p *Center) UnsubscribeAll(eventName string) {
 }
 
 // Publish 分发
-func (p *Center) Publish(eventName string, evts ...interface{}) {
+func (p *Center) Publish(eventName string, evts ...any) {
 	if len(eventName) == 0 {
 		return
 	}

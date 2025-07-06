@@ -1,5 +1,5 @@
 /*
-Copyright © 2021 Henry Huang <hhh@rutcode.com>
+Copyright © 2025 Henry Huang <hhh@rutcode.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,52 +20,12 @@ package logger
 import (
 	"io"
 
-	"xorm.io/xorm/log"
+	"github.com/sirupsen/logrus"
 )
 
-// Noop logger.
-func Noop() Logger {
-	return &noop{}
+// Noop returns a noop Logger.
+func Noop() *logrus.Logger {
+	l := logrus.New()
+	l.SetOutput(io.Discard)
+	return l
 }
-
-type noop struct {
-	level log.LogLevel
-}
-
-func (noop) Log(...interface{}) error {
-	return nil
-}
-func (noop) Debug(args ...interface{})              {}
-func (noop) Debugf(msg string, args ...interface{}) {}
-func (noop) DebugM(msg string, args ...interface{}) {}
-func (noop) Info(args ...interface{})               {}
-func (noop) Infof(msg string, args ...interface{})  {}
-func (noop) InfoM(msg string, args ...interface{})  {}
-func (noop) Warn(args ...interface{})               {}
-func (noop) Warnf(msg string, args ...interface{})  {}
-func (noop) WarnM(msg string, args ...interface{})  {}
-func (noop) Error(args ...interface{})              {}
-func (noop) Errorf(msg string, args ...interface{}) {}
-func (noop) ErrorM(msg string, args ...interface{}) {}
-func (noop) Panic(args ...interface{})              {}
-func (noop) Panicf(msg string, args ...interface{}) {}
-func (noop) PanicM(msg string, args ...interface{}) {}
-func (noop) Fatal(args ...interface{})              {}
-func (noop) Fatalf(msg string, args ...interface{}) {}
-func (noop) FatalM(msg string, args ...interface{}) {}
-func (noop) Writer() io.Writer {
-	return io.Discard
-}
-func (noop) With(...interface{}) Logger {
-	return &noop{}
-}
-func (p *noop) Level() log.LogLevel {
-	return p.level
-}
-
-func (p *noop) SetLevel(l log.LogLevel) {
-	p.level = l
-}
-
-func (p *noop) ShowSQL(show ...bool) {}
-func (p *noop) IsShowSQL() bool      { return false }

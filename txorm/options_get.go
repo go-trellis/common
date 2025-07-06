@@ -35,14 +35,14 @@ const (
 
 type Builder struct {
 	LinkType LinkType
-	Where    interface{}
-	Args     []interface{}
+	Where    any
+	Args     []any
 }
 
 type GetOption func(*GetOptions)
 type GetOptions struct {
-	Wheres interface{}
-	Args   []interface{}
+	Wheres any
+	Args   []any
 
 	Builders []*Builder
 
@@ -76,14 +76,14 @@ func GetBuilder(b *Builder) GetOption {
 	}
 }
 
-func GetWheres(wheres interface{}) GetOption {
+func GetWheres(wheres any) GetOption {
 	return func(options *GetOptions) {
 		switch ts := wheres.(type) {
 		case string:
 			options.addStringWheres(ts)
 		case []string:
 			options.addStringWheres(strings.Join(ts, " AND "))
-		case map[string]interface{}:
+		case map[string]any:
 			options.addMapWheres(ts)
 		default:
 			panic(fmt.Errorf("not supported wheres type: %s", reflect.TypeOf(ts).String()))
@@ -103,7 +103,7 @@ func GetNotIn(ins ...*In) GetOption {
 	}
 }
 
-func GetArgs(args ...interface{}) GetOption {
+func GetArgs(args ...any) GetOption {
 	return func(options *GetOptions) {
 		options.Args = args
 	}
@@ -194,7 +194,7 @@ func (p *GetOptions) Session(session *xorm.Session) *xorm.Session {
 	return session
 }
 
-func (p *GetOptions) addMapWheres(maps map[string]interface{}) {
+func (p *GetOptions) addMapWheres(maps map[string]any) {
 	if maps == nil {
 		return
 	}
@@ -205,7 +205,7 @@ func (p *GetOptions) addMapWheres(maps map[string]interface{}) {
 	}
 
 	switch t := p.Wheres.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		for k, v := range maps {
 			t[k] = v
 		}

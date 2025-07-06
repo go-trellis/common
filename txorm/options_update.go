@@ -23,15 +23,15 @@ import (
 
 type UpdateOption func(*UpdateOptions)
 type UpdateOptions struct {
-	Wheres interface{}
-	Args   []interface{}
+	Wheres any
+	Args   []any
 	Cols   []string
 
 	InWheres    []*In
 	NotInWheres []*In
 }
 
-func UpdateWheres(wheres interface{}) UpdateOption {
+func UpdateWheres(wheres any) UpdateOption {
 	return func(options *UpdateOptions) {
 		switch ts := wheres.(type) {
 		case []string:
@@ -42,7 +42,7 @@ func UpdateWheres(wheres interface{}) UpdateOption {
 	}
 }
 
-func UpdateArgs(args ...interface{}) UpdateOption {
+func UpdateArgs(args ...any) UpdateOption {
 	return func(options *UpdateOptions) {
 		options.Args = args
 	}

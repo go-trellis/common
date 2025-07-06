@@ -28,15 +28,15 @@ type RawMessage = json.RawMessage
 type Delim = json.Delim
 type Token = json.Token
 
-func Unmarshal(bs []byte, v interface{}) error {
+func Unmarshal(bs []byte, v any) error {
 	return json.Unmarshal(bs, v)
 }
 
-func Marshal(v interface{}) ([]byte, error) {
+func Marshal(v any) ([]byte, error) {
 	return json.Marshal(v)
 }
 
-func MarshalIndent(v interface{}, prefix, indent string) ([]byte, error) {
+func MarshalIndent(v any, prefix, indent string) ([]byte, error) {
 	return json.MarshalIndent(v, prefix, indent)
 }
 

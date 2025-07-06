@@ -23,9 +23,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/robfig/cron/v3"
+	"github.com/sirupsen/logrus"
 
 	"trellis.tech/trellis/common.v2/config"
 	"trellis.tech/trellis/common.v2/errcode"
@@ -68,7 +67,7 @@ type Plugins struct {
 	pluginIds map[cron.EntryID]*Plugin
 
 	crons  *cron.Cron
-	logger logger.KitLogger
+	logger logrus.FieldLogger
 }
 
 type Configs struct {
@@ -99,7 +98,7 @@ func CronOptions(option ...cron.Option) Option {
 }
 
 // Logger set config logger
-func Logger(l logger.KitLogger) Option {
+func Logger(l logrus.FieldLogger) Option {
 	return func(p *Plugins) {
 		p.logger = l
 	}
@@ -163,7 +162,7 @@ func (p *Plugins) RegisterPlugin(c *Config) (cron.EntryID, error) {
 	if _, ok := p.plugins[c.Name]; ok {
 		return 0, errcode.Newf("plugin is already exists: %s", c.Name)
 	}
-	plugin, err := NewPlugin(c, log.With(p.logger, "plugin", c.Name))
+	plugin, err := NewPlugin(c, p.logger.WithFields(logrus.Fields{"plugin": c.Name}))
 	if err != nil {
 		return 0, errcode.Newf("initial plugin failed: %+v", err)
 	}
@@ -197,7 +196,7 @@ func (p *Plugins) runPlugin(plugin *Plugin) func() {
 		evalTotalCounter.WithLabelValues(plugin.config.Name).Add(1)
 
 		if err := plugin.config.FN(); err != nil {
-			level.Error(p.logger).Log("msg", "eval_function_failed", "error", err)
+			p.logger.Error("msg", "eval_function_failed", "error", err)
 			evalFailureTotalCounter.WithLabelValues(plugin.config.Name).Add(1)
 		} else {
 			evalSuccessTotalCounter.WithLabelValues(plugin.config.Name).Add(1)

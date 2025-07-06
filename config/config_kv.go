@@ -26,11 +26,7 @@ import (
 	"trellis.tech/trellis/common.v2/types"
 )
 
-func (p *AdapterConfig) copyDollarSymbol(key string, maps *map[string]interface{}) error {
-	var tokens []string
-	if key != "" {
-		tokens = append(tokens, key)
-	}
+func (p *AdapterConfig) copyDollarSymbol(_ string, maps *map[string]any) error {
 	for mapK, mapV := range *maps {
 		value := p.checkValue(mapV)
 		if value != nil {
@@ -40,7 +36,7 @@ func (p *AdapterConfig) copyDollarSymbol(key string, maps *map[string]interface{
 	return nil
 }
 
-func (p *AdapterConfig) checkValue(value interface{}) interface{} {
+func (p *AdapterConfig) checkValue(value any) any {
 	if value == nil {
 		return nil
 	}
@@ -75,14 +71,14 @@ func (p *AdapterConfig) checkValue(value interface{}) interface{} {
 
 		return v
 	case reflect.Slice:
-		vs := value.([]interface{})
+		vs := value.([]any)
 		for i, v := range vs {
 			newV := p.checkValue(v)
 			vs[i] = newV
 		}
 		return vs
 	case reflect.Map:
-		vs, ok := value.(map[string]interface{})
+		vs, ok := value.(map[string]any)
 		if !ok {
 			return value
 		}
@@ -96,7 +92,7 @@ func (p *AdapterConfig) checkValue(value interface{}) interface{} {
 	}
 }
 
-func (p *AdapterConfig) getKeyValue(key string) (interface{}, error) {
+func (p *AdapterConfig) getKeyValue(key string) (any, error) {
 	tokens := strings.Split(key, ".")
 	vm := p.configs[tokens[0]]
 
@@ -108,9 +104,9 @@ func (p *AdapterConfig) getKeyValue(key string) (interface{}, error) {
 		switch v := vm.(type) {
 		case Options:
 			vm = v[t]
-		case map[string]interface{}:
+		case map[string]any:
 			vm = v[t]
-		case map[interface{}]interface{}:
+		case map[any]any:
 			vm = v[t]
 		default:
 			return nil, ErrNotMap
@@ -120,7 +116,7 @@ func (p *AdapterConfig) getKeyValue(key string) (interface{}, error) {
 }
 
 // setKeyValue set key value into *configs
-func (p *AdapterConfig) setKeyValue(key string, value interface{}) (err error) {
+func (p *AdapterConfig) setKeyValue(key string, value any) (err error) {
 	tokens := strings.Split(key, ".")
 	for i := len(tokens) - 1; i >= 0; i-- {
 		if i == 0 {
@@ -132,14 +128,14 @@ func (p *AdapterConfig) setKeyValue(key string, value interface{}) (err error) {
 		case Options:
 			vm[tokens[i]] = value
 			value = vm
-		case map[string]interface{}:
+		case map[string]any:
 			vm[tokens[i]] = value
 			value = vm
-		case map[interface{}]interface{}:
+		case map[any]any:
 			vm[tokens[i]] = value
 			value = vm
 		default:
-			value = map[string]interface{}{tokens[i]: value}
+			value = map[string]any{tokens[i]: value}
 		}
 	}
 	return

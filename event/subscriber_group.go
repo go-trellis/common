@@ -34,9 +34,9 @@ const (
 
 // SubscriberGroup 消费者组
 type SubscriberGroup interface {
-	Subscriber(interface{}) (Subscriber, error)
+	Subscriber(any) (Subscriber, error)
 	RemoveSubscriber(ids ...string) error
-	Publish(values ...interface{}) error
+	Publish(values ...any) error
 	ClearSubscribers()
 }
 
@@ -70,7 +70,7 @@ func NewSubscriberGroup(opts ...GroupOption) SubscriberGroup {
 }
 
 // Subscriber 注册消费者
-func (p *defSubscriberGroup) Subscriber(sub interface{}) (Subscriber, error) {
+func (p *defSubscriberGroup) Subscriber(sub any) (Subscriber, error) {
 	subscriber, err := NewDefSubscriber(sub)
 	if err != nil {
 		return nil, err
@@ -113,7 +113,7 @@ func (p *defSubscriberGroup) RemoveSubscriber(ids ...string) error {
 }
 
 // Publish 发布消息
-func (p *defSubscriberGroup) Publish(values ...interface{}) error {
+func (p *defSubscriberGroup) Publish(values ...any) error {
 	var subscribers []Subscriber
 	p.locker.RLock()
 	for _, s := range p.subscribers {
@@ -124,7 +124,7 @@ func (p *defSubscriberGroup) Publish(values ...interface{}) error {
 	for _, sub := range subscribers {
 		switch p.model {
 		case SubscriberModelGoroutine:
-			go func(values ...interface{}) { _ = sub.Publish(values...) }(values...)
+			go func(values ...any) { _ = sub.Publish(values...) }(values...)
 		default:
 			if err := sub.Publish(values...); err != nil {
 				return err

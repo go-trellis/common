@@ -38,7 +38,7 @@ const (
 type AdapterConfig struct {
 	ConfigFile   string
 	ConfigString string
-	ConfigStruct interface{}
+	ConfigStruct any
 
 	EnvPrefix  string
 	EnvAllowed bool
@@ -49,7 +49,7 @@ type AdapterConfig struct {
 
 	reader  Reader
 	locker  sync.RWMutex
-	configs map[string]interface{}
+	configs map[string]any
 }
 
 // NewAdapterConfig return default config adapter
@@ -60,7 +60,7 @@ func NewAdapterConfig(filepath string) (Config, error) {
 	}
 	a := &AdapterConfig{
 		ConfigFile: filepath,
-		configs:    make(map[string]interface{}),
+		configs:    make(map[string]any),
 	}
 
 	err := a.init(OptionFile(filepath))
@@ -131,7 +131,7 @@ func (p *AdapterConfig) copy() *AdapterConfig {
 
 	values := DeepCopy(p.configs)
 
-	valuesMap := values.(map[string]interface{})
+	valuesMap := values.(map[string]any)
 	return &AdapterConfig{
 		ConfigFile:   p.ConfigFile,
 		ConfigString: p.ConfigString,
@@ -153,9 +153,9 @@ func (p *AdapterConfig) GetByteSize(key string, defValue ...*big.Int) *big.Int {
 }
 
 // GetInterface return a interface object in p.configs by key
-func (p *AdapterConfig) GetInterface(key string, defValue ...interface{}) (res interface{}) {
+func (p *AdapterConfig) GetInterface(key string, defValue ...any) (res any) {
 	var err error
-	var v interface{}
+	var v any
 
 	defer func() {
 		if err != nil {
@@ -256,14 +256,14 @@ func (p *AdapterConfig) GetFloat(key string, defValue ...float64) (res float64) 
 	return v
 }
 
-// GetList return a list of interface{} in p.configs by key
-func (p *AdapterConfig) GetList(key string) (res []interface{}) {
+// GetList return a list of any in p.configs by key
+func (p *AdapterConfig) GetList(key string) (res []any) {
 	vS := reflect.Indirect(reflect.ValueOf(p.GetInterface(key)))
 	if vS.Kind() != reflect.Slice {
 		return nil
 	}
 
-	var vs []interface{}
+	var vs []any
 	for i := 0; i < vS.Len(); i++ {
 		vs = append(vs, vS.Index(i).Interface())
 	}
@@ -334,10 +334,10 @@ func (p *AdapterConfig) GetMap(key string) Options {
 	switch t := vm.(type) {
 	case Options:
 		return t
-	case map[string]interface{}:
+	case map[string]any:
 		return t
-	case map[interface{}]interface{}:
-		result := make(map[string]interface{})
+	case map[any]any:
+		result := make(map[string]any)
 		for k, v := range t {
 			sk, ok := k.(string)
 			if !ok {
@@ -359,14 +359,14 @@ func (p *AdapterConfig) GetConfig(key string) Config {
 	}
 
 	c := p.copy()
-	c.configs = map[string]interface{}{key: vm}
+	c.configs = map[string]any{key: vm}
 	return c
 }
 
 // ToObject unmarshal values to object
-func (p *AdapterConfig) ToObject(key string, model interface{}) error {
+func (p *AdapterConfig) ToObject(key string, model any) error {
 	var (
-		vm  interface{}
+		vm  any
 		err error
 	)
 	if key != "" {
@@ -389,13 +389,13 @@ func (p *AdapterConfig) ToObject(key string, model interface{}) error {
 	return err
 }
 
-func (p *AdapterConfig) Object(model interface{}, opts ...ObjOption) error {
+func (p *AdapterConfig) Object(model any, opts ...ObjOption) error {
 	options := ObjOptions{}
 	for _, opt := range opts {
 		opt(&options)
 	}
 	var (
-		vm  interface{}
+		vm  any
 		err error
 	)
 	if options.Key != "" {
@@ -425,7 +425,7 @@ func (p *AdapterConfig) GetValuesConfig(key string) Config {
 }
 
 // GetKeyValue get value with key
-func (p *AdapterConfig) GetKeyValue(key string) (vm interface{}, err error) {
+func (p *AdapterConfig) GetKeyValue(key string) (vm any, err error) {
 	if len(key) == 0 {
 		return nil, ErrInvalidKey
 	}
@@ -435,7 +435,7 @@ func (p *AdapterConfig) GetKeyValue(key string) (vm interface{}, err error) {
 }
 
 // SetKeyValue set key value into p.configs
-func (p *AdapterConfig) SetKeyValue(key string, value interface{}) (err error) {
+func (p *AdapterConfig) SetKeyValue(key string, value any) (err error) {
 	if len(key) == 0 {
 		return ErrInvalidKey
 	}

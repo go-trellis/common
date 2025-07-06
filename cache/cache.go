@@ -28,23 +28,23 @@ type Cache interface {
 	// New Creates a new table.
 	New(tab string, options ...OptionFunc) error
 	// Insert the object or all of the objects in list.
-	Insert(tab string, key, value interface{}) bool
+	Insert(tab string, key, value any) bool
 	// InsertExpire inserts the object or all of the objects with expired time in list.
-	InsertExpire(tab string, key, value interface{}, expire time.Duration) bool
+	InsertExpire(tab string, key, value any, expire time.Duration) bool
 	// Delete deletes the entire table Tab.
 	Delete(tab string) bool
 	// DeleteObject deletes all objects with key, Key from table Tab.
-	DeleteObject(tab string, key interface{}) bool
+	DeleteObject(tab string, key any) bool
 	// DeleteObjects delete all objects in the table Tab. Remain table in cache.
 	DeleteObjects(tab string)
 	// Lookup Look up values with key, Key from table Tab.
-	Lookup(tab string, key interface{}) ([]interface{}, bool)
+	Lookup(tab string, key any) ([]any, bool)
 	// LookupAll Look up all values in the Tab.
-	LookupAll(tab string) (map[interface{}][]interface{}, bool)
+	LookupAll(tab string) (map[any][]any, bool)
 	// Member Returns true if one or more elements in the table has key, otherwise false.
-	Member(tab string, key interface{}) bool
+	Member(tab string, key any) bool
 	// Members Returns all keys in the table Tab.
-	Members(tab string) ([]interface{}, bool)
+	Members(tab string) ([]any, bool)
 	// SetExpire Set key expire time in the table Tab.
-	SetExpire(tab string, key interface{}, expire time.Duration) bool
+	SetExpire(tab string, key any, expire time.Duration) bool
 }

@@ -34,7 +34,7 @@ func NewXMLReader(opts ...ReaderOptionFunc) Reader {
 	return r
 }
 
-func (p *defXMLReader) Read(model interface{}) error {
+func (p *defXMLReader) Read(model any) error {
 	data, err := ReadFile(p.opts.filename)
 	if err != nil {
 		return err
@@ -42,15 +42,15 @@ func (p *defXMLReader) Read(model interface{}) error {
 	return ParseXMLConfig(data, model)
 }
 
-func (*defXMLReader) Dump(v interface{}) ([]byte, error) {
+func (*defXMLReader) Dump(v any) ([]byte, error) {
 	return xml.Marshal(v)
 }
 
-func (*defXMLReader) ParseData(data []byte, model interface{}) error {
+func (*defXMLReader) ParseData(data []byte, model any) error {
 	return ParseXMLConfig(data, model)
 }
 
 // ParseXMLConfig 解析yaml的配置信息
-func ParseXMLConfig(data []byte, model interface{}) error {
+func ParseXMLConfig(data []byte, model any) error {
 	return xml.Unmarshal(data, model)
 }

@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
 
 	"trellis.tech/trellis/common.v2/errcode"
 	"trellis.tech/trellis/common.v2/logger"
@@ -108,7 +109,7 @@ type OptionConfig func(*Config)
 
 type Plugin struct {
 	config *Config
-	logger logger.KitLogger
+	logger logrus.FieldLogger
 }
 
 type Config struct {
@@ -140,7 +141,7 @@ func (p *Config) check() error {
 	return nil
 }
 
-func NewPlugin(c *Config, l logger.KitLogger) (*Plugin, error) {
+func NewPlugin(c *Config, l logrus.FieldLogger) (*Plugin, error) {
 	if err := c.check(); err != nil {
 		return nil, err
 	}

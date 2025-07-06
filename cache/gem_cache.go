@@ -94,7 +94,7 @@ func (p *gemCache) DeleteObjects(tab string) {
 	tabCache.DeleteObjects()
 }
 
-func (p *gemCache) DeleteObject(tab string, key interface{}) bool {
+func (p *gemCache) DeleteObject(tab string, key any) bool {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return true
@@ -102,7 +102,7 @@ func (p *gemCache) DeleteObject(tab string, key interface{}) bool {
 	return tabCache.DeleteObject(key)
 }
 
-func (p *gemCache) Insert(tab string, key, value interface{}) bool {
+func (p *gemCache) Insert(tab string, key, value any) bool {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return false
@@ -110,7 +110,7 @@ func (p *gemCache) Insert(tab string, key, value interface{}) bool {
 	return tabCache.Insert(key, value)
 }
 
-func (p *gemCache) InsertExpire(tab string, key, value interface{}, expire time.Duration) bool {
+func (p *gemCache) InsertExpire(tab string, key, value any, expire time.Duration) bool {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return false
@@ -122,7 +122,7 @@ func (p *gemCache) getTable(tab string) TableCache {
 	return p.tables[tab]
 }
 
-func (p *gemCache) Lookup(tab string, key interface{}) ([]interface{}, bool) {
+func (p *gemCache) Lookup(tab string, key any) ([]any, bool) {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return nil, false
@@ -130,7 +130,7 @@ func (p *gemCache) Lookup(tab string, key interface{}) ([]interface{}, bool) {
 	return tabCache.Lookup(key)
 }
 
-func (p *gemCache) Member(tab string, key interface{}) bool {
+func (p *gemCache) Member(tab string, key any) bool {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return false
@@ -138,7 +138,7 @@ func (p *gemCache) Member(tab string, key interface{}) bool {
 	return tabCache.Member(key)
 }
 
-func (p *gemCache) Members(tab string) ([]interface{}, bool) {
+func (p *gemCache) Members(tab string) ([]any, bool) {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return nil, false
@@ -146,7 +146,7 @@ func (p *gemCache) Members(tab string) ([]interface{}, bool) {
 	return tabCache.Members()
 }
 
-func (p *gemCache) SetExpire(tab string, key interface{}, expire time.Duration) bool {
+func (p *gemCache) SetExpire(tab string, key any, expire time.Duration) bool {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return false
@@ -154,7 +154,7 @@ func (p *gemCache) SetExpire(tab string, key interface{}, expire time.Duration) 
 	return tabCache.SetExpire(key, expire)
 }
 
-func (p *gemCache) LookupAll(tab string) (map[interface{}][]interface{}, bool) {
+func (p *gemCache) LookupAll(tab string) (map[any][]any, bool) {
 	tabCache := p.getTable(tab)
 	if tabCache == nil {
 		return nil, false

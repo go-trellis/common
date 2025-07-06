@@ -18,23 +18,23 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transaction
 
 type Transaction interface {
-	Session() interface{}
+	Session() any
 	IsTransaction() bool
 
-	Commit(fn interface{}, repos ...interface{}) error
+	Commit(fn any, repos ...any) error
 }
 
 type Repo interface {
-	SetSession(interface{}) error
+	SetSession(any) error
 }
 
 // Derivative derive function
 type Derivative interface {
-	Derive() (repo interface{}, err error)
+	Derive() (repo any, err error)
 }
 
 // Derive derive from developer function
-func Derive(origin interface{}) (interface{}, error) {
+func Derive(origin any) (any, error) {
 	if d, ok := origin.(Derivative); ok {
 		return d.Derive()
 	}
@@ -43,11 +43,11 @@ func Derive(origin interface{}) (interface{}, error) {
 
 // Inheritor inherit function
 type Inheritor interface {
-	Inherit(repo interface{}) error
+	Inherit(repo any) error
 }
 
 // Inherit new repository from origin repository
-func Inherit(new, origin interface{}) error {
+func Inherit(new, origin any) error {
 	if inheritor, ok := new.(Inheritor); ok {
 		return inheritor.Inherit(origin)
 	}

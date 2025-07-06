@@ -24,7 +24,7 @@ import (
 )
 
 // Assert fails the test if the condition is false.
-func Assert(tb testing.TB, condition bool, format string, a ...interface{}) {
+func Assert(tb testing.TB, condition bool, format string, a ...any) {
 	tb.Helper()
 	if !condition {
 		tb.Fatalf(format, a...)
@@ -40,7 +40,7 @@ func Ok(tb testing.TB, err error) {
 }
 
 // NotOk fails the test if an err is nil.
-func NotOk(tb testing.TB, err error, a ...interface{}) {
+func NotOk(tb testing.TB, err error, a ...any) {
 	tb.Helper()
 	if err == nil {
 		if len(a) != 0 {
@@ -52,7 +52,7 @@ func NotOk(tb testing.TB, err error, a ...interface{}) {
 }
 
 // Equals fails the test if exp is not equal to act.
-func Equals(tb testing.TB, exp, act interface{}, msgAndArgs ...interface{}) {
+func Equals(tb testing.TB, exp, act any, msgAndArgs ...any) {
 	tb.Helper()
 	if !reflect.DeepEqual(exp, act) {
 		tb.Fatalf("%s\n\nexp: %#v\n\ngot: %#v\n", formatMessage(msgAndArgs), exp, act)
@@ -60,7 +60,7 @@ func Equals(tb testing.TB, exp, act interface{}, msgAndArgs ...interface{}) {
 }
 
 // ErrorEqual compares Go errors for equality.
-func ErrorEqual(tb testing.TB, left, right error, msgAndArgs ...interface{}) {
+func ErrorEqual(tb testing.TB, left, right error, msgAndArgs ...any) {
 	tb.Helper()
 	if left == right {
 		return
@@ -74,7 +74,7 @@ func ErrorEqual(tb testing.TB, left, right error, msgAndArgs ...interface{}) {
 	tb.Fatalf("%s\n\nexp: %#v\n\ngot: %#v\n", formatMessage(msgAndArgs), left, right)
 }
 
-func formatMessage(msgAndArgs []interface{}) string {
+func formatMessage(msgAndArgs []any) string {
 	if len(msgAndArgs) == 0 {
 		return ""
 	}

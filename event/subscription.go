@@ -24,16 +24,16 @@ import (
 // Subscriber 消费者
 type Subscriber interface {
 	GetID() string
-	Publish(values ...interface{}) error
+	Publish(values ...any) error
 	Stop()
 }
 
 // NewDefSubscriber 生成默认的消费者
-func NewDefSubscriber(sub interface{}) (Subscriber, error) {
+func NewDefSubscriber(sub any) (Subscriber, error) {
 
 	var subscriber Subscriber
 	switch s := sub.(type) {
-	case func(...interface{}) error:
+	case func(...any) error:
 		subscriber = &defSubscriber{
 			id: GenSubscriberID(),
 			fn: s,
@@ -51,7 +51,7 @@ func NewDefSubscriber(sub interface{}) (Subscriber, error) {
 // This value and can be passed to Unsubscribe when the observer is no longer interested in receiving messages
 type defSubscriber struct {
 	id string
-	fn func(values ...interface{}) error
+	fn func(values ...any) error
 }
 
 // GetID return Subscriber's id
@@ -60,7 +60,7 @@ func (p *defSubscriber) GetID() string {
 }
 
 // Publish 发布信息
-func (p *defSubscriber) Publish(values ...interface{}) error {
+func (p *defSubscriber) Publish(values ...any) error {
 	return p.fn(values...)
 }
 

@@ -26,7 +26,7 @@ import (
 
 var table1 = "tab1"
 
-func evict(key, value interface{}) {
+func evict(key, value any) {
 	fmt.Println("evict kv: ", key, value)
 }
 

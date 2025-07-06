@@ -33,11 +33,11 @@ var (
 // Pool interface describes a pool implementation. A pool should have maximum
 // capacity. An ideal pool is threadsafe and easy to use.
 type Pool interface {
-	Get() (interface{}, error)
+	Get() (any, error)
 
-	Put(interface{}) error
+	Put(any) error
 
-	Close(interface{}) error
+	Close(any) error
 
 	Release()
 

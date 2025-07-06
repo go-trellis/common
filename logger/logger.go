@@ -18,132 +18,124 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
-	"fmt"
 	"io"
-	"reflect"
+	"time"
 
-	kLog "github.com/go-kit/log"
-	"go.uber.org/zap/zapcore"
-	"trellis.tech/trellis/common.v2/json"
-	"xorm.io/xorm/log"
+	"github.com/sirupsen/logrus"
 )
 
-type KitLogger = kLog.Logger
-type XormLogger = log.Logger
+type MoveFileType int
 
-type MessageLogger interface {
-	DebugM(msg string, kvs ...interface{})
-	InfoM(msg string, kvs ...interface{})
-	WarnM(msg string, kvs ...interface{})
-	ErrorM(msg string, kvs ...interface{})
-	PanicM(msg string, kvs ...interface{})
-	FatalM(msg string, kvs ...interface{})
-}
+const (
+	MoveFileTypeNone MoveFileType = iota
+	MoveFileTypePerMinite
+	MoveFileTypeHourly
+	MoveFileTypeDaily
+)
 
-// Logger 日志对象
-type Logger interface {
-	KitLogger
-	XormLogger
-	MessageLogger
-
-	With(kvs ...interface{}) Logger
-	Writer() io.Writer
+func (p MoveFileType) Duration() time.Duration {
+	switch p {
+	case MoveFileTypePerMinite:
+		return time.Minute
+	case MoveFileTypeHourly:
+		return time.Hour
+	case MoveFileTypeDaily:
+		return time.Hour * 24
+	}
+	return 0
 }
 
 // Level log level
-type Level int32
+type Level logrus.Level
+type Logger logrus.FieldLogger
 
-// define levels
 const (
-	TraceLevel = Level(iota)
-	DebugLevel
-	InfoLevel
-	WarnLevel
-	ErrorLevel
-	PanicLevel
+	// PanicLevel level, highest level of severity. Logs and then calls panic with the
+	// message passed to Debug, Info, ...
+	PanicLevel Level = iota
+	// FatalLevel level. Logs and then calls `logger.Exit(1)`. It will exit even if the
+	// logging level is set to Panic.
 	FatalLevel
-
-	LevelNameUnknown = "NULL"
-	LevelNameTrace   = "TRAC"
-	LevelNameDebug   = "DEBU"
-	LevelNameInfo    = "INFO"
-	LevelNameWarn    = "WARN"
-	LevelNameError   = "ERRO"
-	LevelNamePanic   = "PANC"
-	LevelNameFatal   = "CRIT"
-
-	levelColorDebug = "\033[32m%s\033[0m" // grenn
-	levelColorInfo  = "\033[37m%s\033[0m" // white
-	levelColorWarn  = "\033[34m%s\033[0m" // blue
-	levelColorError = "\033[33m%s\033[0m" // yellow
-	levelColorPanic = "\033[35m%s\033[0m" // perple
-	levelColorFatal = "\033[31m%s\033[0m" // red
+	// ErrorLevel level. Logs. Used for errors that should definitely be noted.
+	// Commonly used for hooks to send errors to an error tracking service.
+	ErrorLevel
+	// WarnLevel level. Non-critical entries that deserve eyes.
+	WarnLevel
+	// InfoLevel level. General operational entries about what's going on inside the
+	// application.
+	InfoLevel
+	// DebugLevel level. Usually only enabled when debugging. Very verbose logging.
+	DebugLevel
+	// TraceLevel level. Designates finer-grained informational events than the Debug.
+	TraceLevel
 )
-
-// ToZapLevel  convert level into zap level
-func (p *Level) ToZapLevel() zapcore.Level {
-	switch *p {
-	case TraceLevel, DebugLevel:
-		return zapcore.DebugLevel
-	case InfoLevel:
-		return zapcore.InfoLevel
-	case WarnLevel:
-		return zapcore.WarnLevel
-	case ErrorLevel:
-		return zapcore.ErrorLevel
-	case PanicLevel:
-		return zapcore.PanicLevel
-	case FatalLevel:
-		return zapcore.FatalLevel
-	default:
-		return zapcore.DebugLevel
-	}
-}
-
-// LevelColors printer's color
-var LevelColors = map[Level]string{
-	TraceLevel: levelColorDebug,
-	DebugLevel: levelColorDebug,
-	InfoLevel:  levelColorInfo,
-	WarnLevel:  levelColorWarn,
-	ErrorLevel: levelColorError,
-	PanicLevel: levelColorPanic,
-	FatalLevel: levelColorFatal,
-}
 
 // ToLevelName convert level into string name
 func ToLevelName(lvl Level) string {
-	switch lvl {
-	case TraceLevel:
-		return LevelNameTrace
-	case DebugLevel:
-		return LevelNameDebug
-	case InfoLevel:
-		return LevelNameInfo
-	case WarnLevel:
-		return LevelNameWarn
-	case ErrorLevel:
-		return LevelNameError
-	case PanicLevel:
-		return LevelNamePanic
-	case FatalLevel:
-		return LevelNameFatal
-	default:
-		return LevelNameUnknown
-	}
+	return logrus.Level(lvl).String()
 }
 
-func toString(v interface{}) string {
-	switch reflect.TypeOf(v).Kind() {
-	case reflect.Ptr, reflect.Struct, reflect.Map:
-		bs, err := json.Marshal(v)
-		if err != nil {
-			return ""
-		}
-		return string(bs)
-	case reflect.String:
-		return v.(string)
-	default:
-		return fmt.Sprint(v)
+// ToLevel convert string name into level
+func ToLevel(lvl string) (Level, error) {
+	level, err := logrus.ParseLevel(lvl)
+	if err != nil {
+		return 0, err
 	}
+	return Level(level), nil
+}
+
+type LogrusConfig struct {
+	Level         Level
+	ReportCaller  bool
+	Formatter     logrus.Formatter
+	Configs       []any
+	BufferPool    logrus.BufferPool
+	DefaultWriter io.Writer
+}
+
+type TextFormatter = logrus.TextFormatter
+type JSONFormatter = logrus.JSONFormatter
+
+func NewLogger(c *LogrusConfig) (*logrus.Logger, error) {
+	if c == nil {
+		return Noop(), nil
+	}
+
+	logrusLogger := logrus.New()
+	logrusLogger.SetReportCaller(c.ReportCaller)
+
+	ok := false
+	for _, v := range logrus.AllLevels {
+		if c.Level == Level(v) {
+			ok = true
+			break
+		}
+	}
+	if ok {
+		logrusLogger.SetLevel(logrus.Level(c.Level))
+	}
+
+	if c.Formatter != nil {
+		logrusLogger.SetFormatter(c.Formatter)
+	} else {
+		c.Formatter = logrusLogger.Formatter
+	}
+
+	writer, err := NewLugrusHook(c.Formatter, c.Configs)
+	if err != nil {
+		return nil, err
+	}
+	if writer != nil {
+		logrusLogger.AddHook(writer)
+	}
+
+	if c.BufferPool != nil {
+		logrusLogger.SetBufferPool(c.BufferPool)
+	}
+
+	if c.DefaultWriter != nil {
+		logrusLogger.SetOutput(c.DefaultWriter)
+	}
+
+	return logrusLogger, nil
 }

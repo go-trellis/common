@@ -26,7 +26,7 @@ import (
 
 /// Get Execute
 
-func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (bool, error) {
+func Get(session *xorm.Session, bean any, opts ...GetOption) (bool, error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -35,7 +35,7 @@ func Get(session *xorm.Session, bean interface{}, opts ...GetOption) (bool, erro
 	return getOptions.Session(session).Get(bean)
 }
 
-func Find(session *xorm.Session, bean interface{}, opts ...GetOption) error {
+func Find(session *xorm.Session, bean any, opts ...GetOption) error {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -44,7 +44,7 @@ func Find(session *xorm.Session, bean interface{}, opts ...GetOption) error {
 	return getOptions.Session(session).Find(bean)
 }
 
-func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+func FindAndCount(session *xorm.Session, bean any, opts ...GetOption) (int64, error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -53,7 +53,7 @@ func FindAndCount(session *xorm.Session, bean interface{}, opts ...GetOption) (i
 	return getOptions.Session(session).FindAndCount(bean)
 }
 
-func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, error) {
+func Count(session *xorm.Session, bean any, opts ...GetOption) (int64, error) {
 	getOptions := &GetOptions{}
 	for _, opt := range opts {
 		opt(getOptions)
@@ -64,7 +64,7 @@ func Count(session *xorm.Session, bean interface{}, opts ...GetOption) (int64, e
 
 // Update Execute
 
-func Update(session *xorm.Session, bean interface{}, opts ...UpdateOption) (int64, error) {
+func Update(session *xorm.Session, bean any, opts ...UpdateOption) (int64, error) {
 	updateOptions := &UpdateOptions{}
 	for _, opt := range opts {
 		opt(updateOptions)
@@ -115,13 +115,13 @@ func InsertMultiCheckNumber(check ...bool) InsertMultiOption {
 	}
 }
 
-func Insert(session *xorm.Session, beans ...interface{}) (int64, error) {
+func Insert(session *xorm.Session, beans ...any) (int64, error) {
 	return session.Insert(beans...)
 }
 
 // InsertMulti insert multi seperated slice data in a big slice with every step number
 // default to insert the slice with no seperated.
-func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOption) (int64, error) {
+func InsertMulti(session *xorm.Session, ones any, opts ...InsertMultiOption) (int64, error) {
 	// 初始化选项
 	options := &InsertMultiOptions{}
 	for _, opt := range opts {
@@ -163,7 +163,7 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 			}
 
 			// 构建当前批次的插入数据
-			var multi []interface{}
+			var multi []any
 			for j := i; j < end; j++ {
 				multi = append(multi, sliceOnes.Index(j).Interface())
 			}
@@ -190,7 +190,7 @@ func InsertMulti(session *xorm.Session, ones interface{}, opts ...InsertMultiOpt
 
 /// Delete Execute
 
-func Delete(session *xorm.Session, bean interface{}, opts ...DeleteOption) (int64, error) {
+func Delete(session *xorm.Session, bean any, opts ...DeleteOption) (int64, error) {
 	deleteOptions := &DeleteOptions{}
 	for _, opt := range opts {
 		opt(deleteOptions)

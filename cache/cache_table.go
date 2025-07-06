@@ -27,28 +27,28 @@ const (
 )
 
 // EvictCallback is used to get a callback when a cache entry is evicted
-type EvictCallback func(key interface{}, value interface{})
+type EvictCallback func(key any, value any)
 
 // TableCache table manager for k-vs functions
 type TableCache interface {
 	// Insert the object or all of the objects in list.
-	Insert(key, values interface{}) bool
+	Insert(key, values any) bool
 	// InsertExpire insert the object or all of the objects with expired time in list.
-	InsertExpire(key, value interface{}, expire time.Duration) bool
+	InsertExpire(key, value any, expire time.Duration) bool
 	// DeleteObject Deletes all objects with key: Key.
-	DeleteObject(key interface{}) bool
+	DeleteObject(key any) bool
 	// DeleteObjects Delete all objects in the table Tab. Remain table in cache.
 	DeleteObjects()
 	// Member Returns true if one or more elements in the table has key: Key, otherwise false.
-	Member(key interface{}) bool
+	Member(key any) bool
 	// Members Returns all keys in the table Tab.
-	Members() ([]interface{}, bool)
+	Members() ([]any, bool)
 	// Lookup Look up values with key: Key.
-	Lookup(key interface{}) ([]interface{}, bool)
+	Lookup(key any) ([]any, bool)
 	// LookupAll Look up all values in the Tab.
-	LookupAll() (map[interface{}][]interface{}, bool)
+	LookupAll() (map[any][]any, bool)
 	// SetExpire Set Key Expire time
-	SetExpire(key interface{}, expire time.Duration) bool
+	SetExpire(key any, expire time.Duration) bool
 }
 
 // OptionFunc 参数处理函数

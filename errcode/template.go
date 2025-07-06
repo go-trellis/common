@@ -39,7 +39,7 @@ type ErrorCodeTmpl struct {
 }
 
 // Params template params
-type Params map[string]interface{}
+type Params map[string]any
 
 var tmplDefined = make(map[string]bool)
 
@@ -84,12 +84,12 @@ func (p *ErrorCodeTmpl) New(opts ...Option) ErrorCode {
 	}
 
 	if options.Params == nil {
-		options.Params = make(map[string]interface{})
+		options.Params = make(map[string]any)
 	}
 
 	eCode := &errorCode{
 		code:    p.code,
-		context: make(map[string]interface{}),
+		context: make(map[string]any),
 	}
 
 	errID := hash.NewCRCIEEE().Sum(fmt.Sprintf("%s.%d.%s.%d",

@@ -41,7 +41,7 @@ func OptionString(rt ReaderType, cStr string) OptionFunc {
 }
 
 // OptionStruct 结构体解析配置Option函数
-func OptionStruct(rt ReaderType, st interface{}) OptionFunc {
+func OptionStruct(rt ReaderType, st any) OptionFunc {
 	return func(c *AdapterConfig) {
 		c.readerType = rt
 		c.ConfigStruct = st
@@ -65,7 +65,7 @@ func OptionENVPrefix(prefix string) OptionFunc {
 // Config manager data functions
 type Config interface {
 	// GetInterface get a object
-	GetInterface(key string, defValue ...interface{}) (res interface{})
+	GetInterface(key string, defValue ...any) (res any)
 	// GetString get a string
 	GetString(key string, defValue ...string) (res string)
 	// GetBoolean get a bool
@@ -75,7 +75,7 @@ type Config interface {
 	// GetFloat get a float
 	GetFloat(key string, defValue ...float64) (res float64)
 	// GetList get list of objects
-	GetList(key string) (res []interface{})
+	GetList(key string) (res []any)
 	// GetStringList get list of strings
 	GetStringList(key string) []string
 	// GetBooleanList get list of bools
@@ -94,13 +94,13 @@ type Config interface {
 	GetConfig(key string) Config
 	// ToObject unmarshal values to object
 	// Deprecated: see function: Object
-	ToObject(key string, model interface{}) error
+	ToObject(key string, model any) error
 	// Object unmarshal values to object
-	Object(model interface{}, opts ...ObjOption) error
+	Object(model any, opts ...ObjOption) error
 	// GetValuesConfig get key's values if values can be Config, or panic
 	GetValuesConfig(key string) Config
 	// SetKeyValue set key's value into config
-	SetKeyValue(key string, value interface{}) (err error)
+	SetKeyValue(key string, value any) (err error)
 	// Dump get all config
 	Dump() (bs []byte, err error)
 	// GetKeys get all keys

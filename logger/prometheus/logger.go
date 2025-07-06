@@ -18,79 +18,77 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package prometheus
 
 import (
-	"time"
+	"path/filepath"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
-	"go.uber.org/zap/zapcore"
+	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
+	"github.com/sirupsen/logrus"
+	"trellis.tech/trellis/common.v2/errcode"
 	"trellis.tech/trellis/common.v2/logger"
 )
 
 type Config struct {
-	Level        string   `yaml:"level" json:"level"`
-	FileName     string   `yaml:"filename" json:"filename"`
-	MoveFileType int      `yaml:"move_file_type" json:"move_file_type"`
-	MaxLength    int64    `yaml:"max_length" json:"max_length"`
-	MaxBackups   int      `yaml:"max_backups" json:"max_backups"`
-	StdPrinters  []string `yaml:"std_printers" json:"std_printers"`
-	TimeFormat   string   `yaml:"time_format" json:"time_format"`
-	Caller       bool     `yaml:"caller" json:"caller"`
-	CallerSkip   int      `yaml:"caller_skip" json:"caller_skip"`
+	FileName     string `yaml:"filename" json:"filename"`
+	Level        string `yaml:"level" json:"level"`
+	MoveFileType int    `yaml:"move_file_type" json:"move_file_type"`
+	MaxLength    int64  `yaml:"max_length" json:"max_length"`
+	MaxBackups   uint   `yaml:"max_backups" json:"max_backups"`
+	Caller       bool   `yaml:"caller" json:"caller"`
+}
+
+type PrometheusLogger struct {
+	Logger *logrus.Logger
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Config.
-func (p *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (p *Config) UnmarshalYAML(unmarshal func(any) error) error {
 	type plain Config
 	return unmarshal((*plain)(p))
 }
 
-func New(config *Config) log.Logger {
-	options := []logger.Option{
-		logger.LogFileOption(
-			logger.OptionFilename(config.FileName),
-			logger.OptionMoveFileType(logger.MoveFileType(config.MoveFileType)),
-			logger.OptionMaxLength(config.MaxLength),
-			logger.OptionMaxBackups(config.MaxBackups),
-		),
-		logger.EncoderConfig(zapcore.EncoderConfig{}),
-		logger.CallerSkip(config.CallerSkip),
-		logger.StdPrinters(config.StdPrinters),
+func New(config *Config) (log.Logger, error) {
+	var options []rotatelogs.Option
+
+	if config.FileName == "" {
+		return nil, errcode.New("filename is empty")
 	}
-	if config.Caller {
-		options = append(options, logger.Caller())
+	_, filename := filepath.Split(config.FileName)
+	options = append(options, rotatelogs.WithLinkName(filename))
+
+	if config.MoveFileType > 0 {
+		moveType := logger.MoveFileType(config.MoveFileType)
+
+		switch moveType {
+		case logger.MoveFileTypePerMinite:
+			config.FileName += ".%Y%m%d%H%M"
+		case logger.MoveFileTypeHourly:
+			config.FileName += ".%Y%m%d%H"
+		case logger.MoveFileTypeDaily:
+			fallthrough
+		default:
+			moveType = logger.MoveFileTypeDaily
+			config.FileName += ".%Y%m%d"
+		}
+		options = append(options, rotatelogs.WithRotationTime(moveType.Duration()))
 	}
 
-	stdLog, err := logger.NewLogger(options...)
+	if config.MaxLength > 0 {
+		options = append(options, rotatelogs.WithRotationSize(config.MaxLength))
+	}
+
+	if config.MaxBackups > 0 {
+		options = append(options, rotatelogs.WithRotationCount(config.MaxBackups))
+	}
+
+	rotator, err := logger.NewRotateLogs(config.FileName, options...)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	if config.TimeFormat == "" {
-		config.TimeFormat = "2006-01-02T15:04:05.000Z07:00"
-	}
+	kitLog := log.NewJSONLogger(rotator)
 
-	timestampFormat := log.TimestampFormat(
-		func() time.Time { return time.Now() },
-		config.TimeFormat,
-	)
-	l := level.NewFilter(stdLog, getLevel(config.Level))
-	l = log.With(l, "ts", timestampFormat)
+	level.Error(kitLog).Log()
 
-	return l
-}
-
-// Set get the value of the allowed level.
-func getLevel(s string) level.Option {
-	switch s {
-	case "debug":
-		return level.AllowDebug()
-	case "info":
-		return level.AllowInfo()
-	case "warn":
-		return level.AllowWarn()
-	case "error":
-		return level.AllowError()
-	default:
-		return level.AllowInfo()
-	}
+	return kitLog, nil
 }

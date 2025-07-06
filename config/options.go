@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package config
 
 // Options initial params
-type Options map[string]interface{}
+type Options map[string]any
 
 // ToConfig Options to config, default YAML reader
 func (p *Options) ToConfig(rts ...ReaderType) Config {

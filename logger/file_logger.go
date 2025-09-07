@@ -97,7 +97,6 @@ func (p *FileLogger) Write(bs []byte) (int, error) {
 		return 0, err
 	}
 	return p.osFile.Write(bs)
-
 }
 
 func (p *FileLogger) Sync() error { return nil }
@@ -134,6 +133,7 @@ func (p *FileLogger) openFile() (err error) {
 }
 
 func (p *FileLogger) moveFile(t time.Time) error {
+	p.osFile.Close()
 	p.osFile = nil
 
 	err := os.Rename(filepath.Join(p.options.FileDir, p.options.Filename),

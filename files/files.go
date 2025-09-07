@@ -37,6 +37,9 @@ func Read(name string, opts ...Option) (b []byte, n int64, err error) {
 	if err != nil {
 		return nil, 0, err
 	}
+	defer func() {
+		_ = fi.Close()
+	}()
 
 	options := &Options{}
 	for _, opt := range opts {

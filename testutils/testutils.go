@@ -74,6 +74,17 @@ func ErrorEqual(tb testing.TB, left, right error, msgAndArgs ...any) {
 	tb.Fatalf("%s\n\nexp: %#v\n\ngot: %#v\n", formatMessage(msgAndArgs), left, right)
 }
 
+// ErrorEqual compares Go errors for equality.
+func True(tb testing.TB, expert bool, msgAndArgs ...any) {
+	tb.Helper()
+
+	if expert {
+		return
+	}
+
+	tb.Fatalf("%s\n\nexp: TRUE \n\ngot: FALSE\n", formatMessage(msgAndArgs))
+}
+
 func formatMessage(msgAndArgs []any) string {
 	if len(msgAndArgs) == 0 {
 		return ""

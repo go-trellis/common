@@ -23,36 +23,36 @@ import (
 //go:embed testdata
 var EmbedFS embed.FS
 
-var testFS = New(EmbedFS)
+var testFS = New(EmbedFS, OptPath("testdata"), OptSuffix(defaultSuffix))
 
 func TestFS(t *testing.T) {
 	cases := []struct {
 		name            string
-		path            string
+		file            string
 		expectedSize    int64
 		expectedContent string
 	}{
 		{
 			name:            "uncompressed file",
-			path:            "testdata/uncompressed",
+			file:            "uncompressed",
 			expectedSize:    4,
 			expectedContent: "foo\n",
 		},
 		{
 			name:            "compressed file",
-			path:            "testdata/compressed",
-			expectedSize:    4,
+			file:            "compressed.gz",
+			expectedSize:    37,
 			expectedContent: "foo\n",
 		},
 		{
 			name:            "both, open uncompressed",
-			path:            "testdata/both",
+			file:            "both",
 			expectedSize:    4,
 			expectedContent: "foo\n",
 		},
 		{
 			name:         "both, open compressed",
-			path:         "testdata/both.gz",
+			file:         "both.gz",
 			expectedSize: 29,
 			// we don't check content for a explicitly compressed file
 			expectedContent: "",
@@ -61,7 +61,7 @@ func TestFS(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			f, err := testFS.Open(OptPath(c.path))
+			f, err := testFS.Open(c.file)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -75,8 +75,8 @@ func TestFS(t *testing.T) {
 			if size != c.expectedSize {
 				t.Fatalf("size is wrong, expected %d, got %d", c.expectedSize, size)
 			}
-
-			if strings.HasSuffix(c.path, ".gz") {
+			
+			if strings.HasSuffix(c.file, ".gz") {
 				// don't read the comressed content
 				return
 			}

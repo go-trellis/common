@@ -20,6 +20,7 @@ package logrushook
 import (
 	"fmt"
 	"io"
+	"slices"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
@@ -49,13 +50,7 @@ func NewLogrus(c *LogrusConfig) (*logrus.Logger, error) {
 	logrusLogger := logrus.New()
 	logrusLogger.SetReportCaller(c.ReportCaller)
 
-	ok := false
-	for _, v := range logrus.AllLevels {
-		if c.Level == v {
-			ok = true
-			break
-		}
-	}
+	ok := slices.Contains(logrus.AllLevels, c.Level)
 	if ok {
 		logrusLogger.SetLevel(c.Level)
 	} else {

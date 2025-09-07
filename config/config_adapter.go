@@ -72,7 +72,7 @@ func NewAdapterConfig(filepath string) (Config, error) {
 }
 
 func (p *AdapterConfig) init(opts ...OptionFunc) (err error) {
-	for i := 0; i < len(opts); i++ {
+	for i := range opts {
 		opts[i](p)
 	}
 

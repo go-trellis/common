@@ -33,10 +33,10 @@ import (
 )
 
 var (
-	_ zapcore.WriteSyncer = (*fileLogger)(nil)
+	_ zapcore.WriteSyncer = (*FileLogger)(nil)
 )
 
-type fileLogger struct {
+type FileLogger struct {
 	options FileOptions
 
 	mutex  sync.Mutex
@@ -46,7 +46,7 @@ type fileLogger struct {
 }
 
 // NewFileLogger 标准窗体的输出对象
-func NewFileLogger(opts ...FileOption) (*fileLogger, error) {
+func NewFileLogger(opts ...FileOption) (*FileLogger, error) {
 	var options FileOptions
 	for _, o := range opts {
 		o(&options)
@@ -56,12 +56,12 @@ func NewFileLogger(opts ...FileOption) (*fileLogger, error) {
 }
 
 // NewFileLoggerWithOptions 标准窗体的输出对象
-func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
+func NewFileLoggerWithOptions(opts FileOptions) (*FileLogger, error) {
 	if err := opts.Check(); err != nil {
 		return nil, err
 	}
 
-	fw := &fileLogger{
+	fw := &FileLogger{
 		options: opts,
 	}
 
@@ -72,7 +72,7 @@ func NewFileLoggerWithOptions(opts FileOptions) (*fileLogger, error) {
 	return fw, nil
 }
 
-func (p *fileLogger) init() (err error) {
+func (p *FileLogger) init() (err error) {
 	p.backupFileReg = regexp.MustCompile(fmt.Sprintf("%s_.*%s", p.options.FileBasename, p.options.FileExt))
 
 	err = p.openFile()
@@ -90,7 +90,7 @@ func (p *fileLogger) init() (err error) {
 	return nil
 }
 
-func (p *fileLogger) Write(bs []byte) (int, error) {
+func (p *FileLogger) Write(bs []byte) (int, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	if err := p.checkFile(int64(len(bs))); err != nil {
@@ -100,9 +100,9 @@ func (p *fileLogger) Write(bs []byte) (int, error) {
 
 }
 
-func (p *fileLogger) Sync() error { return nil }
+func (p *FileLogger) Sync() error { return nil }
 
-func (p *fileLogger) checkFile(dataLen int64) (err error) {
+func (p *FileLogger) checkFile(dataLen int64) (err error) {
 	if p.osFile == nil {
 		err = p.openFile()
 		if err != nil {
@@ -128,12 +128,12 @@ func (p *fileLogger) checkFile(dataLen int64) (err error) {
 	return p.moveFile(t)
 }
 
-func (p *fileLogger) openFile() (err error) {
+func (p *FileLogger) openFile() (err error) {
 	p.osFile, err = files.OpenWriteFile(filepath.Join(p.options.FileDir, p.options.Filename))
 	return
 }
 
-func (p *fileLogger) moveFile(t time.Time) error {
+func (p *FileLogger) moveFile(t time.Time) error {
 	p.osFile = nil
 
 	err := os.Rename(filepath.Join(p.options.FileDir, p.options.Filename),
@@ -150,7 +150,7 @@ func (p *fileLogger) moveFile(t time.Time) error {
 	return p.openFile()
 }
 
-func (p *fileLogger) removeOldFiles() error {
+func (p *FileLogger) removeOldFiles() error {
 	if p.options.MaxBackups == 0 {
 		return nil
 	}

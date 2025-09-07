@@ -71,13 +71,6 @@ const (
 	LevelNameError   = "ERRO"
 	LevelNamePanic   = "PANC"
 	LevelNameFatal   = "CRIT"
-
-	levelColorDebug = "\033[32m%s\033[0m" // grenn
-	levelColorInfo  = "\033[37m%s\033[0m" // white
-	levelColorWarn  = "\033[34m%s\033[0m" // blue
-	levelColorError = "\033[33m%s\033[0m" // yellow
-	levelColorPanic = "\033[35m%s\033[0m" // perple
-	levelColorFatal = "\033[31m%s\033[0m" // red
 )
 
 // ToZapLevel  convert level into zap level
@@ -98,17 +91,6 @@ func (p *Level) ToZapLevel() zapcore.Level {
 	default:
 		return zapcore.DebugLevel
 	}
-}
-
-// LevelColors printer's color
-var LevelColors = map[Level]string{
-	TraceLevel: levelColorDebug,
-	DebugLevel: levelColorDebug,
-	InfoLevel:  levelColorInfo,
-	WarnLevel:  levelColorWarn,
-	ErrorLevel: levelColorError,
-	PanicLevel: levelColorPanic,
-	FatalLevel: levelColorFatal,
 }
 
 // ToLevelName convert level into string name

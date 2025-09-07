@@ -35,7 +35,7 @@ type MoveFileType int
 
 func (p *MoveFileType) getMoveFileFlag(t time.Time) int {
 	switch *p {
-	case MoveFileTypePerMinite:
+	case MoveFileTypePerMinute:
 		return t.Minute()
 	case MoveFileTypeHourly:
 		return t.Hour()
@@ -49,7 +49,7 @@ func (p *MoveFileType) getMoveFileFlag(t time.Time) int {
 // MoveFileTypes
 const (
 	MoveFileTypeNothing   MoveFileType = iota // 不移动
-	MoveFileTypePerMinite                     // 按分钟移动
+	MoveFileTypePerMinute                     // 按分钟移动
 	MoveFileTypeHourly                        // 按小时移动
 	MoveFileTypeDaily                         // 按天移动
 )

@@ -18,29 +18,31 @@ import (
 	"embed"
 	"io"
 	"io/fs"
+	"path/filepath"
 )
 
 type GzipFS struct {
-	embed embed.FS
+	options *Options
+	embed   embed.FS
 }
 
-func New(fs embed.FS) GzipFS {
-	return GzipFS{fs}
-}
-
-func (p *GzipFS) Open(opts ...Option) (fs.File, error) {
+func New(fs embed.FS, opts ...Option) GzipFS {
 	options := &Options{}
 	for _, opt := range opts {
 		opt(options)
 	}
 	options.init()
+	return GzipFS{options, fs}
+}
 
+func (p GzipFS) Open(name string) (fs.File, error) {
+	path := filepath.Join(p.options.Path, name)
 	var f fs.File
-	if f, err := p.embed.Open(options.Path); err == nil {
+	if f, err := p.embed.Open(path); err == nil {
 		return f, nil
 	}
 
-	f, err := p.embed.Open(options.Path + options.Suffix)
+	f, err := p.embed.Open(path + p.options.Suffix)
 	if err != nil {
 		return f, err
 	}
@@ -54,5 +56,5 @@ func (p *GzipFS) Open(opts ...Option) (fs.File, error) {
 	if err != nil {
 		return f, err
 	}
-	return &File{file: f, content: c, suffix: options.Suffix}, nil
+	return &File{file: f, content: c, suffix: p.options.Suffix}, nil
 }

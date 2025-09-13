@@ -30,7 +30,7 @@ import (
 type LogrusConfig struct {
 	Level         logrus.Level
 	ReportCaller  bool
-	DefaultWirter io.Writer
+	DefaultWriter io.Writer
 	Formatter     logrus.Formatter
 
 	WriterInfo any
@@ -46,69 +46,129 @@ type LogrusLevelFileConfig struct {
 	Options logger.FileOptions `json:",inline" yaml:",inline"`
 }
 
+// NewLogrus 创建并配置一个新的logrus日志记录器
+// 根据提供的LogrusConfig配置参数进行初始化
 func NewLogrus(c *LogrusConfig) (*logrus.Logger, error) {
+	// 参数校验
+	if c == nil {
+		return nil, fmt.Errorf("logrus config cannot be nil")
+	}
+
+	// 初始化基本日志记录器
+	logrusLogger := initializeBaseLogger(c)
+
+	// 如果没有配置WriterInfo，直接返回基本配置的日志记录器
+	if c.WriterInfo == nil {
+		return logrusLogger, nil
+	}
+
+	// 根据WriterInfo类型配置日志输出
+	if err := configureLoggerOutput(logrusLogger, c.WriterInfo); err != nil {
+		return nil, err
+	}
+
+	return logrusLogger, nil
+}
+
+// initializeBaseLogger 初始化基本的logrus日志记录器配置
+func initializeBaseLogger(c *LogrusConfig) *logrus.Logger {
 	logrusLogger := logrus.New()
 	logrusLogger.SetReportCaller(c.ReportCaller)
 
-	ok := slices.Contains(logrus.AllLevels, c.Level)
-	if ok {
+	// 设置日志级别，如果配置的级别无效则使用警告级别
+	if slices.Contains(logrus.AllLevels, c.Level) {
 		logrusLogger.SetLevel(c.Level)
 	} else {
 		logrusLogger.SetLevel(logrus.WarnLevel)
 	}
 
+	// 设置格式化器
 	if c.Formatter != nil {
 		logrusLogger.SetFormatter(c.Formatter)
 	}
 
-	if c.DefaultWirter != nil {
-		logrusLogger.SetOutput(c.DefaultWirter)
+	// 设置默认输出
+	if c.DefaultWriter != nil {
+		logrusLogger.SetOutput(c.DefaultWriter)
 	}
 
-	// 空对象，则直接返回
-	if c.WriterInfo == nil {
-		return logrusLogger, nil
-	}
+	return logrusLogger
+}
 
-	switch t := c.WriterInfo.(type) {
+// configureLoggerOutput 根据WriterInfo类型配置日志输出
+func configureLoggerOutput(logrusLogger *logrus.Logger, writerInfo interface{}) error {
+	switch t := writerInfo.(type) {
 	case string:
-		flog, err := logger.NewFileLogger(logger.OptionFilename(t))
-		if err != nil {
-			return nil, err
-		}
-		logrusWriterHook(logrusLogger, logrus.AllLevels, flog)
-	case *logger.FileOptions:
-		flog, err := logger.NewFileLoggerWithOptions(*t)
-		if err != nil {
-			return nil, err
-		}
-		logrusWriterHook(logrusLogger, logrus.AllLevels, flog)
-	case map[logrus.Level]*logger.FileOptions:
-		for l, options := range t {
-			err := logrusWriterFileOptions(logrusLogger, *options, []logrus.Level{l})
-			if err != nil {
-				return nil, err
-			}
-		}
-	case LogrusLevelFileConfigs:
-		for _, options := range t {
-			err := logrusWriterFileOptions(logrusLogger, options.Options, options.Levels)
-			if err != nil {
-				return nil, err
-			}
-		}
-	case []*LogrusLevelFileConfig:
-		for _, options := range t {
-			err := logrusWriterFileOptions(logrusLogger, options.Options, options.Levels)
-			if err != nil {
-				return nil, err
-			}
-		}
-	default:
-		return nil, fmt.Errorf("unsupported writer info")
-	}
+		// 简单的文件路径配置
+		return handleStringWriter(logrusLogger, t)
 
-	return logrusLogger, nil
+	case *logger.FileOptions:
+		// 单个文件选项配置
+		return handleFileOptionsWriter(logrusLogger, *t)
+
+	case map[logrus.Level]*logger.FileOptions:
+		// 不同日志级别对应不同文件选项的映射
+		return handleLevelFileOptionsMap(logrusLogger, t)
+
+	case *LogrusLevelFileConfig:
+		// 指针类型的日志级别文件配置
+		return logrusWriterFileOptions(logrusLogger, t.Options, t.Levels)
+
+	case LogrusLevelFileConfig:
+		// 值类型的日志级别文件配置
+		return logrusWriterFileOptions(logrusLogger, t.Options, t.Levels)
+
+	case LogrusLevelFileConfigs:
+		// 多个日志级别文件配置的集合
+		return handleMultipleFileConfigs(logrusLogger, t)
+
+	case []*LogrusLevelFileConfig:
+		// 多个日志级别文件配置指针的切片
+		return handleMultipleFileConfigs(logrusLogger, t)
+
+	default:
+		return fmt.Errorf("unsupported writer info type: %T", writerInfo)
+	}
+}
+
+// handleStringWriter 处理字符串类型的文件路径配置
+func handleStringWriter(logrusLogger *logrus.Logger, filePath string) error {
+	flog, err := logger.NewFileLogger(logger.OptionFilename(filePath))
+	if err != nil {
+		return err
+	}
+	logrusWriterHook(logrusLogger, logrus.AllLevels, flog)
+	return nil
+}
+
+// handleFileOptionsWriter 处理单个文件选项配置
+func handleFileOptionsWriter(logrusLogger *logrus.Logger, options logger.FileOptions) error {
+	flog, err := logger.NewFileLoggerWithOptions(options)
+	if err != nil {
+		return err
+	}
+	logrusWriterHook(logrusLogger, logrus.AllLevels, flog)
+	return nil
+}
+
+// handleLevelFileOptionsMap 处理日志级别到文件选项的映射
+func handleLevelFileOptionsMap(logrusLogger *logrus.Logger, levelOptionsMap map[logrus.Level]*logger.FileOptions) error {
+	for level, options := range levelOptionsMap {
+		if err := logrusWriterFileOptions(logrusLogger, *options, []logrus.Level{level}); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// handleMultipleFileConfigs 处理多个日志级别文件配置
+func handleMultipleFileConfigs(logrusLogger *logrus.Logger, configs LogrusLevelFileConfigs) error {
+	for _, config := range configs {
+		if err := logrusWriterFileOptions(logrusLogger, config.Options, config.Levels); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func logrusWriterFileOptions(log *logrus.Logger, options logger.FileOptions, levels []logrus.Level) error {

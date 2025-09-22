@@ -25,9 +25,6 @@ import (
 
 	"trellis.tech/trellis/common.v3/errcode"
 	"trellis.tech/trellis/common.v3/flagext"
-
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 )
 
 var _ flagext.Parser = (*Config)(nil)
@@ -99,16 +96,11 @@ func (cfg *Config) GetTLSConfig() (*tls.Config, error) {
 	return config, nil
 }
 
-// GetGRPCDialOptions creates GRPC DialOptions for TLS
-func (cfg *Config) GetGRPCDialOptions(enabled bool) ([]grpc.DialOption, error) {
-	if !enabled {
-		return []grpc.DialOption{grpc.WithInsecure()}, nil
+// UnmarshalYAML implements the yaml.Unmarshaler interface.
+func (cfg *Config) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	type plain Config
+	if err := unmarshal((*plain)(cfg)); err != nil {
+		return err
 	}
-
-	tlsConfig, err := cfg.GetTLSConfig()
-	if err != nil {
-		return nil, errcode.NewErrors(err, errcode.Newf("error creating grpc dial options"))
-	}
-
-	return []grpc.DialOption{grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig))}, nil
+	return nil
 }

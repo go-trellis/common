@@ -128,7 +128,7 @@ func testFunc(t *testing.T, c config.Config) {
 	testutils.Assert(t, bCfg.GetInterface("c.cn.a") == "test", "c.cn.a should be test in b")
 
 	testutils.Assert(t, c.GetString("b.u") == "", "env user should be empty")
-	testutils.Assert(t, c.GetString("b.pre") == envUser, "env prefix user should be: "+envUser)
+	testutils.Assert(t, c.GetString("b.pre") == envUser, "env prefix user should be: %s", envUser)
 	testutils.Assert(t, c.GetString("b.xxx") == "", "b.xxx should be empty")
 
 	testutils.Assert(t, c.GetString("a") == "Easy!", "a should be easy")

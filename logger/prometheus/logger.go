@@ -21,10 +21,7 @@ import (
 	"path/filepath"
 
 	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/sirupsen/logrus"
-	"trellis.tech/trellis/common.v2/errcode"
 	"trellis.tech/trellis/common.v2/logger"
 )
 
@@ -37,8 +34,10 @@ type Config struct {
 	Caller       bool   `yaml:"caller" json:"caller"`
 }
 
-type PrometheusLogger struct {
-	Logger *logrus.Logger
+type PromeNoonLogger struct{}
+
+func (p *PromeNoonLogger) Log(...any) error {
+	return nil
 }
 
 // UnmarshalYAML implements the yaml.Unmarshaler interface for Config.
@@ -51,7 +50,7 @@ func New(config *Config) (log.Logger, error) {
 	var options []rotatelogs.Option
 
 	if config.FileName == "" {
-		return nil, errcode.New("filename is empty")
+		return &PromeNoonLogger{}, nil
 	}
 	_, filename := filepath.Split(config.FileName)
 	options = append(options, rotatelogs.WithLinkName(filename))
@@ -87,8 +86,6 @@ func New(config *Config) (log.Logger, error) {
 	}
 
 	kitLog := log.NewJSONLogger(rotator)
-
-	level.Error(kitLog).Log()
-
+	
 	return kitLog, nil
 }

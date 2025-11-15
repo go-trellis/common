@@ -108,7 +108,7 @@ type OptionConfig func(*Config)
 
 type Plugin struct {
 	config *Config
-	logger logger.KitLogger
+	logger logger.Logger
 }
 
 type Config struct {
@@ -140,7 +140,7 @@ func (p *Config) check() error {
 	return nil
 }
 
-func NewPlugin(c *Config, l logger.KitLogger) (*Plugin, error) {
+func NewPlugin(c *Config, l logger.Logger) (*Plugin, error) {
 	if err := c.check(); err != nil {
 		return nil, err
 	}

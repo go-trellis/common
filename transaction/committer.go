@@ -123,11 +123,8 @@ func (p *committer) doCommit(fn any, name string, isTransaction bool, repos ...R
 		}
 	}
 
-	var (
-		_newRepos []any
-	)
+	_newRepos := make([]any, 0, len(repos))
 	for _, origin := range repos {
-
 		_newRepoI, err := p.createNewInstance(origin)
 		if err != nil {
 			return err

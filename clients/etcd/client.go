@@ -80,7 +80,7 @@ func NewClient(cfg Config) (Clientv3Facade, error) {
 	}
 	config.TLS = tlsConfig
 
-	var endpoints []string
+	endpoints := make([]string, 0, len(cfg.Endpoints))
 	for _, endpoint := range cfg.Endpoints {
 		if len(endpoint) == 0 {
 			continue

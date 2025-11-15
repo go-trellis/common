@@ -52,7 +52,7 @@ var locker = &sync.Mutex{}
 
 type Option func(*Options)
 type Options struct {
-	logger             logger.XormLogger
+	logger             log.Logger
 	driver, coreDriver string
 	maxIdleConns       int
 	maxOpenConns       int
@@ -67,7 +67,7 @@ func OptDriver(d string) Option {
 	}
 }
 
-func OptLogger(l logger.XormLogger) Option {
+func OptLogger(l log.Logger) Option {
 	return func(o *Options) {
 		o.logger = l
 	}
@@ -193,7 +193,7 @@ func NewXORMEnginesFromFile(file string, l logger.Logger) (map[string]*xorm.Engi
 }
 
 func NewXORMEngineWithConfig(cfg config.Config, l logger.Logger) (engines map[string]*xorm.Engine, err error) {
-	engines = make(map[string]*xorm.Engine, 0)
+	engines = make(map[string]*xorm.Engine)
 	locker.Lock()
 	defer locker.Unlock()
 	defer func() {
@@ -234,12 +234,16 @@ func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm
 		return nil, false, err
 	}
 
-	options.logger = l
-
 	engine, err := newXormEngine(dsn, options, nil)
 	if err != nil {
 		return nil, false, err
 	}
+
+	// Set the xorm logger directly
+	if l != nil {
+		engine.SetLogger(l)
+	}
+
 	return engine, options.isDefault, nil
 }
 
@@ -281,7 +285,7 @@ func configureEngine(engine *xorm.Engine, options *Options) {
 	engine.SetMaxIdleConns(options.maxIdleConns)
 	engine.SetMaxOpenConns(options.maxOpenConns)
 	engine.ShowSQL(options.showSQL)
-	// 如果提供了自定义日志器，则设置自定义日志器
+	// If a custom logger is provided, set the custom logger
 	if options.logger != nil {
 		engine.SetLogger(options.logger)
 	}

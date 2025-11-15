@@ -42,7 +42,7 @@ type ErrorCode interface {
 // OptionFunc set params
 type OptionFunc func(*ErrorOptions)
 
-// ErrorOptions error parmas
+// ErrorOptions error params
 type ErrorOptions struct {
 	namespace string
 	id        string
@@ -80,8 +80,8 @@ func OptionNamespace(ns string) OptionFunc {
 	}
 }
 
-// OptionMesssage set error message into options
-func OptionMesssage(msg string) OptionFunc {
+// OptionMessage set error message into options
+func OptionMessage(msg string) OptionFunc {
 	return func(p *ErrorOptions) {
 		p.message = msg
 	}
@@ -128,6 +128,7 @@ func NewErrorCode(ofs ...OptionFunc) ErrorCode {
 
 	ec := &errorCode{
 		err:     opts.NewSimpleError(),
+		code:    opts.code,
 		context: opts.ctx,
 	}
 
@@ -154,7 +155,11 @@ func (p *errorCode) Context() ErrorContext {
 }
 
 func (p *errorCode) Error() string {
-	var errs = []string{p.err.Error()}
+	if len(p.errors) == 0 {
+		return p.err.Error()
+	}
+	errs := make([]string, 0, len(p.errors)+1)
+	errs = append(errs, p.err.Error())
 	for _, err := range p.errors {
 		errs = append(errs, err.Error())
 	}
@@ -162,12 +167,13 @@ func (p *errorCode) Error() string {
 }
 
 func (p *errorCode) FullError() string {
-	return strings.Join(
-		append([]string{},
-			fmt.Sprintf("ID:%s#%s", genErrorCodeKey(p.Namespace(), p.Code()), p.ID()),
-			"Error:", p.Error(),
-			"Context:", p.Context().Error(),
-		), "\n")
+	var builder strings.Builder
+	builder.WriteString(fmt.Sprintf("ID:%s#%s", genErrorCodeKey(p.Namespace(), p.Code()), p.ID()))
+	builder.WriteString("\nError: ")
+	builder.WriteString(p.Error())
+	builder.WriteString("\nContext: ")
+	builder.WriteString(p.Context().Error())
+	return builder.String()
 }
 
 func (p *errorCode) ID() string {

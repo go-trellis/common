@@ -9,17 +9,19 @@ type JWT struct {
 }
 
 func NewJWT(secureKeys []byte) *JWT {
-	return &JWT{}
+	return &JWT{
+		secureKeys: secureKeys,
+	}
 }
 
-// GenToken 生成JWT
+// GenToken generates a JWT token
 func (p *JWT) GenToken(claims jwt.Claims) (string, error) {
 	if err := checkClaims(claims); err != nil {
 		return "", err
 	}
-	// 使用指定的签名方法创建签名对象
+	// Create a token object with the specified signing method
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	// 使用指定的secret签名并获得完整的编码后的字符串token
+	// Sign the token with the specified secret and get the complete encoded token string
 	return token.SignedString(p.secureKeys)
 }
 

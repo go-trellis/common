@@ -60,7 +60,6 @@ func IntToString(value any) (string, error) {
 // start:  from 1 to len(origin), replace * from beginning
 // length: replace origin length from the beginning
 func HideString(origin string, start, length int) string {
-
 	if len(origin) == 0 || length <= 0 || start <= 0 {
 		return origin
 	}
@@ -71,17 +70,26 @@ func HideString(origin string, start, length int) string {
 	lenRs := len(rs)
 
 	if lenRs >= start {
+		var builder strings.Builder
+		builder.Grow(lenRs + length)
+		builder.WriteString(string(rs[0:start]))
 		if lenRs > length+start {
-			return string(rs[0:start]) + strings.Repeat("*", length) + string(rs[length+start:])
+			builder.WriteString(strings.Repeat("*", length))
+			builder.WriteString(string(rs[length+start:]))
+		} else {
+			builder.WriteString(strings.Repeat("*", lenRs-start))
 		}
-		return string(rs[0:start]) + strings.Repeat("*", lenRs-start)
+		return builder.String()
 	}
 	return origin
 }
 
 // RemoveDuplicateStringByMap remove duplicate string by map whether a string is already exist.
 func RemoveDuplicateStringByMap(ss []string) []string {
-	var result []string
+	if len(ss) == 0 {
+		return nil
+	}
+	result := make([]string, 0, len(ss))
 	mapSS := make(map[string]bool, len(ss))
 	for _, s := range ss {
 		if mapSS[s] {

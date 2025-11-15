@@ -49,7 +49,10 @@ func (p Errors) Errors() error {
 }
 
 func errorsString(errs ...error) []string {
-	var ss []string
+	if len(errs) == 0 {
+		return nil
+	}
+	ss := make([]string, 0, len(errs))
 	for _, e := range errs {
 		switch ev := e.(type) {
 		case ErrorCode:

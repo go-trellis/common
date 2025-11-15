@@ -1,7 +1,8 @@
-.PHONY: build
+.PHONY: build unittest
 
 build:
 	go build ./...
 
-test:
-	go test ./...
+unittest:
+	go test -coverprofile=coverage.out ./...
+	go tool cover -func=coverage.out

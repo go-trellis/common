@@ -64,7 +64,8 @@ func ReadJSONFileToModel(filepath string, model any) error {
 func ParseJSONData(data []byte, model any) error {
 	var escaped bool // string value flag, " appear times, odd is false, even is true
 	var comments int // 0 nothing; 1 line; 2 multi line
-	var result []byte
+	// Pre-allocate result slice with estimated capacity
+	result := make([]byte, 0, len(data))
 
 	length := len(data)
 	for i, w := 0, 0; i < length; i += w {

@@ -84,7 +84,7 @@ func ParseBytes(id []byte) (ID, error) {
 	return ID(i), err
 }
 
-// Worker 工作对象
+// Worker is the worker object
 type Worker struct {
 	locker sync.Mutex
 
@@ -107,7 +107,7 @@ type Worker struct {
 
 type Option func(*Config)
 
-// Config 配置
+// Config is the configuration
 type Config struct {
 	nodeID       int64
 	epoch        int64
@@ -121,14 +121,14 @@ type Config struct {
 func (p *Config) check() error {
 	twEpochLen := len(strconv.Itoa(int(p.epoch)))
 	switch twEpochLen {
-	case 10: //秒
+	case 10: // seconds
 		//p.epoch *= 1000
 		p.epochDiff = 1
 		p.timeAccuracy = 1000000000
-	case 13: //毫秒
+	case 13: // milliseconds
 		p.epochDiff = 1000
 		p.timeAccuracy = 1000000
-	case 16: //微秒
+	case 16: // microseconds
 		//p.epoch /= 1000
 		p.epochDiff = 1000000
 		p.timeAccuracy = 1000
@@ -136,8 +136,9 @@ func (p *Config) check() error {
 		return fmt.Errorf("eponch's length should be 10, 13 or 16")
 	}
 
-	if p.sequenceBits < 0 || p.nodesBits < 0 || p.maxBits < 0 || p.timeAccuracy < 0 {
-		return errcode.New("bits can't less than 0")
+	// Note: uint8 types are always >= 0, so we only check timeAccuracy
+	if p.timeAccuracy < 0 {
+		return errcode.New("time accuracy can't be less than 0")
 	}
 
 	if (p.sequenceBits + p.nodesBits) > p.maxBits {

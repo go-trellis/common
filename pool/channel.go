@@ -45,7 +45,6 @@ type waitConn struct {
 }
 
 func (p *channelPool) init() error {
-
 	if err := p.options.check(); err != nil {
 		return err
 	}
@@ -201,11 +200,10 @@ func (p *channelPool) Release() {
 
 	close(conns)
 
-	count := len(conns)
-	for count > 0 {
-		c := <-conns
-		closeFun(c)
-		count--
+	for c := range conns {
+		if c != nil && closeFun != nil {
+			_ = closeFun(c.conn)
+		}
 	}
 }
 

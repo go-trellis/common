@@ -292,19 +292,22 @@ func newChannelPool() (Pool, error) {
 func simpleTCPServer() {
 	l, err := net.Listen(network, address)
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("Failed to listen on %s: %v", address, err)
+		return
 	}
 	defer l.Close()
 
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Failed to accept connection: %v", err)
+			return
 		}
 
-		go func() {
+		go func(c net.Conn) {
+			defer c.Close()
 			buffer := make([]byte, 256)
-			conn.Read(buffer)
-		}()
+			_, _ = c.Read(buffer)
+		}(conn)
 	}
 }

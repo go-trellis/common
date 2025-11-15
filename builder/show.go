@@ -25,7 +25,7 @@ import (
 	"github.com/mattn/go-colorable"
 )
 
-// 编译信息
+// Build information
 var (
 	ProgramName     string
 	ProgramVersion  string
@@ -90,7 +90,7 @@ func OnColor() Option {
 	}
 }
 
-// Show 显示项目信息
+// Show displays project information
 func Show(opts ...Option) {
 	options := &Options{}
 	for _, o := range opts {

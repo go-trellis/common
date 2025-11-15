@@ -94,9 +94,7 @@ func NewTrellisClaims(options ...Option) jwt.Claims {
 }
 
 func (p *TrellisClaims) initOptions(options ...Option) {
-	if p == nil {
-		p = &TrellisClaims{}
-	}
+	// Note: p cannot be nil when called as a method receiver
 	for _, o := range options {
 		o(p)
 	}

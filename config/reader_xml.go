@@ -50,7 +50,7 @@ func (*defXMLReader) ParseData(data []byte, model any) error {
 	return ParseXMLConfig(data, model)
 }
 
-// ParseXMLConfig 解析yaml的配置信息
+// ParseXMLConfig parses XML configuration data
 func ParseXMLConfig(data []byte, model any) error {
 	return xml.Unmarshal(data, model)
 }

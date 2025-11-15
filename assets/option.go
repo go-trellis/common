@@ -34,7 +34,6 @@ func (p *Options) init() {
 	if p.Path == "" {
 		p.Path = defaultPath
 	}
-	return
 }
 
 type Option func(*Options)

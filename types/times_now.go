@@ -24,7 +24,7 @@ import (
 var _ Times = (*Now)(nil)
 
 /*
-	获取一些日期的函数
+	Functions to get various dates
 	More Time functions
 */
 

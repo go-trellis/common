@@ -140,7 +140,7 @@ func Insert(session *xorm.Session, beans ...any) (c int64, err error) {
 
 // InsertMulti insert data in batches with step number and check number
 func InsertMulti(session *xorm.Session, ones any, opts ...InsertMultiOption) (c int64, err error) {
-	// 初始化选项
+	// Initialize options
 	options := &InsertMultiOptions{}
 	for _, opt := range opts {
 		opt(options)
@@ -189,7 +189,8 @@ func insertMulti(session *xorm.Session, ones any, options *InsertMultiOptions) (
 			}
 
 			// rebuild the slice or array for the current batch
-			var multi []any
+			batchSize := end - i
+			multi := make([]any, 0, batchSize)
 			for j := i; j < end; j++ {
 				multi = append(multi, sliceOnes.Index(j).Interface())
 			}

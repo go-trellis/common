@@ -118,7 +118,7 @@ func (p *AdapterConfig) GetKeys() []string {
 	p.locker.RLock()
 	defer p.locker.RUnlock()
 
-	var keys []string
+	keys := make([]string, 0, len(p.configs))
 	for key := range p.configs {
 		keys = append(keys, key)
 	}
@@ -272,8 +272,9 @@ func (p *AdapterConfig) GetList(key string) (res []any) {
 
 // GetStringList return a list of strings in p.configs by key
 func (p *AdapterConfig) GetStringList(key string) []string {
-	var items []string
-	for _, v := range p.GetList(key) {
+	list := p.GetList(key)
+	items := make([]string, 0, len(list))
+	for _, v := range list {
 		item, ok := v.(string)
 		if !ok {
 			return nil

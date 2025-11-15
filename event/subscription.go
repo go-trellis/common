@@ -37,6 +37,16 @@ func NewDefSubscriber(sub any) (Subscriber, error) {
 			id: GenSubscriberID(),
 			fn: s,
 		}
+	case func(...any):
+		// Wrap func(...any) to func(...any) error
+		fnWithError := func(values ...any) error {
+			s(values...)
+			return nil
+		}
+		subscriber = &defSubscriber{
+			id: GenSubscriberID(),
+			fn: fnWithError,
+		}
 	case Subscriber:
 		subscriber = s
 	default:

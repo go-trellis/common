@@ -19,12 +19,15 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/robfig/cron/v3"
 	"trellis.tech/trellis/common.v3/logger"
 	"trellis.tech/trellis/common.v3/plugin"
 	"trellis.tech/trellis/common.v3/types"
+	"xorm.io/xorm/log"
 )
 
 type T struct{}
@@ -34,14 +37,89 @@ func (p *T) Do() error {
 	return nil
 }
 
-var _ logger.KitLogger = (*Logger)(nil)
+var _ logger.Logger = (*Logger)(nil)
 
 type Logger struct{}
 
-func (*Logger) Log(kvs ...any) error {
-	kvs = append([]any{"haha"}, kvs...)
-	fmt.Println(kvs...)
+func (l *Logger) Log(kvs ...any) error {
 	return nil
+}
+
+func (l *Logger) Debug(kvs ...any) {
+	fmt.Println(append([]any{"debug"}, kvs...)...)
+}
+
+func (l *Logger) Debugf(msg string, kvs ...any) {
+	fmt.Printf("debug: "+msg+" %v\n", kvs)
+}
+
+func (l *Logger) Info(kvs ...any) {
+	fmt.Println(append([]any{"info"}, kvs...)...)
+}
+
+func (l *Logger) Infof(msg string, kvs ...any) {
+	fmt.Printf("info: "+msg+" %v\n", kvs)
+}
+
+func (l *Logger) Warn(kvs ...any) {
+	fmt.Println(append([]any{"warn"}, kvs...)...)
+}
+
+func (l *Logger) Warnf(msg string, kvs ...any) {
+	fmt.Printf("warn: "+msg+" %v\n", kvs)
+}
+
+func (l *Logger) Error(kvs ...any) {
+	fmt.Println(append([]any{"error"}, kvs...)...)
+}
+
+func (l *Logger) Errorf(msg string, kvs ...any) {
+	fmt.Printf("error: "+msg+" %v\n", kvs)
+}
+
+func (l *Logger) Panic(kvs ...any) {
+	fmt.Println(append([]any{"panic"}, kvs...)...)
+	panic("panic")
+}
+
+func (l *Logger) Panicf(msg string, kvs ...any) {
+	fmt.Printf("panic: "+msg+" %v\n", kvs)
+	panic("panic")
+}
+
+func (l *Logger) Fatal(kvs ...any) {
+	fmt.Println(append([]any{"fatal"}, kvs...)...)
+	os.Exit(1)
+}
+
+func (l *Logger) Fatalf(msg string, kvs ...any) {
+	fmt.Printf("fatal: "+msg+" %v\n", kvs)
+	os.Exit(1)
+}
+
+func (l *Logger) With(kvs ...any) logger.Logger {
+	// Simplified implementation, a more complex implementation may be needed in actual projects
+	return l
+}
+
+func (l *Logger) Writer() io.Writer {
+	return os.Stdout
+}
+
+func (l *Logger) Level() log.LogLevel {
+	return log.LOG_INFO
+}
+
+func (l *Logger) SetLevel(level log.LogLevel) {
+	// Simplified implementation, ignore setting
+}
+
+func (l *Logger) ShowSQL(show ...bool) {
+	// Simplified implementation, ignore setting
+}
+
+func (l *Logger) IsShowSQL() bool {
+	return false
 }
 
 func main() {

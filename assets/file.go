@@ -37,14 +37,18 @@ func (p *File) Stat() (fs.FileInfo, error) {
 
 // Read implements the fs.File interface.
 func (p *File) Read(buf []byte) (int, error) {
-	if len(buf) > len(p.content)-p.offset {
-		buf = buf[0:len(p.content[p.offset:])]
+	remaining := len(p.content) - p.offset
+	if remaining <= 0 {
+		return 0, io.EOF
+	}
+	if len(buf) > remaining {
+		buf = buf[:remaining]
 	}
 	n := copy(buf, p.content[p.offset:])
-	if n == len(p.content)-p.offset {
+	p.offset += n
+	if p.offset >= len(p.content) {
 		return n, io.EOF
 	}
-	p.offset += n
 	return n, nil
 }
 

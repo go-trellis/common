@@ -59,8 +59,8 @@ func FormatLayoutTime(t time.Time, layout string) string {
 	return t.Format(layout)
 }
 
-///// 中文的显示格式 /////
-///// Format time to chinese string time /////
+///// Chinese display format /////
+///// Format time to Chinese string time /////
 
 // FormatChineseDate format layout chinese date to string date.
 func FormatChineseDate(t time.Time) string {
@@ -82,7 +82,7 @@ func FormatChineseZDateTime(t time.Time) string {
 	return FormatLayoutTime(t, ChineseZDateTime)
 }
 
-///// 英文的显示格式 /////
+///// English display format /////
 ///// Format time to string /////
 
 // FormatDate format date string.
@@ -151,7 +151,7 @@ func GetMonthDays(year, month int) int {
 	return 0
 }
 
-///// 转换字符串到时间 /////
+///// Convert string to time /////
 ///// Parse string to time /////
 
 // StringToDate parse string to date, but is deprecated, use ParseDate

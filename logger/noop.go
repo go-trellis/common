@@ -37,22 +37,12 @@ func (*noop) Log(...any) error {
 }
 func (*noop) Debug(args ...any)              {}
 func (*noop) Debugf(msg string, args ...any) {}
-func (*noop) DebugM(msg string, args ...any) {}
 func (*noop) Info(args ...any)               {}
 func (*noop) Infof(msg string, args ...any)  {}
-func (*noop) InfoM(msg string, args ...any)  {}
 func (*noop) Warn(args ...any)               {}
 func (*noop) Warnf(msg string, args ...any)  {}
-func (*noop) WarnM(msg string, args ...any)  {}
 func (*noop) Error(args ...any)              {}
 func (*noop) Errorf(msg string, args ...any) {}
-func (*noop) ErrorM(msg string, args ...any) {}
-func (*noop) Panic(args ...any)              {}
-func (*noop) Panicf(msg string, args ...any) {}
-func (*noop) PanicM(msg string, args ...any) {}
-func (*noop) Fatal(args ...any)              {}
-func (*noop) Fatalf(msg string, args ...any) {}
-func (*noop) FatalM(msg string, args ...any) {}
 func (*noop) Writer() io.Writer {
 	return io.Discard
 }

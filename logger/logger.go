@@ -22,97 +22,16 @@ import (
 	"io"
 	"reflect"
 
-	kLog "github.com/go-kit/log"
-	"go.uber.org/zap/zapcore"
 	"trellis.tech/trellis/common.v3/json"
 	"xorm.io/xorm/log"
 )
 
-type KitLogger = kLog.Logger
-type XormLogger = log.Logger
-
-type MessageLogger interface {
-	DebugM(msg string, kvs ...any)
-	InfoM(msg string, kvs ...any)
-	WarnM(msg string, kvs ...any)
-	ErrorM(msg string, kvs ...any)
-	PanicM(msg string, kvs ...any)
-	FatalM(msg string, kvs ...any)
-}
-
-// Logger 日志对象
+// Logger is the logging interface
 type Logger interface {
-	KitLogger
-	XormLogger
-	MessageLogger
+	log.Logger
 
 	With(kvs ...any) Logger
 	Writer() io.Writer
-}
-
-// Level log level
-type Level int32
-
-// define levels
-const (
-	TraceLevel = Level(iota)
-	DebugLevel
-	InfoLevel
-	WarnLevel
-	ErrorLevel
-	PanicLevel
-	FatalLevel
-
-	LevelNameUnknown = "NULL"
-	LevelNameTrace   = "TRAC"
-	LevelNameDebug   = "DEBU"
-	LevelNameInfo    = "INFO"
-	LevelNameWarn    = "WARN"
-	LevelNameError   = "ERRO"
-	LevelNamePanic   = "PANC"
-	LevelNameFatal   = "CRIT"
-)
-
-// ToZapLevel  convert level into zap level
-func (p *Level) ToZapLevel() zapcore.Level {
-	switch *p {
-	case TraceLevel, DebugLevel:
-		return zapcore.DebugLevel
-	case InfoLevel:
-		return zapcore.InfoLevel
-	case WarnLevel:
-		return zapcore.WarnLevel
-	case ErrorLevel:
-		return zapcore.ErrorLevel
-	case PanicLevel:
-		return zapcore.PanicLevel
-	case FatalLevel:
-		return zapcore.FatalLevel
-	default:
-		return zapcore.DebugLevel
-	}
-}
-
-// ToLevelName convert level into string name
-func ToLevelName(lvl Level) string {
-	switch lvl {
-	case TraceLevel:
-		return LevelNameTrace
-	case DebugLevel:
-		return LevelNameDebug
-	case InfoLevel:
-		return LevelNameInfo
-	case WarnLevel:
-		return LevelNameWarn
-	case ErrorLevel:
-		return LevelNameError
-	case PanicLevel:
-		return LevelNamePanic
-	case FatalLevel:
-		return LevelNameFatal
-	default:
-		return LevelNameUnknown
-	}
 }
 
 func toString(v any) string {

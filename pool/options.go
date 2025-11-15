@@ -40,7 +40,6 @@ type Options struct {
 }
 
 func (p *Options) check() error {
-
 	if p.maxIdle <= 0 {
 		p.maxIdle = p.maxCap
 	}

@@ -114,8 +114,13 @@ func (p *defSubscriberGroup) RemoveSubscriber(ids ...string) error {
 
 // Publish messages to all subscribers.
 func (p *defSubscriberGroup) Publish(values ...any) error {
-	var subscribers []Subscriber
 	p.locker.RLock()
+	subscriberCount := len(p.subscribers)
+	if subscriberCount == 0 {
+		p.locker.RUnlock()
+		return nil
+	}
+	subscribers := make([]Subscriber, 0, subscriberCount)
 	for _, s := range p.subscribers {
 		subscribers = append(subscribers, s)
 	}

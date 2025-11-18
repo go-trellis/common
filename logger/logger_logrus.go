@@ -55,6 +55,42 @@ func NewLogrusLogger() (*LogrusLogger, error) {
 	return ll, nil
 }
 
+// NewLogrusLoggerWithRotate creates a new logrus logger with file rotation
+func NewLogrusLoggerWithRotate(config *RotateLogsConfig) (*LogrusLogger, error) {
+	logger := logrus.New()
+	
+	if config != nil {
+		if err := SetupRotateLogsLogger(logger, config); err != nil {
+			return nil, err
+		}
+	} else {
+		logger.SetOutput(io.Discard)
+	}
+
+	ll := &LogrusLogger{
+		logger: logger,
+	}
+
+	return ll, nil
+}
+
+// SetRotateLogs sets up file rotation for the logger
+func (p *LogrusLogger) SetRotateLogs(config *RotateLogsConfig) error {
+	if p.logger == nil || config == nil {
+		return nil
+	}
+	return SetupRotateLogsLogger(p.logger, config)
+}
+
+// AddRotateLogsHook adds a file rotation hook to the logger
+// This allows logs to be written to both the default output and rotated files
+func (p *LogrusLogger) AddRotateLogsHook(config *RotateLogsConfig) error {
+	if p.logger == nil || config == nil {
+		return nil
+	}
+	return AddRotateLogsHook(p.logger, config)
+}
+
 // With creates a child logger with specified fields
 func (p *LogrusLogger) With(kvs ...any) Logger {
 	lenFields := len(kvs)

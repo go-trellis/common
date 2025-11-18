@@ -100,7 +100,7 @@ func (p *defaultStack) PopMany(count int64) (vs []any, exist bool) {
 	}
 	p.length -= count
 
-	vs, p.stack, exist = p.stack[:count-1], p.stack[count:], true
+	vs, p.stack, exist = p.stack[:count], p.stack[count:], true
 	return
 }
 

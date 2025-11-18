@@ -27,6 +27,7 @@ import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	writerhook "github.com/sirupsen/logrus/hooks/writer"
+	"trellis.tech/trellis/common.v3/types"
 )
 
 // RotateMode defines the log rotation mode
@@ -247,18 +248,28 @@ func (r *RotateLogsConfig) UnmarshalYAML(unmarshal func(any) error) error {
 
 	// Parse MaxAge
 	if aux.MaxAge != "" {
-		duration, err := time.ParseDuration(aux.MaxAge)
-		if err != nil {
-			return fmt.Errorf("invalid max_age duration: %w", err)
+		duration := types.ParseStringTime(strings.ToLower(aux.MaxAge))
+		if duration == 0 && aux.MaxAge != "0" && aux.MaxAge != "" {
+			// Try standard time.ParseDuration as fallback
+			if d, err := time.ParseDuration(aux.MaxAge); err == nil {
+				duration = d
+			} else {
+				return fmt.Errorf("invalid max_age duration: %s", aux.MaxAge)
+			}
 		}
 		r.MaxAge = duration
 	}
 
 	// Parse RotationTime
 	if aux.RotationTime != "" {
-		duration, err := time.ParseDuration(aux.RotationTime)
-		if err != nil {
-			return fmt.Errorf("invalid rotation_time duration: %w", err)
+		duration := types.ParseStringTime(strings.ToLower(aux.RotationTime))
+		if duration == 0 && aux.RotationTime != "0" && aux.RotationTime != "" {
+			// Try standard time.ParseDuration as fallback
+			if d, err := time.ParseDuration(aux.RotationTime); err == nil {
+				duration = d
+			} else {
+				return fmt.Errorf("invalid rotation_time duration: %s", aux.RotationTime)
+			}
 		}
 		r.RotationTime = duration
 	}
@@ -320,18 +331,28 @@ func (r *RotateLogsConfig) UnmarshalJSON(data []byte) error {
 
 	// Parse MaxAge
 	if aux.MaxAge != "" {
-		duration, err := time.ParseDuration(aux.MaxAge)
-		if err != nil {
-			return fmt.Errorf("invalid max_age duration: %w", err)
+		duration := types.ParseStringTime(strings.ToLower(aux.MaxAge))
+		if duration == 0 && aux.MaxAge != "0" && aux.MaxAge != "" {
+			// Try standard time.ParseDuration as fallback
+			if d, err := time.ParseDuration(aux.MaxAge); err == nil {
+				duration = d
+			} else {
+				return fmt.Errorf("invalid max_age duration: %s", aux.MaxAge)
+			}
 		}
 		r.MaxAge = duration
 	}
 
 	// Parse RotationTime
 	if aux.RotationTime != "" {
-		duration, err := time.ParseDuration(aux.RotationTime)
-		if err != nil {
-			return fmt.Errorf("invalid rotation_time duration: %w", err)
+		duration := types.ParseStringTime(strings.ToLower(aux.RotationTime))
+		if duration == 0 && aux.RotationTime != "0" && aux.RotationTime != "" {
+			// Try standard time.ParseDuration as fallback
+			if d, err := time.ParseDuration(aux.RotationTime); err == nil {
+				duration = d
+			} else {
+				return fmt.Errorf("invalid rotation_time duration: %s", aux.RotationTime)
+			}
 		}
 		r.RotationTime = duration
 	}

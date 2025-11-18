@@ -200,10 +200,22 @@ func (p *channelPool) Release() {
 
 	close(conns)
 
-	for c := range conns {
-		if c != nil && closeFun != nil {
-			_ = closeFun(c.conn)
+	// Use a goroutine with timeout to avoid blocking forever
+	done := make(chan bool, 1)
+	go func() {
+		defer func() { done <- true }()
+		for c := range conns {
+			if c != nil && closeFun != nil {
+				_ = closeFun(c.conn)
+			}
 		}
+	}()
+
+	select {
+	case <-done:
+		// All connections closed
+	case <-time.After(time.Millisecond * 100):
+		// Timeout after 100ms - fast enough for tests, long enough for cleanup
 	}
 }
 

@@ -492,17 +492,16 @@ func (p *AdapterConfig) processIncludes(configs *map[string]any, visitedFiles ma
 
 	// Check if there's a "#include" field
 	includeValue, hasInclude := (*configs)["#include"]
+	var includeKey string
 	if !hasInclude {
 		// Also check for legacy "include" field (without #) for backward compatibility
 		includeValue, hasInclude = (*configs)["include"]
 		if !hasInclude {
 			return nil
 		}
-		// Remove legacy include field from configs (it's metadata, not configuration)
-		defer delete(*configs, "include")
+		includeKey = "include"
 	} else {
-		// Remove #include field from configs (it's metadata, not configuration)
-		defer delete(*configs, "#include")
+		includeKey = "#include"
 	}
 
 	// Parse include value - can be string or array of strings
@@ -513,12 +512,16 @@ func (p *AdapterConfig) processIncludes(configs *map[string]any, visitedFiles ma
 			includePaths = []string{v}
 		}
 	case []any:
+		// Pre-allocate capacity for better performance
+		includePaths = make([]string, 0, len(v))
 		for _, item := range v {
 			if str, ok := item.(string); ok && str != "" {
 				includePaths = append(includePaths, str)
 			}
 		}
 	case []string:
+		// Pre-allocate capacity for better performance
+		includePaths = make([]string, 0, len(v))
 		for _, str := range v {
 			if str != "" {
 				includePaths = append(includePaths, str)
@@ -527,6 +530,10 @@ func (p *AdapterConfig) processIncludes(configs *map[string]any, visitedFiles ma
 	default:
 		return ErrInvalidIncludeValue
 	}
+
+	// Remove include field from configs (it's metadata, not configuration)
+	// Do this after parsing to ensure we only delete if parsing succeeded
+	delete(*configs, includeKey)
 
 	// Process each include file
 	for _, includePath := range includePaths {

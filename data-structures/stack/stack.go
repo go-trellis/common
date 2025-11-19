@@ -62,13 +62,14 @@ func (p *defaultStack) PushMany(vs ...any) {
 	defer p.Unlock()
 
 	lenVS := len(vs)
-
-	prepend := make([]any, lenVS)
-	for i, v := range vs {
-		prepend[i] = v
+	if lenVS == 0 {
+		return
 	}
 
-	p.stack = append(prepend, p.stack...)
+	// Pre-allocate capacity for better performance
+	newStack := make([]any, 0, lenVS+len(p.stack))
+	newStack = append(newStack, vs...)
+	p.stack = append(newStack, p.stack...)
 	p.length += int64(lenVS)
 }
 

@@ -7,3 +7,6 @@ unittest:
 	go test -coverprofile=coverage.out ./...
 	go tool cover -func=coverage.out -o coverage.html
 	gocov convert coverage.out | gocov-xml > coverage.xml
+
+gofmt:
+	find . -name "*.go" | xargs gofmt -w

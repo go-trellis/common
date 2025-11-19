@@ -3,7 +3,7 @@ Finite-state machine in go
 
 ## Introduction
 
-* [点击进入中文相关说明](http://zh.wikipedia.org/wiki/%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA)
+* [Click for Chinese documentation](http://zh.wikipedia.org/wiki/%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA)
 * [Click to article in English](http://en.wikipedia.org/wiki/Finite-state_machine)
 
 ## Installation

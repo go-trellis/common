@@ -1,6 +1,6 @@
 # snowflake
 
-Twitter snowflake worker - Twitter雪花ID计算器
+Twitter snowflake worker - Twitter Snowflake ID Generator
 
 [twitter announcing](https://blog.twitter.com/engineering/en_us/a/2010/announcing-snowflake.html)
 

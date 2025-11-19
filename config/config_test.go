@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"trellis.tech/trellis/common.v3/config"
-	"trellis.tech/trellis/common.v3/shell"
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/shell"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 const (
@@ -113,9 +113,10 @@ func testFunc(t *testing.T, c config.Config) {
 	testutils.Ok(t, err)
 
 	for _, k := range slices {
-		if k.Name == "slice_user_right" {
+		switch k.Name {
+		case "slice_user_right":
 			testutils.Assert(t, k.Value == envUser, "user should be %q", k.Value)
-		} else if k.Name == "slice_user_wrong" {
+		case "slice_user_wrong":
 			testutils.Assert(t, k.Value == "", "user should be %q", k.Value)
 		}
 	}

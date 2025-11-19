@@ -20,7 +20,7 @@ package rijndael
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestPKCSPadding(t *testing.T) {

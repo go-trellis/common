@@ -20,7 +20,7 @@ package config
 import (
 	"bytes"
 
-	"trellis.tech/trellis/common.v3/json"
+	"trellis.tech/trellis/common.v3/utils/json"
 )
 
 type defJSONReader struct {

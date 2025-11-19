@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v3/errcode"
+	"trellis.tech/trellis/common.v3/errors/errcode"
 )
 
 const (

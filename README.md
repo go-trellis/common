@@ -33,61 +33,66 @@ go get trellis.tech/trellis/common.v3
 - AES encryption with ECB mode
 - TLS configuration helpers
 
-### Data Structures (`data-structures`)
+### Data Structures (`storage/data-structures`)
 - Stack implementation with thread-safe operations
 - Queue implementation (FIFO)
 - Multi-Producer Single-Consumer (MPSC) lock-free queue
 
-### Cache (`cache`)
+### Cache (`storage/cache`)
 - LRU cache implementation
 - Multiple value modes: Unique, Bag, DuplicateBag
 - Expiration support
 - Table-based cache management
 
-### Connection Pool (`pool`)
+### Connection Pool (`storage/pool`)
 - Generic connection pool
 - Configurable capacity and idle timeout
 - Connection health checks (ping)
 - Concurrent-safe operations
 
-### Error Handling (`errcode`)
+### Error Handling (`errors/errcode`)
 - Structured error codes
 - Error context support
 - Multiple error aggregation
 - Simple error wrapper
 
-### State Machine (`fsm`)
+### State Machine (`state-machine/fsm`)
 - Finite state machine implementation
 - Namespace-based state management
 - Transition validation
 - Configurable via YAML
 
-### ID Generation (`snowflake`)
+### ID Generation (`id/snowflake`)
 - Twitter Snowflake ID generator
 - Configurable worker and datacenter bits
 - High-performance ID generation
 
-### Database (`txorm`)
+### Database (`orm/txorm`)
 - XORM transaction wrapper
 - Prometheus metrics integration
 - SQL builder helpers
 - Transaction management
 
-### Rate Limiting (`ratelimit`)
+### Transaction (`orm/transaction`)
+- Generic transaction management interface
+- Transaction engine abstraction
+- Commit and rollback support
+
+### Rate Limiting (`middleware/ratelimit`)
 - Token bucket algorithm implementation
 - Flexible key extraction (IP, User ID, Path, custom)
 - gRPC interceptors support
 - Redis-based distributed rate limiting
 - Multi-limiter support
 
-### Circuit Breaker (`circuitbreaker`)
+### Circuit Breaker (`middleware/circuitbreaker`)
 - Three-state circuit breaker (Closed, Open, Half-Open)
 - Configurable failure thresholds and timeouts
 - Thread-safe implementation
 - gRPC interceptors support
 - State change callbacks
 
-### Tracing (`tracing`)
+### Tracing (`middleware/tracing`)
 - Automatic trace ID generation
 - Trace ID propagation through HTTP and gRPC
 - Gin middleware integration
@@ -95,12 +100,11 @@ go get trellis.tech/trellis/common.v3
 - HTTP header support (`X-Trace-Id`)
 
 ### Other Utilities
-- **types**: Type conversions, time formatting, string utilities
-- **files**: File reading utilities with compression support
-- **event**: Event bus for pub/sub patterns
-- **injector**: Dependency injection helpers
-- **flagext**: Extended flag parsing
-- **transaction**: Generic transaction management interface
+- **utils/types**: Type conversions, time formatting, string utilities
+- **utils/files**: File reading utilities with compression support
+- **event-plugin/event**: Event bus for pub/sub patterns
+- **event-plugin/injector**: Dependency injection helpers
+- **utils/flagext**: Extended flag parsing
 
 ## Quick Start
 
@@ -142,7 +146,7 @@ logrusLogger, err := logger.NewLogrusLoggerWithRotate(config)
 ### Snowflake ID Generation
 
 ```go
-import "trellis.tech/trellis/common.v3/snowflake"
+import "trellis.tech/trellis/common.v3/id/snowflake"
 
 worker, _ := snowflake.NewWorker()
 id := worker.Next()
@@ -151,7 +155,7 @@ id := worker.Next()
 ### Cache Usage
 
 ```go
-import "trellis.tech/trellis/common.v3/cache"
+import "trellis.tech/trellis/common.v3/storage/cache"
 
 c := cache.New("table1", cache.OptValueMode(cache.ValueModeUnique))
 c.Insert("key1", "value1")
@@ -161,7 +165,7 @@ values, ok := c.Lookup("key1")
 ### Connection Pool
 
 ```go
-import "trellis.tech/trellis/common.v3/pool"
+import "trellis.tech/trellis/common.v3/storage/pool"
 
 factory := func() (any, error) {
     return net.Dial("tcp", "localhost:8080")
@@ -185,7 +189,7 @@ defer p.Put(conn)
 ```go
 import (
     "time"
-    "trellis.tech/trellis/common.v3/ratelimit"
+    "trellis.tech/trellis/common.v3/middleware/ratelimit"
 )
 
 config := ratelimit.NewConfig(100, time.Second)
@@ -203,7 +207,7 @@ if !allowed {
 import (
     "context"
     "time"
-    "trellis.tech/trellis/common.v3/circuitbreaker"
+    "trellis.tech/trellis/common.v3/middleware/circuitbreaker"
 )
 
 cb := circuitbreaker.NewCircuitBreaker(circuitbreaker.Config{
@@ -226,7 +230,7 @@ err := cb.Execute(ctx, func() error {
 ```go
 import (
     "github.com/gin-gonic/gin"
-    "trellis.tech/trellis/common.v3/tracing"
+    "trellis.tech/trellis/common.v3/middleware/tracing"
 )
 
 router := gin.Default()
@@ -286,12 +290,12 @@ make build
 ## Sub-packages Documentation
 
 - [config](config/README.md) - Configuration management
-- [cache](cache/README.md) - LRU cache implementation
-- [snowflake](snowflake/README.md) - Snowflake ID generator
-- [fsm](fsm/README.md) - Finite state machine
-- [ratelimit](ratelimit/README.md) - Rate limiting implementation
-- [circuitbreaker](circuitbreaker/README.md) - Circuit breaker implementation
-- [tracing](tracing/README.md) - Request tracing and trace ID propagation
+- [cache](storage/cache/README.md) - LRU cache implementation
+- [snowflake](id/snowflake/README.md) - Snowflake ID generator
+- [fsm](state-machine/fsm/README.md) - Finite state machine
+- [ratelimit](middleware/ratelimit/README.md) - Rate limiting implementation
+- [circuitbreaker](middleware/circuitbreaker/README.md) - Circuit breaker implementation
+- [tracing](middleware/tracing/README.md) - Request tracing and trace ID propagation
 
 ## Other Useful Utilities
 

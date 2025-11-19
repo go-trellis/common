@@ -23,8 +23,8 @@ import (
 	"flag"
 	"os"
 
-	"trellis.tech/trellis/common.v3/errcode"
-	"trellis.tech/trellis/common.v3/flagext"
+	"trellis.tech/trellis/common.v3/errors/errcode"
+	"trellis.tech/trellis/common.v3/utils/flagext"
 )
 
 var _ flagext.Parser = (*Config)(nil)

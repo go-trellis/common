@@ -27,10 +27,10 @@ import (
 	"time"
 
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v3/errcode"
-	"trellis.tech/trellis/common.v3/files"
-	"trellis.tech/trellis/common.v3/json"
-	"trellis.tech/trellis/common.v3/types"
+	"trellis.tech/trellis/common.v3/errors/errcode"
+	"trellis.tech/trellis/common.v3/utils/files"
+	"trellis.tech/trellis/common.v3/utils/json"
+	"trellis.tech/trellis/common.v3/utils/types"
 )
 
 const (

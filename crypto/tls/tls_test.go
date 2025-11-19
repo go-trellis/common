@@ -24,8 +24,8 @@ import (
 	"reflect"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/errcode"
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/errors/errcode"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestConfig_ParseFlags(t *testing.T) {

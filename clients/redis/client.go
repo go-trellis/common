@@ -23,8 +23,8 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
-	"trellis.tech/trellis/common.v3/flagext"
-	"trellis.tech/trellis/common.v3/types"
+	"trellis.tech/trellis/common.v3/utils/flagext"
+	"trellis.tech/trellis/common.v3/utils/types"
 )
 
 var _ flagext.Parser = (*Config)(nil)

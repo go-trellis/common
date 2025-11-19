@@ -20,7 +20,7 @@ package arcfour
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestNew(t *testing.T) {

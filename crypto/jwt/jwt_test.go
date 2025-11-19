@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"trellis.tech/trellis/common.v3/crypto/jwt"
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 
 	go_jwt "github.com/golang-jwt/jwt/v5"
 )

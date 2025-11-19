@@ -22,7 +22,7 @@ import (
 	"io"
 	"reflect"
 
-	"trellis.tech/trellis/common.v3/json"
+	"trellis.tech/trellis/common.v3/utils/json"
 	"xorm.io/xorm/log"
 )
 

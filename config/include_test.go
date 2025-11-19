@@ -23,7 +23,7 @@ import (
 	"testing"
 
 	"trellis.tech/trellis/common.v3/config"
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestInclude_SingleFile(t *testing.T) {

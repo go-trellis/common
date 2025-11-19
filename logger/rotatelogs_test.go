@@ -25,7 +25,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestDefaultRotateLogsConfig(t *testing.T) {

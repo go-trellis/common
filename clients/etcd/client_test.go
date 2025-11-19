@@ -6,8 +6,8 @@ import (
 	"time"
 
 	commonTls "trellis.tech/trellis/common.v3/crypto/tls"
-	"trellis.tech/trellis/common.v3/testutils"
-	"trellis.tech/trellis/common.v3/types"
+	"trellis.tech/trellis/common.v3/utils/testutils"
+	"trellis.tech/trellis/common.v3/utils/types"
 )
 
 func TestConfig_ParseFlags(t *testing.T) {

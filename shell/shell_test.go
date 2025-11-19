@@ -78,4 +78,3 @@ func TestPrintCommand_NotVerbose(t *testing.T) {
 	// printCommand should not print when verbose is false
 	printCommand("test", "arg1", "arg2")
 }
-

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	commonTls "trellis.tech/trellis/common.v3/crypto/tls"
-	"trellis.tech/trellis/common.v3/types"
 	"trellis.tech/trellis/common.v3/testutils"
+	"trellis.tech/trellis/common.v3/types"
 )
 
 func TestConfig_ParseFlags(t *testing.T) {
@@ -59,7 +59,7 @@ func TestNewClient_EmptyEndpoints(t *testing.T) {
 
 func TestNewClient_WithEndpoints(t *testing.T) {
 	cfg := Config{
-		Endpoints: []string{"127.0.0.1:2379"},
+		Endpoints:   []string{"127.0.0.1:2379"},
 		DialTimeout: types.Duration(time.Second),
 	}
 	// This will try to connect and may fail
@@ -116,7 +116,7 @@ func TestNewClient_EndpointSplitError(t *testing.T) {
 func TestConfig_ParseFlagsWithPrefix_AllFields(t *testing.T) {
 	cfg := &Config{}
 	f := flag.NewFlagSet("test", flag.ContinueOnError)
-	
+
 	cfg.ParseFlagsWithPrefix("test.", f)
 	// Should not panic - just registers flags, doesn't parse them
 }
@@ -127,4 +127,3 @@ func TestNewClient_DefaultConfig(t *testing.T) {
 	// Should use default endpoint 127.0.0.1:2379
 	_ = err
 }
-

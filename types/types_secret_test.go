@@ -21,8 +21,8 @@ import (
 	"flag"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/testutils"
 	"gopkg.in/yaml.v3"
+	"trellis.tech/trellis/common.v3/testutils"
 )
 
 func TestSecret_String(t *testing.T) {
@@ -74,4 +74,3 @@ func TestSecret_MarshalJSON(t *testing.T) {
 	testutils.Ok(t, err)
 	testutils.Assert(t, len(data) > 0, "should marshal to YAML")
 }
-

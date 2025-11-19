@@ -157,4 +157,3 @@ func TestHash32Repo_Sum32_Consistency(t *testing.T) {
 
 	testutils.Equals(t, result1, result2, "Same input should produce same Sum32 result")
 }
-

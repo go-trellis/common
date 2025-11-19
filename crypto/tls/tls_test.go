@@ -161,4 +161,3 @@ func TestConfig_UnmarshalYAML_Error(t *testing.T) {
 	err := cfg.UnmarshalYAML(unmarshal)
 	testutils.NotOk(t, err, "should return error when unmarshal fails")
 }
-

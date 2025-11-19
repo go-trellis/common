@@ -200,4 +200,3 @@ func TestRawMessageType(t *testing.T) {
 	var raw RawMessage = []byte(`{"test":"value"}`)
 	testutils.Assert(t, len(raw) > 0, "raw message should not be empty")
 }
-

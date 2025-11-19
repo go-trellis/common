@@ -1,0 +1,14 @@
+"#include": "test.yaml"
+app:
+  name: "my-app"
+  version: "1.0.0"
+database:
+  host: "localhost"
+  port: 5432
+users:
+  - name: "user1"
+    age: 30
+  - name: "user2"
+    age: 25
+  - name: "${test.name}"
+    age: "${test.age}"

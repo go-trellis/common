@@ -98,4 +98,3 @@ func TestOnColor(t *testing.T) {
 	opt(opts)
 	testutils.Assert(t, opts.OnColor, "OnColor should set OnColor option")
 }
-

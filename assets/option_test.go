@@ -77,4 +77,3 @@ func TestOptPath(t *testing.T) {
 
 	testutils.Equals(t, "/custom/path", opts.Path, "OptPath should set path")
 }
-

@@ -208,4 +208,3 @@ func TestCache_InsertExpire_Expired(t *testing.T) {
 	_, ok := cache.Lookup("table1", "key1")
 	testutils.Assert(t, !ok, "Lookup should return false for expired key")
 }
-

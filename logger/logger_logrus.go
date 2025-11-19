@@ -58,7 +58,7 @@ func NewLogrusLogger() (*LogrusLogger, error) {
 // NewLogrusLoggerWithRotate creates a new logrus logger with file rotation
 func NewLogrusLoggerWithRotate(config *RotateLogsConfig) (*LogrusLogger, error) {
 	logger := logrus.New()
-	
+
 	if config != nil {
 		if err := SetupRotateLogsLogger(logger, config); err != nil {
 			return nil, err

@@ -205,4 +205,3 @@ func TestNewHashRepo_SHA512_256(t *testing.T) {
 	result := repo.Sum("test")
 	testutils.Assert(t, len(result) > 0, "Sum should return non-empty result")
 }
-

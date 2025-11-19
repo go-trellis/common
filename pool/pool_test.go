@@ -382,11 +382,11 @@ func TestPoolConcurrent(t *testing.T) {
 
 	var wg sync.WaitGroup
 	wg.Add(1)
-		go func() {
-			defer wg.Done()
-			time.Sleep(time.Millisecond * 50) // Reduced delay for faster tests
-			p.Release()
-		}()
+	go func() {
+		defer wg.Done()
+		time.Sleep(time.Millisecond * 50) // Reduced delay for faster tests
+		p.Release()
+	}()
 
 	for i := 0; i < MaximumCap; i++ {
 		wg.Add(1)

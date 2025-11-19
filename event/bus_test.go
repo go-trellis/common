@@ -232,4 +232,3 @@ func TestMultipleSubscribers(t *testing.T) {
 	// Only sub2 should receive (async, so we just verify it exists)
 	_ = sub2 // Suppress unused variable warning
 }
-

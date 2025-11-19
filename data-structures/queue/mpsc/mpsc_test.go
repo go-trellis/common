@@ -195,4 +195,3 @@ func TestEmptyAfterPop(t *testing.T) {
 	q.Pop()
 	testutils.Assert(t, q.Empty(), "queue should be empty after pop")
 }
-

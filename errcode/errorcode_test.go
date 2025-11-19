@@ -140,4 +140,3 @@ func TestErrorCode_AllMethods(t *testing.T) {
 	testutils.Equals(t, ec.Message(), "test message")
 	testutils.Assert(t, ec.Context() != nil, "context should not be nil")
 }
-

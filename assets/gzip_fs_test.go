@@ -75,7 +75,7 @@ func TestFS(t *testing.T) {
 			if size != c.expectedSize {
 				t.Fatalf("size is wrong, expected %d, got %d", c.expectedSize, size)
 			}
-			
+
 			if strings.HasSuffix(c.file, ".gz") {
 				// don't read the comressed content
 				return

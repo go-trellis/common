@@ -38,7 +38,7 @@ func TestInject_MultipleParams(t *testing.T) {
 	type Target struct {
 		StringValue string  `inject:"string"`
 		IntValue    int     `inject:"int"`
-		FloatValue   float64 `inject:"float"`
+		FloatValue  float64 `inject:"float"`
 	}
 
 	target := &Target{}
@@ -104,4 +104,3 @@ func TestInject_EmptyTarget(t *testing.T) {
 	// Inject with nil target might not error, depends on implementation
 	_ = err
 }
-

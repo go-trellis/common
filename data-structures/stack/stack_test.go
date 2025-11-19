@@ -247,4 +247,3 @@ func TestPushPopDifferentTypes(t *testing.T) {
 	val, _ = stack.Pop()
 	testutils.Assert(t, val == "string", "should pop string last (first pushed)")
 }
-

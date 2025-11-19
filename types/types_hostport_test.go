@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/testutils"
 	"gopkg.in/yaml.v3"
+	"trellis.tech/trellis/common.v3/testutils"
 )
 
 func TestHostPort_UnmarshalYAML(t *testing.T) {
@@ -110,4 +110,3 @@ func TestHostPort_String_OnlyPort(t *testing.T) {
 	hp := HostPort{Host: "", Port: "8080"}
 	testutils.Equals(t, ":8080", hp.String(), "Should format with empty host")
 }
-

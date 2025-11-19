@@ -130,9 +130,9 @@ func TestPKCSUnPadding_PaddingZero(t *testing.T) {
 
 func TestPKCSUnPadding_NotAllSame(t *testing.T) {
 	buf := make([]byte, 16)
-	buf[15] = 8  // Padding value
-	buf[14] = 7  // Different value
-	buf[13] = 8  // Different value
+	buf[15] = 8 // Padding value
+	buf[14] = 7 // Different value
+	buf[13] = 8 // Different value
 	n := 8
 	_, err := PKCSUnPadding(buf, n)
 	testutils.NotOk(t, err, "should return error for inconsistent padding")
@@ -147,4 +147,3 @@ func TestPKCS5UnPadding(t *testing.T) {
 	testutils.Ok(t, err)
 	testutils.Equals(t, buf, unpadded, "unpadded data should match original")
 }
-

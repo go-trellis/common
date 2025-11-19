@@ -43,7 +43,7 @@ func TestFSM_AddTransition(t *testing.T) {
 
 func TestFSM_AddTransition_Invalid(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test nil transition
 	err := fsm.AddTransition(nil)
 	testutils.NotOk(t, err, "should return error for nil transition")
@@ -108,7 +108,7 @@ func TestFSM_GetTargetTransition(t *testing.T) {
 
 func TestFSM_GetTargetTransition_NotFound(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test namespace not found
 	_, err := fsm.GetTargetTransition("nonexistent", "initial", "start")
 	testutils.NotOk(t, err, "should return error for nonexistent namespace")
@@ -116,14 +116,14 @@ func TestFSM_GetTargetTransition_NotFound(t *testing.T) {
 	// Test transition not found
 	err = fsm.AddNamespace("test")
 	testutils.Ok(t, err)
-	
+
 	_, err = fsm.GetTargetTransition("test", "initial", "start")
 	testutils.NotOk(t, err, "should return error for nonexistent transition")
 }
 
 func TestFSM_GetCurrentStatus(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test empty namespace
 	status := fsm.GetCurrentStatus("nonexistent")
 	testutils.Equals(t, "", status, "status should be empty for nonexistent namespace")
@@ -131,7 +131,7 @@ func TestFSM_GetCurrentStatus(t *testing.T) {
 	// Test with namespace
 	err := fsm.AddNamespace("test")
 	testutils.Ok(t, err)
-	
+
 	status = fsm.GetCurrentStatus("test")
 	testutils.Equals(t, "", status, "status should be empty initially")
 
@@ -160,7 +160,7 @@ func TestFSM_Remove(t *testing.T) {
 	testutils.Ok(t, err)
 
 	fsm.Remove()
-	
+
 	status := fsm.GetCurrentStatus("test1")
 	testutils.Equals(t, "", status, "status should be empty after remove")
 }
@@ -171,7 +171,7 @@ func TestFSM_RemoveNamespace(t *testing.T) {
 	testutils.Ok(t, err)
 
 	fsm.RemoveNamespace("test")
-	
+
 	status := fsm.GetCurrentStatus("test")
 	testutils.Equals(t, "", status, "status should be empty after remove namespace")
 
@@ -182,7 +182,7 @@ func TestFSM_RemoveNamespace(t *testing.T) {
 
 func TestFSM_AddNamespace(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	err := fsm.AddNamespace("test")
 	testutils.Ok(t, err)
 
@@ -216,7 +216,7 @@ func TestFSM_RemoveTransition(t *testing.T) {
 
 func TestFSM_RemoveTransition_Invalid(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test nil transition
 	err := fsm.RemoveTransition(nil)
 	testutils.NotOk(t, err, "should return error for nil transition")
@@ -230,7 +230,7 @@ func TestFSM_RemoveTransition_Invalid(t *testing.T) {
 	}
 	err = fsm.AddNamespace("test")
 	testutils.Ok(t, err)
-	
+
 	err = fsm.RemoveTransition(trans)
 	// May or may not error depending on implementation - transition doesn't exist
 	_ = err
@@ -264,7 +264,7 @@ func TestFSM_ChangeCurrentStatus(t *testing.T) {
 
 func TestFSM_ChangeCurrentStatus_NotFound(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test namespace not found
 	_, err := fsm.ChangeCurrentStatus("nonexistent", "start")
 	testutils.NotOk(t, err, "should return error for nonexistent namespace")
@@ -272,7 +272,7 @@ func TestFSM_ChangeCurrentStatus_NotFound(t *testing.T) {
 	// Test transition not found
 	err = fsm.AddNamespace("test")
 	testutils.Ok(t, err)
-	
+
 	_, err = fsm.ChangeCurrentStatus("test", "start")
 	testutils.NotOk(t, err, "should return error for nonexistent transition")
 }
@@ -301,7 +301,7 @@ func TestFSM_SetCurrentStatus(t *testing.T) {
 
 func TestFSM_SetCurrentStatus_NotFound(t *testing.T) {
 	fsm := New().(*FSM)
-	
+
 	// Test namespace not found
 	err := fsm.SetCurrentStatus("nonexistent", "initial")
 	testutils.NotOk(t, err, "should return error for nonexistent namespace")
@@ -309,8 +309,7 @@ func TestFSM_SetCurrentStatus_NotFound(t *testing.T) {
 	// Test status not found
 	err = fsm.AddNamespace("test")
 	testutils.Ok(t, err)
-	
+
 	err = fsm.SetCurrentStatus("test", "nonexistent")
 	testutils.NotOk(t, err, "should return error for nonexistent status")
 }
-

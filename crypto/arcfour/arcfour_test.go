@@ -124,4 +124,3 @@ func TestArcFour_Encryption_LongMessage(t *testing.T) {
 	testutils.Assert(t, encrypted != nil, "Encryption should handle long messages")
 	testutils.Assert(t, len(encrypted) == len(source), "Encrypted length should match source length")
 }
-

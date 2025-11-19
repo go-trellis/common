@@ -79,4 +79,3 @@ func TestStrings_FlagValue(t *testing.T) {
 	ss.Set("flag2")
 	testutils.Assert(t, len(ss) == 2, "should have 2 elements")
 }
-

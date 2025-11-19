@@ -193,4 +193,3 @@ func TestReadBufferLengthOption(t *testing.T) {
 	testutils.Assert(t, string(data) == string(testContent), "content should match")
 	_ = n
 }
-

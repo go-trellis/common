@@ -408,4 +408,3 @@ func TestLogMethod(t *testing.T) {
 		}
 	}
 }
-

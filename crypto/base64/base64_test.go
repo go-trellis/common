@@ -162,4 +162,3 @@ func TestEncodeDecodeURLEncoding(t *testing.T) {
 	testutils.Ok(t, err)
 	testutils.Equals(t, original, string(decoded), "round trip should work for URL encoding")
 }
-

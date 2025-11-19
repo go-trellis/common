@@ -25,9 +25,9 @@ import (
 )
 
 type mockParser struct {
-	parseFlagsCalled         bool
+	parseFlagsCalled           bool
 	parseFlagsWithPrefixCalled bool
-	prefix                 string
+	prefix                     string
 }
 
 func (m *mockParser) ParseFlags(f *flag.FlagSet) {
@@ -134,4 +134,3 @@ func TestParseFlagsWithPrefix_RealParser(t *testing.T) {
 	testutils.Equals(t, "prefixed-value", cfg.StringValue, "StringValue should be set with prefix")
 	testutils.Equals(t, 30, cfg.IntValue, "IntValue should be set with prefix")
 }
-

@@ -104,4 +104,3 @@ func TestNoop_IsShowSQL(t *testing.T) {
 	result := n.IsShowSQL()
 	testutils.Assert(t, !result, "IsShowSQL should return false")
 }
-

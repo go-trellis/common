@@ -19,12 +19,15 @@ package config
 
 import (
 	"math/big"
+	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
 	"time"
 
 	"gopkg.in/yaml.v3"
+	"trellis.tech/trellis/common.v3/errcode"
 	"trellis.tech/trellis/common.v3/files"
 	"trellis.tech/trellis/common.v3/json"
 	"trellis.tech/trellis/common.v3/types"
@@ -107,6 +110,12 @@ func (p *AdapterConfig) init(opts ...OptionFunc) (err error) {
 	}
 
 	if err = p.reader.ParseData(p.data, &p.configs); err != nil {
+		return
+	}
+
+	// Process include files before processing ${variable} substitution
+	visitedFiles := make(map[string]bool)
+	if err = p.processIncludes(&p.configs, visitedFiles); err != nil {
 		return
 	}
 
@@ -460,4 +469,163 @@ func (p *AdapterConfig) Copy() Config {
 
 func (p *AdapterConfig) IsEmpty() bool {
 	return len(p.configs) == 0
+}
+
+// processIncludes processes include directives in the configuration.
+// It loads included files and merges them into the current configuration.
+// visitedFiles is used to detect circular references.
+func (p *AdapterConfig) processIncludes(configs *map[string]any, visitedFiles map[string]bool) error {
+	// Get the base directory of the current config file for resolving relative paths
+	var baseDir string
+	var absPath string
+	if len(p.ConfigFile) > 0 {
+		baseDir = filepath.Dir(p.ConfigFile)
+		var err error
+		absPath, err = filepath.Abs(p.ConfigFile)
+		if err == nil {
+			// Mark current file as visited if not already marked
+			if !visitedFiles[absPath] {
+				visitedFiles[absPath] = true
+			}
+		}
+	}
+
+	// Check if there's a "#include" field
+	includeValue, hasInclude := (*configs)["#include"]
+	if !hasInclude {
+		// Also check for legacy "include" field (without #) for backward compatibility
+		includeValue, hasInclude = (*configs)["include"]
+		if !hasInclude {
+			return nil
+		}
+		// Remove legacy include field from configs (it's metadata, not configuration)
+		defer delete(*configs, "include")
+	} else {
+		// Remove #include field from configs (it's metadata, not configuration)
+		defer delete(*configs, "#include")
+	}
+
+	// Parse include value - can be string or array of strings
+	var includePaths []string
+	switch v := includeValue.(type) {
+	case string:
+		if v != "" {
+			includePaths = []string{v}
+		}
+	case []any:
+		for _, item := range v {
+			if str, ok := item.(string); ok && str != "" {
+				includePaths = append(includePaths, str)
+			}
+		}
+	case []string:
+		for _, str := range v {
+			if str != "" {
+				includePaths = append(includePaths, str)
+			}
+		}
+	default:
+		return ErrInvalidIncludeValue
+	}
+
+	// Process each include file
+	for _, includePath := range includePaths {
+		// Resolve path (absolute or relative to baseDir)
+		resolvedPath := includePath
+		if !filepath.IsAbs(includePath) && baseDir != "" {
+			resolvedPath = filepath.Join(baseDir, includePath)
+		}
+
+		absIncludePath, err := filepath.Abs(resolvedPath)
+		if err != nil {
+			return errcode.Newf("failed to resolve include path %s: %v", includePath, err)
+		}
+
+		// Check for circular reference
+		if visitedFiles[absIncludePath] {
+			return ErrIncludeCircularRef
+		}
+
+		// Check if file exists
+		if _, err := os.Stat(absIncludePath); os.IsNotExist(err) {
+			return errcode.Newf("%s: %s", ErrIncludeFileNotFound, includePath)
+		}
+
+		// Mark this file as visited before loading to prevent circular reference
+		visitedFiles[absIncludePath] = true
+
+		// Load included configuration
+		includedConfig := &AdapterConfig{
+			ConfigFile: absIncludePath,
+			configs:    make(map[string]any),
+			readerType: fileToReaderType(absIncludePath),
+			EnvPrefix:  p.EnvPrefix,
+			EnvAllowed: p.EnvAllowed,
+		}
+
+		// Read and parse the included file
+		data, _, err := files.Read(absIncludePath)
+		if err != nil {
+			return errcode.Newf("failed to read include file %s: %v", includePath, err)
+		}
+
+		var includedReader Reader
+		switch includedConfig.readerType {
+		case ReaderTypeJSON:
+			includedReader = NewJSONReader(ReaderOptionFilename(absIncludePath))
+		case ReaderTypeYAML:
+			includedReader = NewYAMLReader(ReaderOptionFilename(absIncludePath))
+		default:
+			return errcode.Newf("unsupported reader type for include file %s", includePath)
+		}
+
+		includedConfig.reader = includedReader
+
+		// Parse the included file
+		if err := includedReader.ParseData(data, &includedConfig.configs); err != nil {
+			return errcode.Newf("failed to parse include file %s: %v", includePath, err)
+		}
+
+		// Recursively process includes in the included file
+		if err := includedConfig.processIncludes(&includedConfig.configs, visitedFiles); err != nil {
+			return err
+		}
+
+		// Process ${variable} substitution in included config before merging
+		if err := includedConfig.copyDollarSymbol(&includedConfig.configs); err != nil {
+			return errcode.Newf("failed to process variables in include file %s: %v", includePath, err)
+		}
+
+		// Merge included config into current config (included values override existing ones)
+		p.mergeConfigs(configs, includedConfig.configs)
+	}
+
+	return nil
+}
+
+// mergeConfigs merges source config into target config.
+// Values from source override values in target.
+func (p *AdapterConfig) mergeConfigs(target *map[string]any, source map[string]any) {
+	for key, sourceValue := range source {
+		targetValue, exists := (*target)[key]
+
+		if !exists {
+			// Key doesn't exist in target, just add it
+			(*target)[key] = DeepCopy(sourceValue)
+			continue
+		}
+
+		// Both exist, need to merge if both are maps, otherwise source overrides
+		targetMap, targetIsMap := targetValue.(map[string]any)
+		sourceMap, sourceIsMap := sourceValue.(map[string]any)
+
+		if targetIsMap && sourceIsMap {
+			// Both are maps, merge recursively
+			p.mergeConfigs(&targetMap, sourceMap)
+			(*target)[key] = targetMap
+		} else {
+			// Not both maps, source overrides target
+			(*target)[key] = DeepCopy(sourceValue)
+		}
+	}
 }

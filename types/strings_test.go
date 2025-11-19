@@ -122,4 +122,3 @@ func TestStringContainedInSlice(t *testing.T) {
 	testutils.Assert(t, StringContainedInSlice("test123", haystack), "should find contained string")
 	testutils.Assert(t, !StringContainedInSlice("xyz", haystack), "should not find not contained string")
 }
-

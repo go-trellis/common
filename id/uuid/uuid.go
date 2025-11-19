@@ -15,28 +15,39 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-package flagext
+package uuid
 
 import (
-	"flag"
-	"fmt"
+	"github.com/google/uuid"
 )
 
-var _ flag.Value = (*ignoredFlag)(nil)
-
-type ignoredFlag struct {
-	name string
+// New generates a new random UUID
+func New() string {
+	return uuid.New().String()
 }
 
-func (p ignoredFlag) String() string {
-	return fmt.Sprintf("ignored: %s", p.name)
+// NewUUID generates a new UUID and returns uuid.UUID
+func NewUUID() uuid.UUID {
+	return uuid.New()
 }
 
-func (ignoredFlag) Set(string) error {
-	return nil
+// Parse parses UUID string
+func Parse(s string) (uuid.UUID, error) {
+	return uuid.Parse(s)
 }
 
-// IgnoredFlag ignores set value, without any warning
-func IgnoredFlag(f *flag.FlagSet, name, message string) {
-	f.Var(ignoredFlag{name}, name, message)
+// MustParse parses UUID string or panics
+func MustParse(s string) uuid.UUID {
+	return uuid.MustParse(s)
+}
+
+// IsValid checks if string is a valid UUID
+func IsValid(s string) bool {
+	_, err := uuid.Parse(s)
+	return err == nil
+}
+
+// NewString returns a new UUID as string (alias for New)
+func NewString() string {
+	return New()
 }

@@ -20,6 +20,7 @@ import [gopkg.in/yaml.v3](https://github.com/go-yaml/yaml/tree/v3)
 
 * dot separator to get values, and if return nil, you should set default value
 * A: ${X.Y.Z} for finding out X.Y.Z's value and setting into A. [See copy example](config_test.go#L20):[See config](example.json#14)
+* A: ${include:filepath} for including another config file. The included file will be merged at the position where it's referenced.
 * You can do like this: c.GetString("a.b.c") Or c.GetString("a.b.c", "default")
 * You can write notes into the json file.
 * Supported: .json, .yaml
@@ -123,4 +124,33 @@ yReader := NewYAMLReader() or NewYAMLReader(ReaderOptionFilename(filename))
 ```go
 sReader := NewSuffixReader(ReaderOptionFilename(filename))
 ```
+
+### Include Files
+
+You can include other config files using the `${include:filepath}` syntax. The included file path can be relative (relative to the current config file) or absolute.
+
+**Example:**
+
+```yaml
+# main.yml
+app:
+  name: MyApp
+  database: ${include:database.yml}
+  cache: ${include:../config/cache.yml}
+```
+
+```yaml
+# database.yml
+host: localhost
+port: 3306
+user: root
+```
+
+When loading `main.yml`, the `database` field will be replaced with the contents of `database.yml`.
+
+**Features:**
+- Supports relative and absolute file paths
+- Prevents circular includes (will return an error if detected)
+- Supports nested includes (included files can also use `${include:...}`)
+- Included files can use the same features as main config files (including `${key}` references and environment variables)
 

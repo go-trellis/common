@@ -19,6 +19,7 @@ package config
 
 import (
 	"math/big"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -31,7 +32,8 @@ import (
 )
 
 const (
-	includeReg = `\$\{([0-9|a-z|A-Z|_|-]|\.)+\}`
+	includeReg       = `\$\{([0-9|a-z|A-Z|_|-]|\.)+\}`
+	includeFileReg   = `\$\{include:([^}]+)\}`
 )
 
 // AdapterConfig default config adapter
@@ -47,9 +49,10 @@ type AdapterConfig struct {
 
 	readerType ReaderType
 
-	reader  Reader
-	locker  sync.RWMutex
-	configs map[string]any
+	reader       Reader
+	locker       sync.RWMutex
+	configs      map[string]any
+	includedFiles map[string]bool // 跟踪已包含的文件，防止循环引用
 }
 
 // NewAdapterConfig return default config adapter
@@ -59,8 +62,9 @@ func NewAdapterConfig(filepath string) (Config, error) {
 		return nil, ErrInvalidFilePath
 	}
 	a := &AdapterConfig{
-		ConfigFile: filepath,
-		configs:    make(map[string]any),
+		ConfigFile:    filepath,
+		configs:       make(map[string]any),
+		includedFiles: make(map[string]bool),
 	}
 
 	err := a.init(OptionFile(filepath))
@@ -76,7 +80,18 @@ func (p *AdapterConfig) init(opts ...OptionFunc) (err error) {
 		opts[i](p)
 	}
 
+	if p.includedFiles == nil {
+		p.includedFiles = make(map[string]bool)
+	}
+
 	if len(p.ConfigFile) > 0 {
+		// 将当前文件标记为已包含（使用绝对路径）
+		absPath, absErr := filepath.Abs(p.ConfigFile)
+		if absErr == nil {
+			p.includedFiles[absPath] = true
+		} else {
+			p.includedFiles[p.ConfigFile] = true
+		}
 
 		p.readerType = fileToReaderType(p.ConfigFile)
 
@@ -132,13 +147,18 @@ func (p *AdapterConfig) copy() *AdapterConfig {
 	values := DeepCopy(p.configs)
 
 	valuesMap := values.(map[string]any)
+	includedFilesCopy := make(map[string]bool)
+	for k, v := range p.includedFiles {
+		includedFilesCopy[k] = v
+	}
 	return &AdapterConfig{
-		ConfigFile:   p.ConfigFile,
-		ConfigString: p.ConfigString,
-		ConfigStruct: p.ConfigStruct,
-		readerType:   p.readerType,
-		reader:       p.reader,
-		configs:      valuesMap,
+		ConfigFile:    p.ConfigFile,
+		ConfigString:  p.ConfigString,
+		ConfigStruct:  p.ConfigStruct,
+		readerType:    p.readerType,
+		reader:        p.reader,
+		configs:       valuesMap,
+		includedFiles: includedFilesCopy,
 	}
 }
 

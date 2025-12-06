@@ -26,4 +26,6 @@ var (
 	ErrInvalidFilePath        = errcode.New("invalid file path")
 	ErrUnknownSuffixes        = errcode.New("unknown file with suffix")
 	ErrNotSupportedReaderType = errcode.New("not supported reader type")
+	ErrCircularInclude        = errcode.New("circular include detected")
+	ErrIncludeFileNotFound    = errcode.New("include file not found")
 )

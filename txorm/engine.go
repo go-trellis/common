@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-trellis/common.v2/config"
+	"github.com/go-trellis/common.v2/errcode"
+	"github.com/go-trellis/common.v2/logger"
+	"github.com/go-trellis/common.v2/transaction"
 	"github.com/sirupsen/logrus"
-	"trellis.tech/trellis/common.v2/config"
-	"trellis.tech/trellis/common.v2/errcode"
-	"trellis.tech/trellis/common.v2/logger"
-	"trellis.tech/trellis/common.v2/transaction"
 
 	"xorm.io/xorm"
 	"xorm.io/xorm/core"

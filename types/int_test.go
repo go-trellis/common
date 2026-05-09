@@ -21,8 +21,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"trellis.tech/trellis/common.v2/testutils"
-	"trellis.tech/trellis/common.v2/types"
+	"github.com/go-trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/types"
 )
 
 func Test_ToInt64(t *testing.T) {

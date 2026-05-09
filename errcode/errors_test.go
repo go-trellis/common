@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"testing"
 
-	"trellis.tech/trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/testutils"
 )
 
 func TestNewErrors(t *testing.T) {

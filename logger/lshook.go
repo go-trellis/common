@@ -21,10 +21,10 @@ import (
 	"io"
 	"path/filepath"
 
+	"github.com/go-trellis/common.v2/errcode"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
-	"trellis.tech/trellis/common.v2/errcode"
 )
 
 type RotateConfig struct {

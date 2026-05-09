@@ -10,13 +10,13 @@ CompilerVersion="`go version`"
 BuildTime=`date -u '+%Y-%m-%d %H:%M:%S'`
 Author=`whoami`@`hostname`
 
-go build -ldflags "-X 'trellis.tech/trellis/common.v2/builder.ProgramName=$ProgramName' \
--X 'trellis.tech/trellis/common.v2/builder.ProgramVersion=$ProgramVersion' \
--X 'trellis.tech/trellis/common.v2/builder.ProgramBranch=$ProgramBranch' \
--X 'trellis.tech/trellis/common.v2/builder.ProgramRevision=$ProgramRevision' \
--X 'trellis.tech/trellis/common.v2/builder.CompilerVersion=${CompilerVersion}' \
--X 'trellis.tech/trellis/common.v2/builder.BuildTime=$BuildTime' \
--X 'trellis.tech/trellis/common.v2/builder.Author=$Author' \
+go build -ldflags "-X 'github.com/go-trellis/common.v2/builder.ProgramName=$ProgramName' \
+-X 'github.com/go-trellis/common.v2/builder.ProgramVersion=$ProgramVersion' \
+-X 'github.com/go-trellis/common.v2/builder.ProgramBranch=$ProgramBranch' \
+-X 'github.com/go-trellis/common.v2/builder.ProgramRevision=$ProgramRevision' \
+-X 'github.com/go-trellis/common.v2/builder.CompilerVersion=${CompilerVersion}' \
+-X 'github.com/go-trellis/common.v2/builder.BuildTime=$BuildTime' \
+-X 'github.com/go-trellis/common.v2/builder.Author=$Author' \
 " -o ${ProgramName} main.go
 
 ./${ProgramName}
@@ -28,7 +28,7 @@ rm ./${ProgramName}
 package main
 
 import (
-	"trellis.tech/trellis/common.v2/builder"
+	"github.com/go-trellis/common.v2/builder"
 )
 
 func main() {

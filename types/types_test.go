@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/types"
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v2/testutils"
-	"trellis.tech/trellis/common.v2/types"
 )
 
 func TestFlags(t *testing.T) {

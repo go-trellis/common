@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"trellis.tech/trellis/common.v2/config"
-	"trellis.tech/trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/config"
+	"github.com/go-trellis/common.v2/testutils"
 )
 
 // TestIncludeBasic 测试基本的 include 功能

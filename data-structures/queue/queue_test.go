@@ -3,9 +3,9 @@ package queue_test
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/testutils"
 
-	"trellis.tech/trellis/common.v2/data-structures/queue"
+	"github.com/go-trellis/common.v2/data-structures/queue"
 )
 
 func TestQueue(t *testing.T) {

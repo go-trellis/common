@@ -25,9 +25,9 @@ import (
 	"regexp"
 	"strings"
 
-	"trellis.tech/trellis/common.v2/errcode"
-	"trellis.tech/trellis/common.v2/files"
-	"trellis.tech/trellis/common.v2/types"
+	"github.com/go-trellis/common.v2/errcode"
+	"github.com/go-trellis/common.v2/files"
+	"github.com/go-trellis/common.v2/types"
 )
 
 func (p *AdapterConfig) copyDollarSymbol(_ string, maps *map[string]any) error {

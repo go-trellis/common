@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v2/testutils"
-	"trellis.tech/trellis/common.v2/types"
+	"github.com/go-trellis/common.v2/testutils"
+	"github.com/go-trellis/common.v2/types"
 )
 
 func TestTimeFunctions(t *testing.T) {

@@ -21,8 +21,8 @@ import (
 	"path/filepath"
 
 	"github.com/go-kit/log"
+	"github.com/go-trellis/common/logger"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"trellis.tech/trellis/common.v2/logger"
 )
 
 type Config struct {

@@ -25,10 +25,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-trellis/common/files"
+	"github.com/go-trellis/common/json"
+	"github.com/go-trellis/common/types"
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v2/files"
-	"trellis.tech/trellis/common.v2/json"
-	"trellis.tech/trellis/common.v2/types"
 )
 
 const (

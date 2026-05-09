@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/trellis/common.v2/crypto/base64"
-	"trellis.tech/trellis/common.v2/errcode"
+	"github.com/go-trellis/common/crypto/base64"
+	"github.com/go-trellis/common/errcode"
 )
 
 const (

@@ -26,9 +26,9 @@ import (
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 
-	"trellis.tech/trellis/common.v2/config"
-	"trellis.tech/trellis/common.v2/errcode"
-	"trellis.tech/trellis/common.v2/logger"
+	"github.com/go-trellis/common/config"
+	"github.com/go-trellis/common/errcode"
+	"github.com/go-trellis/common/logger"
 )
 
 var mapPluginConfigs = map[string]*Config{}

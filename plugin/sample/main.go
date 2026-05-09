@@ -21,10 +21,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/go-trellis/common/logger"
+	"github.com/go-trellis/common/plugin"
+	"github.com/go-trellis/common/types"
 	"github.com/robfig/cron/v3"
-	"trellis.tech/trellis/common.v2/logger"
-	"trellis.tech/trellis/common.v2/plugin"
-	"trellis.tech/trellis/common.v2/types"
 )
 
 type T struct{}

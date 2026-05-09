@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"time"
 
-	"trellis.tech/trellis/common.v2/cache"
+	"github.com/go-trellis/common/cache"
 )
 
 var table1 = "tab1"

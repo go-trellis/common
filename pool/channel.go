@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/trellis/common.v2/errcode"
+	"github.com/go-trellis/common/errcode"
 )
 
 type channelPool struct {

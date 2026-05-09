@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	"trellis.tech/trellis/common.v2/errcode"
+	"github.com/go-trellis/common/errcode"
 )
 
 // Datas

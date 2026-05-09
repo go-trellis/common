@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
-	"trellis.tech/trellis/common.v2/flagext"
-	"trellis.tech/trellis/common.v2/types"
+	"github.com/go-trellis/common/flagext"
+	"github.com/go-trellis/common/types"
 
 	"gopkg.in/yaml.v3"
 )

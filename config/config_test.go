@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v2/config"
-	"trellis.tech/trellis/common.v2/shell"
-	"trellis.tech/trellis/common.v2/testutils"
+	"github.com/go-trellis/common/config"
+	"github.com/go-trellis/common/shell"
+	"github.com/go-trellis/common/testutils"
 )
 
 const (

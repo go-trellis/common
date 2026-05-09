@@ -26,11 +26,11 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common.v3/utils/files"
+	"github.com/go-trellis/common.v3/utils/json"
+	"github.com/go-trellis/common.v3/utils/types"
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v3/errors/errcode"
-	"trellis.tech/trellis/common.v3/utils/files"
-	"trellis.tech/trellis/common.v3/utils/json"
-	"trellis.tech/trellis/common.v3/utils/types"
 )
 
 const (

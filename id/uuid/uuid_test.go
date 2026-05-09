@@ -20,7 +20,7 @@ package uuid
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNew(t *testing.T) {

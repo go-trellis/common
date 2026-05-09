@@ -21,7 +21,7 @@ import (
 	"hash/crc32"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNewCRC32(t *testing.T) {

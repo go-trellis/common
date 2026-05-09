@@ -20,7 +20,7 @@ package slice
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestContains(t *testing.T) {

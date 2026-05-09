@@ -21,7 +21,7 @@ import (
 	"sync"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNewEventCenter(t *testing.T) {

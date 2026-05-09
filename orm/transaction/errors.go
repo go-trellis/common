@@ -17,7 +17,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package transaction
 
-import "trellis.tech/trellis/common.v3/errors/errcode"
+import "github.com/go-trellis/common.v3/errors/errcode"
 
 var (
 	ErrAtLeastOneRepo   = errcode.New("input one repo at least")

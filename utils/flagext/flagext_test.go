@@ -21,7 +21,7 @@ import (
 	"flag"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 type mockParser struct {

@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestDo_Success(t *testing.T) {

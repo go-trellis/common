@@ -20,7 +20,7 @@ package assets
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestOptions_Init_Default(t *testing.T) {

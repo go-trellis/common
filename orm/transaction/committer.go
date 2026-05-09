@@ -20,7 +20,7 @@ package transaction
 import (
 	"reflect"
 
-	"trellis.tech/trellis/common.v3"
+	"github.com/go-trellis/common.v3"
 )
 
 var (

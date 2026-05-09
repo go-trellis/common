@@ -20,9 +20,9 @@ package jwt
 import (
 	"time"
 
+	"github.com/go-trellis/common.v3/errors/errcode"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v3/errors/errcode"
 )
 
 const (

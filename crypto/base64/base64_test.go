@@ -22,7 +22,7 @@ import (
 	"strings"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNewEncoding(t *testing.T) {

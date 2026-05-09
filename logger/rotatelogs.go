@@ -24,10 +24,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-trellis/common.v3/utils/types"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	writerhook "github.com/sirupsen/logrus/hooks/writer"
-	"trellis.tech/trellis/common.v3/utils/types"
 )
 
 // RotateMode defines the log rotation mode

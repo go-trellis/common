@@ -21,7 +21,7 @@ import (
 	"crypto"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNewHashRepo_MD5(t *testing.T) {

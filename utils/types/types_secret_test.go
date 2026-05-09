@@ -21,8 +21,8 @@ import (
 	"flag"
 	"testing"
 
+	"github.com/go-trellis/common.v3/utils/testutils"
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestSecret_String(t *testing.T) {

@@ -18,8 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package txorm
 
 import (
-	"trellis.tech/trellis/common.v3/errors/errcode"
-	"trellis.tech/trellis/common.v3/orm/transaction"
+	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common.v3/orm/transaction"
 
 	"xorm.io/xorm"
 )

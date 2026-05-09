@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/go-trellis/common.v3/utils/testutils"
 	"gopkg.in/yaml.v3"
-	"trellis.tech/trellis/common.v3/utils/testutils"
 )
 
 func TestHostPort_UnmarshalYAML(t *testing.T) {

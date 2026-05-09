@@ -22,7 +22,7 @@ import (
 	"sync"
 	"time"
 
-	"trellis.tech/trellis/common.v3/utils/types"
+	"github.com/go-trellis/common.v3/utils/types"
 )
 
 type gemCache struct {

@@ -18,7 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package pool
 
 import (
-	"trellis.tech/trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common.v3/errors/errcode"
 )
 
 var (

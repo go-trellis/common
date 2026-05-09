@@ -23,10 +23,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/go-trellis/common.v3/event-plugin/plugin"
+	"github.com/go-trellis/common.v3/logger"
+	"github.com/go-trellis/common.v3/utils/types"
 	"github.com/robfig/cron/v3"
-	"trellis.tech/trellis/common.v3/event-plugin/plugin"
-	"trellis.tech/trellis/common.v3/logger"
-	"trellis.tech/trellis/common.v3/utils/types"
 	"xorm.io/xorm/log"
 )
 

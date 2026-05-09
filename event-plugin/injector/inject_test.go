@@ -20,7 +20,7 @@ package injector
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestInject_Simple(t *testing.T) {

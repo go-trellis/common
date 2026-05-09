@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNewClient(t *testing.T) {

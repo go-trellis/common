@@ -23,9 +23,9 @@ import (
 	"net"
 	"time"
 
-	commonTls "trellis.tech/trellis/common.v3/crypto/tls"
-	"trellis.tech/trellis/common.v3/utils/flagext"
-	"trellis.tech/trellis/common.v3/utils/types"
+	commonTls "github.com/go-trellis/common.v3/crypto/tls"
+	"github.com/go-trellis/common.v3/utils/flagext"
+	"github.com/go-trellis/common.v3/utils/types"
 
 	"go.etcd.io/etcd/client/pkg/v3/transport"
 	clientv3 "go.etcd.io/etcd/client/v3"

@@ -21,9 +21,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/go-trellis/common.v3"
+	"github.com/go-trellis/common.v3/utils/json"
 	"github.com/google/uuid"
-	"trellis.tech/trellis/common.v3"
-	"trellis.tech/trellis/common.v3/utils/json"
 )
 
 const (

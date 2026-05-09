@@ -22,8 +22,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/config"
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/config"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestInclude_SingleFile(t *testing.T) {

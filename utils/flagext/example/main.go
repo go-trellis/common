@@ -23,8 +23,8 @@ import (
 	"io"
 	"os"
 
-	"trellis.tech/trellis/common.v3/utils/flagext"
-	"trellis.tech/trellis/common.v3/utils/types"
+	"github.com/go-trellis/common.v3/utils/flagext"
+	"github.com/go-trellis/common.v3/utils/types"
 
 	"gopkg.in/yaml.v3"
 )

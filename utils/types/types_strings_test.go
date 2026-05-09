@@ -22,7 +22,7 @@ import (
 	"sort"
 	"testing"
 
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestStrings_Len(t *testing.T) {

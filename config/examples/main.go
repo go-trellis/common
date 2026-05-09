@@ -20,7 +20,7 @@ package main
 import (
 	"fmt"
 
-	"trellis.tech/trellis/common.v3/config"
+	"github.com/go-trellis/common.v3/config"
 )
 
 /*

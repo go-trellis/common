@@ -20,8 +20,8 @@ package snowflake
 import (
 	"testing"
 
-	"trellis.tech/trellis/common.v3/errors/errcode"
-	"trellis.tech/trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common.v3/utils/testutils"
 )
 
 func TestNext(t *testing.T) {

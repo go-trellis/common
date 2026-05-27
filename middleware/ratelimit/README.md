@@ -4,7 +4,7 @@ This package provides the **core rate limiting implementation** that can be used
 
 ## Package Overview
 
-**Location**: `github.com/go-trellis/common.v3/middleware/ratelimit`
+**Location**: `github.com/go-trellis/common/middleware/ratelimit`
 
 **Purpose**: Generic rate limiting implementation
 
@@ -34,7 +34,7 @@ This is the **core** rate limiting package. It provides:
 import (
     "time"
     "google.golang.org/grpc"
-    "github.com/go-trellis/common.v3/middleware/ratelimit"
+    "github.com/go-trellis/common/middleware/ratelimit"
 )
 ```
 
@@ -62,7 +62,7 @@ import (
     "context"
     "time"
     "github.com/redis/go-redis/v9"
-    "github.com/go-trellis/common.v3/middleware/ratelimit"
+    "github.com/go-trellis/common/middleware/ratelimit"
 )
 
 rdb := redis.NewClient(&redis.Options{
@@ -86,7 +86,7 @@ You can also use this package directly for custom rate limiting needs:
 import (
     "context"
     "time"
-    "github.com/go-trellis/common.v3/middleware/ratelimit"
+    "github.com/go-trellis/common/middleware/ratelimit"
 )
 
 // Create rate limiter
@@ -115,7 +115,7 @@ if !allowed {
 import (
     "context"
     "fmt"
-    "github.com/go-trellis/common.v3/middleware/ratelimit"
+    "github.com/go-trellis/common/middleware/ratelimit"
 )
 
 customExtractor := func(ctx context.Context) string {
@@ -136,7 +136,7 @@ Configure rate limiting programmatically:
 ```go
 import (
     "time"
-    "github.com/go-trellis/common.v3/middleware/ratelimit"
+    "github.com/go-trellis/common/middleware/ratelimit"
 )
 
 config := ratelimit.NewConfig(100, time.Second)

@@ -64,7 +64,7 @@ func (s *MyService) MyMethod(ctx context.Context, req *pb.Request) (*pb.Response
 ### Getting Trace ID from Context
 
 ```go
-import "github.com/go-trellis/common.v3/middleware/tracing"
+import "github.com/go-trellis/common/middleware/tracing"
 
 // From any context
 traceID := tracing.TraceIDFromContext(ctx)
@@ -76,7 +76,7 @@ if traceID != "" {
 ### Manual Trace ID Setting
 
 ```go
-import "github.com/go-trellis/common.v3/middleware/tracing"
+import "github.com/go-trellis/common/middleware/tracing"
 
 ctx := tracing.WithTraceID(context.Background(), "my-trace-id")
 ```
@@ -135,7 +135,7 @@ To use tracing in your HTTP service, add the middleware:
 ```go
 import (
     "github.com/gin-gonic/gin"
-    "github.com/go-trellis/common.v3/middleware/tracing"
+    "github.com/go-trellis/common/middleware/tracing"
 )
 
 router := gin.Default()

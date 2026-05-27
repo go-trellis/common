@@ -23,8 +23,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-trellis/common.v3/crypto/base64"
-	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common/crypto/base64"
+	"github.com/go-trellis/common/errors/errcode"
 )
 
 const (
@@ -129,9 +129,11 @@ func (p *Config) check() error {
 		p.epochDiff = 1000
 		p.timeAccuracy = 1000000
 	case 16: // microseconds
-		//p.epoch /= 1000
-		p.epochDiff = 1000000
-		p.timeAccuracy = 1000
+		// Use microseconds input for epoch, but keep millisecond tick size to avoid
+		// overflowing signed 63-bit IDs when shifting timestamps.
+		p.epoch /= 1000
+		p.epochDiff = 1000
+		p.timeAccuracy = 1000000
 	default:
 		return fmt.Errorf("eponch's length should be 10, 13 or 16")
 	}

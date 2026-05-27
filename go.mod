@@ -1,4 +1,4 @@
-module github.com/go-trellis/common.v3
+module github.com/go-trellis/common
 
 go 1.24.7
 

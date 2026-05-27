@@ -22,9 +22,9 @@ import (
 	"testing"
 	"time"
 
-	commonTls "github.com/go-trellis/common.v3/crypto/tls"
-	"github.com/go-trellis/common.v3/utils/testutils"
-	"github.com/go-trellis/common.v3/utils/types"
+	commonTls "github.com/go-trellis/common/crypto/tls"
+	"github.com/go-trellis/common/utils/testutils"
+	"github.com/go-trellis/common/utils/types"
 )
 
 func TestConfig_ParseFlags(t *testing.T) {

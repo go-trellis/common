@@ -22,8 +22,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/go-trellis/common.v3/errors/errcode"
-	"github.com/go-trellis/common.v3/utils/types"
+	"github.com/go-trellis/common/errors/errcode"
+	"github.com/go-trellis/common/utils/types"
 )
 
 func (p *AdapterConfig) copyDollarSymbol(maps *map[string]any) error {

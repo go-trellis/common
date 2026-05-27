@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/utils/testutils"
 	"gopkg.in/yaml.v3"
 )
 

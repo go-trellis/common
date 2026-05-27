@@ -20,7 +20,7 @@ package config
 import (
 	"strings"
 
-	"github.com/go-trellis/common.v3/utils/files"
+	"github.com/go-trellis/common/utils/files"
 )
 
 type defSuffixReader struct {

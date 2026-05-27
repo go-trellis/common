@@ -21,7 +21,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/utils/testutils"
 )
 
 func TestRead(t *testing.T) {

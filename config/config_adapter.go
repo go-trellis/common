@@ -26,10 +26,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-trellis/common.v3/errors/errcode"
-	"github.com/go-trellis/common.v3/utils/files"
-	"github.com/go-trellis/common.v3/utils/json"
-	"github.com/go-trellis/common.v3/utils/types"
+	"github.com/go-trellis/common/errors/errcode"
+	"github.com/go-trellis/common/utils/files"
+	"github.com/go-trellis/common/utils/json"
+	"github.com/go-trellis/common/utils/types"
 	"gopkg.in/yaml.v3"
 )
 

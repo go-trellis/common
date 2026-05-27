@@ -21,7 +21,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/utils/testutils"
 	"xorm.io/xorm/log"
 )
 

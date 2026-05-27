@@ -4,7 +4,7 @@ This package provides the **core circuit breaker implementation** that can be us
 
 ## Package Overview
 
-**Location**: `github.com/go-trellis/common.v3/middleware/circuitbreaker`
+**Location**: `github.com/go-trellis/common/middleware/circuitbreaker`
 
 **Purpose**: Generic circuit breaker implementation
 
@@ -34,7 +34,7 @@ This is the **core** circuit breaker package. It provides:
 import (
     "context"
     "time"
-    "github.com/go-trellis/common.v3/middleware/circuitbreaker"
+    "github.com/go-trellis/common/middleware/circuitbreaker"
 )
 
 // Create circuit breaker
@@ -67,7 +67,7 @@ if err != nil {
 ```go
 import (
     "google.golang.org/grpc"
-    "github.com/go-trellis/common.v3/middleware/circuitbreaker"
+    "github.com/go-trellis/common/middleware/circuitbreaker"
 )
 
 // Create circuit breaker
@@ -123,7 +123,7 @@ Configure circuit breaker programmatically:
 ```go
 import (
     "time"
-    "github.com/go-trellis/common.v3/middleware/circuitbreaker"
+    "github.com/go-trellis/common/middleware/circuitbreaker"
 )
 
 cb := circuitbreaker.NewCircuitBreaker(circuitbreaker.Config{

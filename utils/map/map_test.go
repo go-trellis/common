@@ -20,7 +20,7 @@ package maputil
 import (
 	"testing"
 
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/utils/testutils"
 )
 
 func TestKeys(t *testing.T) {

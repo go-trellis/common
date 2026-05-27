@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/utils/testutils"
 )
 
 func TestFile_Read(t *testing.T) {

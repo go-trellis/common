@@ -18,7 +18,7 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/go-trellis/common.v3/utils/json"
+	"github.com/go-trellis/common/utils/json"
 )
 
 // HostPort represents a "host:port" network address.

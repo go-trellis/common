@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-trellis/common.v3"
-	"github.com/go-trellis/common.v3/utils/json"
+	"github.com/go-trellis/common"
+	"github.com/go-trellis/common/utils/json"
 	"github.com/google/uuid"
 )
 

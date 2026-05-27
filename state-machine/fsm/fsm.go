@@ -20,7 +20,7 @@ package fsm
 import (
 	"sync"
 
-	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common/errors/errcode"
 )
 
 type FSM struct {

@@ -22,8 +22,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/go-trellis/common.v3/utils/flagext"
-	"github.com/go-trellis/common.v3/utils/types"
+	"github.com/go-trellis/common/utils/flagext"
+	"github.com/go-trellis/common/utils/types"
 	"github.com/redis/go-redis/v9"
 )
 

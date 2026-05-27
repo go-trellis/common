@@ -20,8 +20,8 @@ package rijndael
 import (
 	"bytes"
 
-	"github.com/go-trellis/common.v3"
-	"github.com/go-trellis/common.v3/errors/errcode"
+	"github.com/go-trellis/common"
+	"github.com/go-trellis/common/errors/errcode"
 )
 
 // Errors padding & unpadding can return

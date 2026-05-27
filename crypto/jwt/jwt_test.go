@@ -21,8 +21,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-trellis/common.v3/crypto/jwt"
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/crypto/jwt"
+	"github.com/go-trellis/common/utils/testutils"
 
 	go_jwt "github.com/golang-jwt/jwt/v5"
 )

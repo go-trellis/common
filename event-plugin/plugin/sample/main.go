@@ -23,9 +23,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/go-trellis/common.v3/event-plugin/plugin"
-	"github.com/go-trellis/common.v3/logger"
-	"github.com/go-trellis/common.v3/utils/types"
+	"github.com/go-trellis/common/event-plugin/plugin"
+	"github.com/go-trellis/common/logger"
+	"github.com/go-trellis/common/utils/types"
 	"github.com/robfig/cron/v3"
 	"xorm.io/xorm/log"
 )

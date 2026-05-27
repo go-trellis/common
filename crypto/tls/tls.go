@@ -23,8 +23,8 @@ import (
 	"flag"
 	"os"
 
-	"github.com/go-trellis/common.v3/errors/errcode"
-	"github.com/go-trellis/common.v3/utils/flagext"
+	"github.com/go-trellis/common/errors/errcode"
+	"github.com/go-trellis/common/utils/flagext"
 )
 
 var _ flagext.Parser = (*Config)(nil)

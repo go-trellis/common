@@ -22,10 +22,10 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/go-trellis/common.v3/config"
-	"github.com/go-trellis/common.v3/errors/errcode"
-	"github.com/go-trellis/common.v3/logger"
-	"github.com/go-trellis/common.v3/orm/transaction"
+	"github.com/go-trellis/common/config"
+	"github.com/go-trellis/common/errors/errcode"
+	"github.com/go-trellis/common/logger"
+	"github.com/go-trellis/common/orm/transaction"
 
 	"xorm.io/xorm"
 	"xorm.io/xorm/core"

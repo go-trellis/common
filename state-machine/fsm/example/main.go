@@ -20,7 +20,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/go-trellis/common.v3/state-machine/fsm"
+	"github.com/go-trellis/common/state-machine/fsm"
 )
 
 func main() {

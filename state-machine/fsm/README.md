@@ -9,7 +9,7 @@ Finite-state machine in go
 ## Installation
 
 ```go
-go get -u github.com/go-trellis/common.v3/state-machine/fsm
+go get -u github.com/go-trellis/common/state-machine/fsm
 ```
 
 ## Usage

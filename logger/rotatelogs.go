@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-trellis/common.v3/utils/types"
+	"github.com/go-trellis/common/utils/types"
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	writerhook "github.com/sirupsen/logrus/hooks/writer"

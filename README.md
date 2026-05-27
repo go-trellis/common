@@ -5,7 +5,7 @@ A comprehensive Go utility library containing various tools and helpers for buil
 ## Installation
 
 ```bash
-go get github.com/go-trellis/common.v3
+go get github.com/go-trellis/common
 ```
 
 ## Features
@@ -58,7 +58,7 @@ go get github.com/go-trellis/common.v3
 ### Configuration
 
 ```go
-import "github.com/go-trellis/common.v3/config"
+import "github.com/go-trellis/common/config"
 
 cfg, err := config.NewConfig("config.yaml")
 appName := cfg.GetString("app.name")
@@ -69,7 +69,7 @@ appName := cfg.GetString("app.name")
 ### Logging
 
 ```go
-import "github.com/go-trellis/common.v3/logger"
+import "github.com/go-trellis/common/logger"
 
 config := logger.DefaultRotateLogsConfig("/var/log/app.log")
 config.RotateMode = logger.RotateModeDay
@@ -81,9 +81,9 @@ logrusLogger, _ := logger.NewLogrusLoggerWithRotate(config)
 
 ```go
 import (
-    "github.com/go-trellis/common.v3/utils/slice"
-    "github.com/go-trellis/common.v3/id/uuid"
-    "github.com/go-trellis/common.v3/utils/retry"
+    "github.com/go-trellis/common/utils/slice"
+    "github.com/go-trellis/common/id/uuid"
+    "github.com/go-trellis/common/utils/retry"
 )
 
 // Slice operations

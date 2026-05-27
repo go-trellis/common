@@ -25,8 +25,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-trellis/common.v3/errors/errcode"
-	"github.com/go-trellis/common.v3/utils/testutils"
+	"github.com/go-trellis/common/errors/errcode"
+	"github.com/go-trellis/common/utils/testutils"
 )
 
 var (

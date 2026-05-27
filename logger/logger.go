@@ -22,7 +22,7 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/go-trellis/common.v3/utils/json"
+	"github.com/go-trellis/common/utils/json"
 	"xorm.io/xorm/log"
 )
 

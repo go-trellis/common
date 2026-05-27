@@ -20,7 +20,7 @@ package fsm
 import (
 	"sync"
 
-	"github.com/go-trellis/common.v3/config"
+	"github.com/go-trellis/common/config"
 )
 
 type Config struct {

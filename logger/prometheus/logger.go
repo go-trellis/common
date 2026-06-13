@@ -18,11 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package prometheus
 
 import (
-	"path/filepath"
-
 	"github.com/go-kit/log"
 	"github.com/go-trellis/common/logger"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 )
 
 type Config struct {
@@ -47,45 +44,22 @@ func (p *Config) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 func New(config *Config) (log.Logger, error) {
-	var options []rotatelogs.Option
-
 	if config.FileName == "" {
 		return &PromeNoonLogger{}, nil
 	}
-	_, filename := filepath.Split(config.FileName)
-	options = append(options, rotatelogs.WithLinkName(filename))
 
-	if config.MoveFileType > 0 {
-		moveType := logger.MoveFileType(config.MoveFileType)
-
-		switch moveType {
-		case logger.MoveFileTypePerMinite:
-			config.FileName += ".%Y%m%d%H%M"
-		case logger.MoveFileTypeHourly:
-			config.FileName += ".%Y%m%d%H"
-		case logger.MoveFileTypeDaily:
-			fallthrough
-		default:
-			moveType = logger.MoveFileTypeDaily
-			config.FileName += ".%Y%m%d"
-		}
-		options = append(options, rotatelogs.WithRotationTime(moveType.Duration()))
+	rotateCfg := &logger.RotateConfig{
+		FileName:      config.FileName,
+		MoveFileType:  logger.MoveFileType(config.MoveFileType),
+		RotationSize:  config.MaxLength,
+		RotationCount: config.MaxBackups,
+		Caller:        config.Caller,
 	}
 
-	if config.MaxLength > 0 {
-		options = append(options, rotatelogs.WithRotationSize(config.MaxLength))
-	}
-
-	if config.MaxBackups > 0 {
-		options = append(options, rotatelogs.WithRotationCount(config.MaxBackups))
-	}
-
-	rotator, err := logger.NewRotateLogs(config.FileName, options...)
+	rotator, err := logger.NewRotateLogs(rotateCfg)
 	if err != nil {
 		return nil, err
 	}
 
-	kitLog := log.NewJSONLogger(rotator)
-	
-	return kitLog, nil
+	return log.NewJSONLogger(rotator), nil
 }

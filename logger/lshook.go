@@ -19,10 +19,8 @@ package logger
 
 import (
 	"io"
-	"path/filepath"
 
 	"github.com/go-trellis/common/errcode"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/rifflock/lfshook"
 	"github.com/sirupsen/logrus"
 )
@@ -33,39 +31,6 @@ type RotateConfig struct {
 	RotationSize  int64        `yaml:"rotation_size" json:"rotation_size"`
 	RotationCount uint         `yaml:"rotation_count" json:"rotation_count"`
 	Caller        bool         `yaml:"caller" json:"caller"`
-}
-
-func (p *RotateConfig) ToOptions() ([]rotatelogs.Option, error) {
-	var options []rotatelogs.Option
-	if p.FileName == "" {
-		return nil, errcode.New("filename is empty")
-	}
-	_, filename := filepath.Split(p.FileName)
-	options = append(options, rotatelogs.WithLinkName(filename))
-
-	moveType := MoveFileType(p.MoveFileType)
-	switch moveType {
-	case MoveFileTypePerMinite:
-		p.FileName += ".%Y%m%d%H%M"
-	case MoveFileTypeHourly:
-		p.FileName += ".%Y%m%d%H"
-	case MoveFileTypeDaily:
-		fallthrough
-	default:
-		moveType = MoveFileTypeDaily
-		p.FileName += ".%Y%m%d"
-	}
-	options = append(options, rotatelogs.WithRotationTime(moveType.Duration()))
-
-	if p.RotationSize > 0 {
-		options = append(options, rotatelogs.WithRotationSize(p.RotationSize))
-	}
-
-	if p.RotationCount > 0 {
-		options = append(options, rotatelogs.WithRotationCount(p.RotationCount))
-	}
-
-	return options, nil
 }
 
 type LugrusHookConfig struct {
@@ -87,16 +52,12 @@ type LugrusLevelConfig struct {
 
 type LugrusLevelConfigs []*LugrusLevelConfig
 
-func NewRotateLogsWithConfig(cfg *RotateConfig) (*rotatelogs.RotateLogs, error) {
-	options, err := cfg.ToOptions()
-	if err != nil {
-		return nil, err
-	}
-	return NewRotateLogs(cfg.FileName, options...)
+func NewRotateLogsWithConfig(cfg *RotateConfig) (io.Writer, error) {
+	return newRotatingFileWriterFromRotateConfig(cfg, true)
 }
 
-func NewRotateLogs(p string, options ...rotatelogs.Option) (*rotatelogs.RotateLogs, error) {
-	return rotatelogs.New(p, options...)
+func NewRotateLogs(cfg *RotateConfig) (io.Writer, error) {
+	return newRotatingFileWriterFromRotateConfig(cfg, false)
 }
 
 func NewLFShook(output any, formatter logrus.Formatter) logrus.Hook {
@@ -104,11 +65,7 @@ func NewLFShook(output any, formatter logrus.Formatter) logrus.Hook {
 }
 
 func NewLugrusHookWithConfig(cfg *LugrusHookConfig) (logrus.Hook, error) {
-	options, err := cfg.ToOptions()
-	if err != nil {
-		return nil, err
-	}
-	rotate, err := NewRotateLogs(cfg.FileName, options...)
+	rotate, err := NewRotateLogsWithConfig(cfg.RotateConfig)
 	if err != nil {
 		return nil, err
 	}

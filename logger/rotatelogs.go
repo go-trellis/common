@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/go-trellis/common/utils/types"
-	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
 	"github.com/sirupsen/logrus"
 	writerhook "github.com/sirupsen/logrus/hooks/writer"
 )
@@ -42,7 +41,7 @@ const (
 
 // RotateLogsConfig configures the file rotation logger
 type RotateLogsConfig struct {
-	// LogPath is the base path for log files
+	// LogPath is the path of the active log file. Rotated archives are stored as LogPath.{period}.
 	LogPath string `yaml:"log_path" json:"log_path"`
 
 	// RotateMode defines how logs are rotated: "hour" or "day"
@@ -67,19 +66,8 @@ type RotateLogsConfig struct {
 	// RotationCount is the maximum number of rotated files to keep (0 means no limit)
 	RotationCount uint `yaml:"rotation_count" json:"rotation_count"`
 
-	// LinkName is the symbolic link name pointing to the current log file
-	LinkName string `yaml:"link_name" json:"link_name"`
-
 	// ForceNewFile forces rotation even if the file doesn't exist
 	ForceNewFile bool `yaml:"force_new_file" json:"force_new_file"`
-
-	// Clock allows customization of the clock used for rotation
-	// Not serialized to YAML/JSON as it's a runtime interface
-	Clock rotatelogs.Clock `yaml:"-" json:"-"`
-
-	// Handler allows customization of the rotation handler
-	// Not serialized to YAML/JSON as it's a runtime interface
-	Handler rotatelogs.Handler `yaml:"-" json:"-"`
 
 	// WriterLevels specifies which log levels should be written to this writer
 	// Format: ["debug", "info", "warn", "error", "fatal", "panic"]
@@ -94,7 +82,6 @@ func DefaultRotateLogsConfig(logPath string) *RotateLogsConfig {
 		MaxAge:        7 * 24 * time.Hour, // Keep logs for 7 days
 		RotationTime:  24 * time.Hour,     // Rotate daily
 		RotationCount: 0,                  // No limit
-		LinkName:      "",
 		ForceNewFile:  false,
 		WriterLevels:  []logrus.Level{logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel, logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel},
 	}
@@ -105,81 +92,7 @@ func NewRotateLogsWriter(config *RotateLogsConfig) (io.Writer, error) {
 	if config == nil {
 		return nil, nil
 	}
-
-	var options []rotatelogs.Option
-
-	// Set rotation time based on mode
-	switch config.RotateMode {
-	case RotateModeHour:
-		if config.RotationTime == 0 {
-			config.RotationTime = time.Hour
-		}
-		options = append(options, rotatelogs.WithRotationTime(config.RotationTime))
-	case RotateModeDay:
-		if config.RotationTime == 0 {
-			config.RotationTime = 24 * time.Hour
-		}
-		options = append(options, rotatelogs.WithRotationTime(config.RotationTime))
-	default:
-		// Default to day mode
-		if config.RotationTime == 0 {
-			config.RotationTime = 24 * time.Hour
-		}
-		options = append(options, rotatelogs.WithRotationTime(config.RotationTime))
-	}
-
-	// Add size-based rotation if MaxSize is set (works with both hour and day modes)
-	if config.MaxSize > 0 {
-		options = append(options, rotatelogs.WithRotationSize(config.MaxSize))
-	}
-
-	// Set max age
-	if config.MaxAge > 0 {
-		options = append(options, rotatelogs.WithMaxAge(config.MaxAge))
-	}
-
-	// Set rotation count
-	if config.RotationCount > 0 {
-		options = append(options, rotatelogs.WithRotationCount(config.RotationCount))
-	}
-
-	// Set link name
-	if config.LinkName != "" {
-		options = append(options, rotatelogs.WithLinkName(config.LinkName))
-	}
-
-	// Set force new file
-	if config.ForceNewFile {
-		options = append(options, rotatelogs.ForceNewFile())
-	}
-
-	// Set clock
-	if config.Clock != nil {
-		options = append(options, rotatelogs.WithClock(config.Clock))
-	}
-
-	// Set handler
-	if config.Handler != nil {
-		options = append(options, rotatelogs.WithHandler(config.Handler))
-	}
-
-	// Generate filename pattern based on mode
-	var filenamePattern string
-	switch config.RotateMode {
-	case RotateModeHour:
-		filenamePattern = config.LogPath + ".%Y%m%d%H"
-	case RotateModeDay:
-		filenamePattern = config.LogPath + ".%Y%m%d"
-	default:
-		filenamePattern = config.LogPath + ".%Y%m%d"
-	}
-
-	writer, err := rotatelogs.New(filenamePattern, options...)
-	if err != nil {
-		return nil, err
-	}
-
-	return writer, nil
+	return newRotatingFileWriter(config)
 }
 
 // AddRotateLogsHook adds a file rotation hook to the logrus logger
@@ -193,7 +106,6 @@ func AddRotateLogsHook(logger *logrus.Logger, config *RotateLogsConfig) error {
 		return err
 	}
 
-	// Use writer hook to write logs to the rotated file
 	levels := config.WriterLevels
 	if len(levels) == 0 {
 		levels = []logrus.Level{logrus.PanicLevel, logrus.FatalLevel, logrus.ErrorLevel, logrus.WarnLevel, logrus.InfoLevel, logrus.DebugLevel, logrus.TraceLevel}
@@ -218,14 +130,80 @@ func SetupRotateLogsLogger(logger *logrus.Logger, config *RotateLogsConfig) erro
 		return nil
 	}
 
-	// Create rotatelogs writer
 	writer, err := NewRotateLogsWriter(config)
 	if err != nil {
 		return err
 	}
 
-	// Set the writer as the logger output
 	logger.SetOutput(writer)
+
+	return nil
+}
+
+func parseRotateDuration(s string) (time.Duration, error) {
+	if s == "" {
+		return 0, nil
+	}
+	duration := types.ParseStringTime(strings.ToLower(s))
+	if duration == 0 && s != "0" {
+		if d, err := time.ParseDuration(s); err == nil {
+			return d, nil
+		}
+		return 0, fmt.Errorf("invalid duration: %s", s)
+	}
+	return duration, nil
+}
+
+func parseWriterLevels(levels []string) ([]logrus.Level, error) {
+	if len(levels) == 0 {
+		return nil, nil
+	}
+	parsed := make([]logrus.Level, 0, len(levels))
+	for _, levelStr := range levels {
+		level, err := logrus.ParseLevel(strings.ToLower(levelStr))
+		if err != nil {
+			return nil, fmt.Errorf("invalid log level %q: %w", levelStr, err)
+		}
+		parsed = append(parsed, level)
+	}
+	return parsed, nil
+}
+
+func formatWriterLevels(levels []logrus.Level) []string {
+	if len(levels) == 0 {
+		return nil
+	}
+	formatted := make([]string, 0, len(levels))
+	for _, level := range levels {
+		formatted = append(formatted, strings.ToLower(level.String()))
+	}
+	return formatted
+}
+
+func applyRotateLogsConfigFields(r *RotateLogsConfig, maxAge, rotationTime string, writerLevels []string) error {
+	if maxAge != "" {
+		duration, err := parseRotateDuration(maxAge)
+		if err != nil {
+			return fmt.Errorf("invalid max_age duration: %s", maxAge)
+		}
+		r.MaxAge = duration
+	}
+
+	if rotationTime != "" {
+		duration, err := parseRotateDuration(rotationTime)
+		if err != nil {
+			return fmt.Errorf("invalid rotation_time duration: %s", rotationTime)
+		}
+		r.RotationTime = duration
+	}
+
+	if len(writerLevels) > 0 {
+		levels, err := parseWriterLevels(writerLevels)
+		if err != nil {
+			return err
+		}
+		r.WriterLevels = levels
+	}
 
 	return nil
 }
@@ -246,54 +224,13 @@ func (r *RotateLogsConfig) UnmarshalYAML(unmarshal func(any) error) error {
 		return err
 	}
 
-	// Parse MaxAge
-	if aux.MaxAge != "" {
-		duration := types.ParseStringTime(strings.ToLower(aux.MaxAge))
-		if duration == 0 && aux.MaxAge != "0" && aux.MaxAge != "" {
-			// Try standard time.ParseDuration as fallback
-			if d, err := time.ParseDuration(aux.MaxAge); err == nil {
-				duration = d
-			} else {
-				return fmt.Errorf("invalid max_age duration: %s", aux.MaxAge)
-			}
-		}
-		r.MaxAge = duration
-	}
-
-	// Parse RotationTime
-	if aux.RotationTime != "" {
-		duration := types.ParseStringTime(strings.ToLower(aux.RotationTime))
-		if duration == 0 && aux.RotationTime != "0" && aux.RotationTime != "" {
-			// Try standard time.ParseDuration as fallback
-			if d, err := time.ParseDuration(aux.RotationTime); err == nil {
-				duration = d
-			} else {
-				return fmt.Errorf("invalid rotation_time duration: %s", aux.RotationTime)
-			}
-		}
-		r.RotationTime = duration
-	}
-
-	// Parse WriterLevels
-	if len(aux.WriterLevels) > 0 {
-		levels := make([]logrus.Level, 0, len(aux.WriterLevels))
-		for _, levelStr := range aux.WriterLevels {
-			level, err := logrus.ParseLevel(strings.ToLower(levelStr))
-			if err != nil {
-				return fmt.Errorf("invalid log level %q: %w", levelStr, err)
-			}
-			levels = append(levels, level)
-		}
-		r.WriterLevels = levels
-	}
-
-	return nil
+	return applyRotateLogsConfigFields(r, aux.MaxAge, aux.RotationTime, aux.WriterLevels)
 }
 
 // MarshalYAML implements yaml.Marshaler for WriterLevels
 func (r RotateLogsConfig) MarshalYAML() (any, error) {
 	type Alias RotateLogsConfig
-	aux := &struct {
+	return &struct {
 		MaxAge       string   `yaml:"max_age"`
 		RotationTime string   `yaml:"rotation_time"`
 		WriterLevels []string `yaml:"writer_levels"`
@@ -301,16 +238,9 @@ func (r RotateLogsConfig) MarshalYAML() (any, error) {
 	}{
 		MaxAge:       r.MaxAge.String(),
 		RotationTime: r.RotationTime.String(),
+		WriterLevels: formatWriterLevels(r.WriterLevels),
 		Alias:        (*Alias)(&r),
-	}
-
-	// Convert WriterLevels to strings
-	aux.WriterLevels = make([]string, 0, len(r.WriterLevels))
-	for _, level := range r.WriterLevels {
-		aux.WriterLevels = append(aux.WriterLevels, strings.ToLower(level.String()))
-	}
-
-	return aux, nil
+	}, nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler for RotateLogsConfig
@@ -329,48 +259,7 @@ func (r *RotateLogsConfig) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	// Parse MaxAge
-	if aux.MaxAge != "" {
-		duration := types.ParseStringTime(strings.ToLower(aux.MaxAge))
-		if duration == 0 && aux.MaxAge != "0" && aux.MaxAge != "" {
-			// Try standard time.ParseDuration as fallback
-			if d, err := time.ParseDuration(aux.MaxAge); err == nil {
-				duration = d
-			} else {
-				return fmt.Errorf("invalid max_age duration: %s", aux.MaxAge)
-			}
-		}
-		r.MaxAge = duration
-	}
-
-	// Parse RotationTime
-	if aux.RotationTime != "" {
-		duration := types.ParseStringTime(strings.ToLower(aux.RotationTime))
-		if duration == 0 && aux.RotationTime != "0" && aux.RotationTime != "" {
-			// Try standard time.ParseDuration as fallback
-			if d, err := time.ParseDuration(aux.RotationTime); err == nil {
-				duration = d
-			} else {
-				return fmt.Errorf("invalid rotation_time duration: %s", aux.RotationTime)
-			}
-		}
-		r.RotationTime = duration
-	}
-
-	// Parse WriterLevels
-	if len(aux.WriterLevels) > 0 {
-		levels := make([]logrus.Level, 0, len(aux.WriterLevels))
-		for _, levelStr := range aux.WriterLevels {
-			level, err := logrus.ParseLevel(strings.ToLower(levelStr))
-			if err != nil {
-				return fmt.Errorf("invalid log level %q: %w", levelStr, err)
-			}
-			levels = append(levels, level)
-		}
-		r.WriterLevels = levels
-	}
-
-	return nil
+	return applyRotateLogsConfigFields(r, aux.MaxAge, aux.RotationTime, aux.WriterLevels)
 }
 
 // MarshalJSON implements json.Marshaler for RotateLogsConfig
@@ -384,13 +273,8 @@ func (r RotateLogsConfig) MarshalJSON() ([]byte, error) {
 	}{
 		MaxAge:       r.MaxAge.String(),
 		RotationTime: r.RotationTime.String(),
+		WriterLevels: formatWriterLevels(r.WriterLevels),
 		Alias:        (*Alias)(&r),
-	}
-
-	// Convert WriterLevels to strings
-	aux.WriterLevels = make([]string, 0, len(r.WriterLevels))
-	for _, level := range r.WriterLevels {
-		aux.WriterLevels = append(aux.WriterLevels, strings.ToLower(level.String()))
 	}
 
 	return json.Marshal(aux)

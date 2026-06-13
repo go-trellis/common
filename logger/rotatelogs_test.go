@@ -36,7 +36,6 @@ func TestDefaultRotateLogsConfig(t *testing.T) {
 	testutils.Equals(t, 7*24*time.Hour, config.MaxAge, "MaxAge should be 7 days")
 	testutils.Equals(t, 24*time.Hour, config.RotationTime, "RotationTime should be 24 hours")
 	testutils.Equals(t, uint(0), config.RotationCount, "RotationCount should be 0")
-	testutils.Equals(t, "", config.LinkName, "LinkName should be empty")
 	testutils.Assert(t, !config.ForceNewFile, "ForceNewFile should be false")
 	testutils.Assert(t, len(config.WriterLevels) > 0, "WriterLevels should not be empty")
 }
@@ -143,27 +142,6 @@ func TestNewRotateLogsWriter_WithRotationCount(t *testing.T) {
 	}
 }
 
-func TestNewRotateLogsWriter_WithLinkName(t *testing.T) {
-	tmpDir := t.TempDir()
-	logPath := filepath.Join(tmpDir, "test.log")
-	linkName := filepath.Join(tmpDir, "current.log")
-
-	config := &RotateLogsConfig{
-		LogPath:      logPath,
-		RotateMode:   RotateModeDay,
-		RotationTime: 24 * time.Hour,
-		LinkName:     linkName,
-	}
-
-	writer, err := NewRotateLogsWriter(config)
-	testutils.Ok(t, err)
-	testutils.Assert(t, writer != nil, "writer should not be nil")
-
-	if closer, ok := writer.(io.Closer); ok {
-		closer.Close()
-	}
-}
-
 func TestNewRotateLogsWriter_DefaultRotationTime(t *testing.T) {
 	tmpDir := t.TempDir()
 	logPath := filepath.Join(tmpDir, "test.log")
@@ -178,7 +156,6 @@ func TestNewRotateLogsWriter_DefaultRotationTime(t *testing.T) {
 	writer, err := NewRotateLogsWriter(config)
 	testutils.Ok(t, err)
 	testutils.Assert(t, writer != nil, "writer should not be nil")
-	testutils.Equals(t, time.Hour, config.RotationTime, "RotationTime should default to 1 hour")
 
 	if closer, ok := writer.(io.Closer); ok {
 		closer.Close()
@@ -194,7 +171,6 @@ func TestNewRotateLogsWriter_DefaultRotationTime(t *testing.T) {
 	writer2, err := NewRotateLogsWriter(config2)
 	testutils.Ok(t, err)
 	testutils.Assert(t, writer2 != nil, "writer should not be nil")
-	testutils.Equals(t, 24*time.Hour, config2.RotationTime, "RotationTime should default to 24 hours")
 
 	if closer, ok := writer2.(io.Closer); ok {
 		closer.Close()
@@ -306,7 +282,6 @@ max_age: 7d
 rotation_time: 24h
 max_size: 1048576
 rotation_count: 10
-link_name: /tmp/current.log
 force_new_file: true
 writer_levels:
   - info
@@ -359,7 +334,6 @@ func TestRotateLogsConfig_MarshalYAML(t *testing.T) {
 		RotationTime:  24 * time.Hour,
 		MaxSize:       1048576,
 		RotationCount: 10,
-		LinkName:      "/tmp/current.log",
 		ForceNewFile:  true,
 		WriterLevels:  []logrus.Level{logrus.InfoLevel, logrus.WarnLevel},
 	}
@@ -377,7 +351,6 @@ func TestRotateLogsConfig_UnmarshalJSON(t *testing.T) {
 		"rotation_time": "24h",
 		"max_size": 1048576,
 		"rotation_count": 10,
-		"link_name": "/tmp/current.log",
 		"force_new_file": true,
 		"writer_levels": ["info", "warn", "error"]
 	}`
@@ -391,7 +364,6 @@ func TestRotateLogsConfig_UnmarshalJSON(t *testing.T) {
 	testutils.Equals(t, 24*time.Hour, config.RotationTime, "RotationTime should match")
 	testutils.Equals(t, int64(1048576), config.MaxSize, "MaxSize should match")
 	testutils.Equals(t, uint(10), config.RotationCount, "RotationCount should match")
-	testutils.Equals(t, "/tmp/current.log", config.LinkName, "LinkName should match")
 	testutils.Assert(t, config.ForceNewFile, "ForceNewFile should be true")
 	testutils.Assert(t, len(config.WriterLevels) == 3, "WriterLevels should have 3 levels")
 }
@@ -428,7 +400,6 @@ func TestRotateLogsConfig_MarshalJSON(t *testing.T) {
 		RotationTime:  24 * time.Hour,
 		MaxSize:       1048576,
 		RotationCount: 10,
-		LinkName:      "/tmp/current.log",
 		ForceNewFile:  true,
 		WriterLevels:  []logrus.Level{logrus.InfoLevel, logrus.WarnLevel, logrus.ErrorLevel},
 	}
@@ -609,7 +580,6 @@ func TestNewRotateLogsWriter_DefaultMode(t *testing.T) {
 	writer, err := NewRotateLogsWriter(config)
 	testutils.Ok(t, err)
 	testutils.Assert(t, writer != nil, "writer should not be nil")
-	testutils.Equals(t, 24*time.Hour, config.RotationTime, "should default to 24 hours")
 
 	if closer, ok := writer.(io.Closer); ok {
 		closer.Close()
@@ -718,24 +688,3 @@ func TestRotateLogsConfig_UnmarshalJSON_MixedCaseLevels(t *testing.T) {
 	testutils.Assert(t, len(config.WriterLevels) == 3, "should have 3 levels")
 }
 
-func TestRotateLogsConfig_ClockAndHandler(t *testing.T) {
-	tmpDir := t.TempDir()
-	logPath := filepath.Join(tmpDir, "test.log")
-
-	config := &RotateLogsConfig{
-		LogPath:      logPath,
-		RotateMode:   RotateModeDay,
-		RotationTime: 24 * time.Hour,
-		// Clock and Handler are runtime-only, cannot be tested via JSON/YAML
-		Clock:   nil,
-		Handler: nil,
-	}
-
-	writer, err := NewRotateLogsWriter(config)
-	testutils.Ok(t, err)
-	testutils.Assert(t, writer != nil, "writer should not be nil")
-
-	if closer, ok := writer.(io.Closer); ok {
-		closer.Close()
-	}
-}

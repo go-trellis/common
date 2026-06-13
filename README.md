@@ -68,6 +68,11 @@ appName := cfg.GetString("app.name")
 
 ### Logging
 
+Logs are written directly to `log_path` as a regular file (no symlinks). When rotation occurs, the active file is renamed to an archived file:
+
+- Active log: `/var/log/app.log`
+- Archived logs: `/var/log/app.log.20250613` (day mode) or `/var/log/app.log.2025061314` (hour mode)
+
 ```go
 import "github.com/go-trellis/common/logger"
 
@@ -76,6 +81,8 @@ config.RotateMode = logger.RotateModeDay
 config.MaxSize = 100 * 1024 * 1024
 logrusLogger, _ := logger.NewLogrusLoggerWithRotate(config)
 ```
+
+Use `tail -f /var/log/app.log` to follow the active log file.
 
 ### Common Utilities
 

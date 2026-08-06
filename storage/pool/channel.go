@@ -96,13 +96,17 @@ func (p *channelPool) Get() (any, error) {
 			return c.conn, nil
 		default:
 			p.mu.Lock()
+			if p.conns == nil {
+				p.mu.Unlock()
+				return nil, ErrPoolClosed
+			}
 			if p.openings >= p.maxActive {
 				wait := make(chan waitConn, 1)
 				p.waitings = append(p.waitings, wait)
 				p.mu.Unlock()
 				c, ok := <-wait
 				if !ok {
-					return nil, ErrOpenedMaxConns
+					return nil, ErrPoolClosed
 				}
 				if p.options.idleTimeout > 0 && c.idleConn.t.Add(p.options.idleTimeout).Before(time.Now()) {
 					p.Close(c.idleConn.conn)
@@ -111,14 +115,26 @@ func (p *channelPool) Get() (any, error) {
 				return c.idleConn.conn, nil
 			}
 
-			if p.options.factory == nil {
+			factory := p.options.factory
+			if factory == nil {
 				p.mu.Unlock()
 				return nil, ErrNilFactory
 			}
-			conn, err := p.options.factory()
+			p.mu.Unlock()
+
+			conn, err := factory()
 			if err != nil {
-				p.mu.Unlock()
 				return nil, err
+			}
+
+			p.mu.Lock()
+			if p.conns == nil {
+				closeFn := p.options.close
+				p.mu.Unlock()
+				if closeFn != nil {
+					_ = closeFn(conn)
+				}
+				return nil, ErrPoolClosed
 			}
 			p.openings++
 			p.mu.Unlock()
@@ -188,34 +204,36 @@ func (p *channelPool) Release() {
 	p.mu.Lock()
 	conns := p.conns
 	p.conns = nil
+	waitings := p.waitings
+	p.waitings = nil
 	p.options.factory = nil
 	p.options.ping = nil
 	closeFun := p.options.close
 	p.options.close = nil
+	p.openings = 0
 	p.mu.Unlock()
+
+	// Wake all Get waiters; receiving from a closed channel unblocks them.
+	for _, w := range waitings {
+		if w != nil {
+			close(w)
+		}
+	}
 
 	if conns == nil {
 		return
 	}
 
 	close(conns)
-
-	// Use a goroutine with timeout to avoid blocking forever
-	done := make(chan bool, 1)
-	go func() {
-		defer func() { done <- true }()
-		for c := range conns {
-			if c != nil && closeFun != nil {
-				_ = closeFun(c.conn)
-			}
+	for c := range conns {
+		if c == nil || closeFun == nil {
+			continue
 		}
-	}()
-
-	select {
-	case <-done:
-		// All connections closed
-	case <-time.After(time.Millisecond * 100):
-		// Timeout after 100ms - fast enough for tests, long enough for cleanup
+		conn := c.conn
+		// Close asynchronously so a blocking close implementation cannot hang Release.
+		go func(conn any) {
+			_ = closeFun(conn)
+		}(conn)
 	}
 }
 

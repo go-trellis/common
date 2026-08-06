@@ -34,11 +34,15 @@ var (
 	MaximumCap     = 30
 	network        = "tcp"
 	address        = "127.0.0.1:7777"
-	factory        = func() (any, error) { return net.Dial(network, address) }
-	close          = func(c any) error {
+	factory = func() (any, error) { return net.Dial(network, address) }
+	// Named closeConn (not close) so it does not shadow the builtin close used by channelPool.
+	closeConn = func(c any) error {
 		cc, ok := c.(net.Conn)
 		if !ok {
 			return errcode.New("not net connection")
+		}
+		if tc, ok := cc.(*net.TCPConn); ok {
+			_ = tc.SetLinger(0)
 		}
 		return cc.Close()
 	}
@@ -82,7 +86,7 @@ func TestNewPool_InvalidOptions(t *testing.T) {
 	testutils.NotOk(t, err, "should return error for nil factory")
 
 	// Test invalid capacity settings
-	_, err = NewPool(InitialCap(10), MaxCap(5), OptionFactory(factory), OptionClose(close))
+	_, err = NewPool(InitialCap(10), MaxCap(5), OptionFactory(factory), OptionClose(closeConn))
 	testutils.NotOk(t, err, "should return error for invalid capacity")
 
 	// Test nil close
@@ -97,7 +101,7 @@ func TestNewPool_Options(t *testing.T) {
 		MaxIdle(5),
 		IdleTimeout(time.Second*30),
 		OptionFactory(factory),
-		OptionClose(close),
+		OptionClose(closeConn),
 		OptionPing(ping),
 	)
 	testutils.Ok(t, err)
@@ -156,7 +160,7 @@ func TestPool_Get_AfterRelease(t *testing.T) {
 }
 
 func TestPool_Put(t *testing.T) {
-	p, err := NewPool(InitialCap(0), MaxCap(MaximumCap), OptionFactory(factory), OptionClose(close))
+	p, err := NewPool(InitialCap(0), MaxCap(MaximumCap), OptionFactory(factory), OptionClose(closeConn))
 	testutils.Ok(t, err)
 	defer p.Release()
 
@@ -233,7 +237,7 @@ func TestPool_Close_AfterRelease(t *testing.T) {
 }
 
 func TestPool_Ping(t *testing.T) {
-	p, err := NewPool(InitialCap(2), MaxCap(10), OptionFactory(factory), OptionClose(close), OptionPing(ping))
+	p, err := NewPool(InitialCap(2), MaxCap(10), OptionFactory(factory), OptionClose(closeConn), OptionPing(ping))
 	testutils.Ok(t, err)
 	defer p.Release()
 
@@ -248,7 +252,7 @@ func TestPool_Ping(t *testing.T) {
 }
 
 func TestPool_Ping_Nil(t *testing.T) {
-	p, err := NewPool(InitialCap(2), MaxCap(10), OptionFactory(factory), OptionClose(close), OptionPing(ping))
+	p, err := NewPool(InitialCap(2), MaxCap(10), OptionFactory(factory), OptionClose(closeConn), OptionPing(ping))
 	testutils.Ok(t, err)
 	defer p.Release()
 
@@ -303,7 +307,7 @@ func TestPool_IdleTimeout(t *testing.T) {
 		MaxIdle(5),
 		IdleTimeout(time.Millisecond*100),
 		OptionFactory(factory),
-		OptionClose(close),
+		OptionClose(closeConn),
 	)
 	testutils.Ok(t, err)
 	defer p.Release()
@@ -328,7 +332,7 @@ func TestPool_Get_WithPing(t *testing.T) {
 		InitialCap(2),
 		MaxCap(10),
 		OptionFactory(factory),
-		OptionClose(close),
+		OptionClose(closeConn),
 		OptionPing(failPing),
 	)
 	testutils.Ok(t, err)
@@ -345,7 +349,7 @@ func TestPool_Get_Waiting(t *testing.T) {
 		InitialCap(1),
 		MaxCap(2),
 		OptionFactory(factory),
-		OptionClose(close),
+		OptionClose(closeConn),
 	)
 	testutils.Ok(t, err)
 	defer p.Release()
@@ -413,7 +417,7 @@ func TestPoolConcurrent(t *testing.T) {
 }
 
 func TestPoolWriteRead(t *testing.T) {
-	p, _ := NewPool(MaxCap(30), OptionFactory(factory), OptionClose(close))
+	p, _ := NewPool(MaxCap(30), OptionFactory(factory), OptionClose(closeConn))
 	defer p.Release()
 
 	conn, _ := p.Get()
@@ -429,7 +433,7 @@ func TestPoolWriteRead(t *testing.T) {
 }
 
 func TestPoolConcurrent2(t *testing.T) {
-	p, _ := NewPool(MaxCap(30), OptionFactory(factory), OptionClose(close))
+	p, _ := NewPool(MaxCap(30), OptionFactory(factory), OptionClose(closeConn))
 	defer p.Release()
 
 	var wg sync.WaitGroup
@@ -466,7 +470,7 @@ func TestPoolConcurrent2(t *testing.T) {
 }
 
 func TestPoolConcurrent3(t *testing.T) {
-	p, _ := NewPool(MaxCap(1), OptionFactory(factory), OptionClose(close))
+	p, _ := NewPool(MaxCap(1), OptionFactory(factory), OptionClose(closeConn))
 
 	var wg sync.WaitGroup
 
@@ -493,7 +497,7 @@ func TestOptions_Check(t *testing.T) {
 		maxCap:     10,
 		maxIdle:    0, // Will be set to maxCap
 		factory:    factory,
-		close:      close,
+		close:      closeConn,
 	}
 	err := opts.check()
 	testutils.Ok(t, err)
@@ -505,7 +509,7 @@ func TestOptions_Check_InvalidCapacity(t *testing.T) {
 		initialCap: 10,
 		maxCap:     5,
 		factory:    factory,
-		close:      close,
+		close:      closeConn,
 	}
 	err := opts.check()
 	testutils.NotOk(t, err, "should return error for invalid capacity")
@@ -517,14 +521,99 @@ func TestOptions_Check_InvalidMaxIdle(t *testing.T) {
 		maxCap:     5,
 		maxIdle:    3,
 		factory:    factory,
-		close:      close,
+		close:      closeConn,
 	}
 	err := opts.check()
 	testutils.NotOk(t, err, "should return error for invalid maxIdle")
 }
 
+func TestReleaseWakesWaiters(t *testing.T) {
+	var created int
+	p, err := NewPool(
+		InitialCap(0),
+		MaxIdle(1),
+		MaxCap(1),
+		OptionFactory(func() (any, error) {
+			created++
+			return created, nil
+		}),
+		OptionClose(func(c any) error { return nil }),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	conn, err := p.Get()
+	if err != nil {
+		t.Fatalf("Get: %v", err)
+	}
+	if conn == nil {
+		t.Fatal("expected connection")
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		_, err := p.Get()
+		done <- err
+	}()
+
+	cp := p.(*channelPool)
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		cp.mu.Lock()
+		nwait := len(cp.waitings)
+		cp.mu.Unlock()
+		if nwait >= 1 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("timed out waiting for Get to enqueue")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	p.Release()
+
+	select {
+	case err := <-done:
+		if err != ErrPoolClosed {
+			t.Fatalf("waiter error = %v, want %v", err, ErrPoolClosed)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Release did not wake waiting Get")
+	}
+}
+
+func TestReleaseClosesIdleConnValue(t *testing.T) {
+	closed := make(chan any, 1)
+	p, err := NewPool(
+		InitialCap(1),
+		MaxIdle(1),
+		MaxCap(1),
+		OptionFactory(func() (any, error) { return "conn", nil }),
+		OptionClose(func(c any) error {
+			closed <- c
+			return nil
+		}),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	p.Release()
+
+	select {
+	case c := <-closed:
+		if c != "conn" {
+			t.Fatalf("close got %v (%T), want underlying conn value", c, c)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Release did not close idle connection")
+	}
+}
+
 func newChannelPool() (Pool, error) {
-	return NewPool(InitialCap(TestInitialCap), MaxIdle(TestInitialCap), MaxCap(MaximumCap), OptionFactory(factory), OptionClose(close))
+	return NewPool(InitialCap(TestInitialCap), MaxIdle(TestInitialCap), MaxCap(MaximumCap), OptionFactory(factory), OptionClose(closeConn))
 }
 
 func simpleTCPServer(l net.Listener) {

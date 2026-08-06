@@ -72,6 +72,10 @@ func (p *committer) checkRepos(txFunc any, originRepos []Repo) error {
 		return ErrNotFoundFunction
 	}
 
+	if lf := GetLogicFunc(txFunc); lf == nil || lf.Logic == nil {
+		return ErrNotFoundFunction
+	}
+
 	if reposLen := len(originRepos); reposLen < 1 {
 		return ErrAtLeastOneRepo
 	}
@@ -125,9 +129,11 @@ func (p *committer) doCommit(fn any, name string, isTransaction bool, repos ...R
 
 	_newRepos := make([]any, 0, len(repos))
 	for _, origin := range repos {
-		_newRepoI, err := p.createNewInstance(origin)
-		if err != nil {
-			return err
+		_newRepoI, e := p.createNewInstance(origin)
+		if e != nil {
+			// BeginTransaction may already have allocated a session; best-effort cleanup.
+			_ = trans.Commit(nil)
+			return e
 		}
 		_newRepos = append(_newRepos, _newRepoI)
 	}

@@ -20,7 +20,6 @@ package txorm
 import (
 	"database/sql"
 	"fmt"
-	"sync"
 
 	"github.com/go-trellis/common/config"
 	"github.com/go-trellis/common/errors/errcode"
@@ -47,8 +46,6 @@ var (
 type XEngine struct {
 	*xorm.Engine
 }
-
-var locker = &sync.Mutex{}
 
 type Option func(*Options)
 type Options struct {
@@ -118,8 +115,6 @@ func NewEnginesWithConfig(cfg config.Config, l logger.Logger) (engines map[strin
 		return nil, errcode.New("nil config")
 	}
 
-	locker.Lock()
-	defer locker.Unlock()
 	es := make(map[string]transaction.Engine)
 
 	defer func() {
@@ -132,13 +127,13 @@ func NewEnginesWithConfig(cfg config.Config, l logger.Logger) (engines map[strin
 	}()
 
 	for _, key := range cfg.GetKeys() {
-		engine, isDefault, err := newXORMEngineWithConfig(cfg, key, l)
-		if err != nil {
-			return nil, err
+		engine, isDefault, e := newXORMEngineWithConfig(cfg, key, l)
+		if e != nil {
+			return nil, e
 		}
-		xEngine, err := newXEngine(engine)
-		if err != nil {
-			return nil, err
+		xEngine, e := newXEngine(engine)
+		if e != nil {
+			return nil, e
 		}
 		if isDefault {
 			es[transaction.DefaultDatabase] = xEngine
@@ -193,29 +188,31 @@ func NewXORMEnginesFromFile(file string, l logger.Logger) (map[string]*xorm.Engi
 }
 
 func NewXORMEngineWithConfig(cfg config.Config, l logger.Logger) (engines map[string]*xorm.Engine, err error) {
-	engines = make(map[string]*xorm.Engine)
-	locker.Lock()
-	defer locker.Unlock()
+	if cfg == nil {
+		return nil, errcode.New("nil config")
+	}
+
+	es := make(map[string]*xorm.Engine)
 	defer func() {
 		if err == nil {
 			return
 		}
-		for _, engine := range engines {
+		for _, engine := range es {
 			engine.Close()
 		}
 	}()
 
 	for _, key := range cfg.GetKeys() {
-		engine, isDefault, err := newXORMEngineWithConfig(cfg, key, l)
-		if err != nil {
-			return nil, err
+		engine, isDefault, e := newXORMEngineWithConfig(cfg, key, l)
+		if e != nil {
+			return nil, e
 		}
 		if isDefault {
-			engines[transaction.DefaultDatabase] = engine
+			es[transaction.DefaultDatabase] = engine
 		}
-		engines[key] = engine
+		es[key] = engine
 	}
-	return engines, nil
+	return es, nil
 }
 
 func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm.Engine, bool, error) {
@@ -306,7 +303,7 @@ func configureToOptions(cfg config.Config) *Options {
 }
 
 func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {
-	return TransactionDoWithSession(p.Engine.NewSession(), fn)
+	return TransactionDo(p, fn)
 }
 
 func (p *XEngine) NewSession() (any, error) {

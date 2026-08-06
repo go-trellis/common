@@ -51,23 +51,29 @@ func (p *trans) IsTransaction() bool {
 }
 
 // Commit executes the logic function and commits the transaction. If there is an error during the execution of the logic function, the transaction will be rolled back. Otherwise, the transaction will be committed.
-func (p *trans) Commit(fun any, repos ...any) error {
-	// get the logic function
+func (p *trans) Commit(fun any, repos ...any) (err error) {
 	fn := transaction.GetLogicFunc(fun)
+
+	// TX session must be closed on every exit path, including invalid Logic.
+	if p.IsTransaction() {
+		if p.session == nil {
+			p.session = p.engine.NewSession()
+		}
+		defer p.session.Close()
+	}
+
 	if fn == nil || fn.Logic == nil {
-		return errcode.New("logic function is not found")
+		return transaction.ErrNotFoundFunction
 	}
 
 	var (
 		_values   []any
 		_newRepos []any
-		err       error
+		sessions  []*xorm.Session
 	)
 
 	if p.IsTransaction() {
-		defer p.session.Close()
-
-		if err := p.session.Begin(); err != nil {
+		if err = p.session.Begin(); err != nil {
 			return err
 		}
 
@@ -84,8 +90,15 @@ func (p *trans) Commit(fun any, repos ...any) error {
 			_newRepos = append(_newRepos, repo)
 		}
 	} else {
+		defer func() {
+			for _, s := range sessions {
+				_ = s.Close()
+			}
+		}()
+
 		for _, repo := range repos {
 			session := p.engine.NewSession()
+			sessions = append(sessions, session)
 			if err = setTransactionRepoSession(repo, session); err != nil {
 				return err
 			}
@@ -99,29 +112,24 @@ func (p *trans) Commit(fun any, repos ...any) error {
 		}
 	}()
 
-	// execute before logic
 	if _, err = transaction.CallFunc(fn.BeforeLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// execute logic
 	if _values, err = transaction.CallFunc(fn.Logic, _newRepos...); err != nil {
 		return err
 	}
 
-	// execute after logic
 	if _, err = transaction.CallFunc(fn.AfterLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// commit transaction
 	if p.isTrans {
 		if err = p.session.Commit(); err != nil {
 			return err
 		}
 	}
 
-	// call after commit logic
 	if _, err = transaction.CallFunc(fn.AfterCommit, _values); err != nil {
 		return err
 	}
@@ -129,7 +137,6 @@ func (p *trans) Commit(fun any, repos ...any) error {
 	return nil
 }
 
-// setTransactionRepoSession sets the session for a transaction repo. It returns an error if the repository does not implement the transaction.Repo interface.
 func setTransactionRepoSession(repo any, session *xorm.Session) error {
 	tRepo, ok := repo.(transaction.Repo)
 	if !ok {
@@ -155,7 +162,9 @@ func TransactionDo(engine transaction.Engine, fn func(*xorm.Session) error) erro
 	if err != nil {
 		return err
 	}
-	return TransactionDoWithSession(xEngine.Engine.NewSession(), fn)
+	session := xEngine.Engine.NewSession()
+	defer session.Close()
+	return TransactionDoWithSession(session, fn)
 }
 
 func assertXormEngine(engine transaction.Engine) (*XEngine, error) {
@@ -170,8 +179,12 @@ func assertXormEngine(engine transaction.Engine) (*XEngine, error) {
 	return xEngine, nil
 }
 
-// TransactionDoWithSession to do transaction with customer function
+// TransactionDoWithSession to do transaction with customer function.
+// Caller owns the session lifecycle.
 func TransactionDoWithSession(s *xorm.Session, fn func(*xorm.Session) error) (err error) {
+	if s == nil {
+		return errcode.New("nil session")
+	}
 	if err = s.Begin(); err != nil {
 		return
 	}

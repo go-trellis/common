@@ -104,29 +104,23 @@ func NewLogger(c *LogrusConfig) (*logrus.Logger, error) {
 	logrusLogger := logrus.New()
 	logrusLogger.SetReportCaller(c.ReportCaller)
 
-	ok := false
-	for _, v := range logrus.AllLevels {
-		if c.Level == Level(v) {
-			ok = true
-			break
-		}
-	}
-	if ok {
+	if c.Level >= PanicLevel && c.Level <= TraceLevel {
 		logrusLogger.SetLevel(logrus.Level(c.Level))
 	}
 
-	if c.Formatter != nil {
-		logrusLogger.SetFormatter(c.Formatter)
+	formatter := c.Formatter
+	if formatter == nil {
+		formatter = logrusLogger.Formatter
 	} else {
-		c.Formatter = logrusLogger.Formatter
+		logrusLogger.SetFormatter(formatter)
 	}
 
-	writer, err := NewLugrusHook(c.Formatter, c.Configs)
+	hook, err := NewLugrusHook(formatter, c.Configs)
 	if err != nil {
 		return nil, err
 	}
-	if writer != nil {
-		logrusLogger.AddHook(writer)
+	if hook != nil {
+		logrusLogger.AddHook(hook)
 	}
 
 	if c.BufferPool != nil {

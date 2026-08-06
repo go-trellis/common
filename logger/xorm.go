@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
+	"io"
+
 	"xorm.io/xorm/log"
 
 	"github.com/sirupsen/logrus"
@@ -27,42 +29,24 @@ type XormLogger log.Logger
 
 type XormLogrus struct {
 	showSQL bool
+	level   log.LogLevel
 	Logger  *logrus.Logger
 }
 
 func ToXormLogger(l *logrus.Logger) XormLogger {
+	if l == nil {
+		l = logrus.New()
+		l.SetOutput(io.Discard)
+		return &XormLogrus{Logger: l, level: log.LOG_OFF}
+	}
 	return &XormLogrus{
 		Logger: l,
+		level:  logrusLevelToXorm(l.GetLevel()),
 	}
 }
 
-func (p *XormLogrus) Debug(v ...any) {
-	p.Logger.Debug(v...)
-}
-func (p *XormLogrus) Debugf(format string, v ...any) {
-	p.Logger.Debugf(format, v...)
-}
-func (p *XormLogrus) Info(v ...any) {
-	p.Logger.Info(v...)
-}
-func (p *XormLogrus) Infof(format string, v ...any) {
-	p.Logger.Infof(format, v...)
-}
-func (p *XormLogrus) Error(v ...any) {
-	p.Logger.Error(v...)
-}
-func (p *XormLogrus) Errorf(format string, v ...any) {
-	p.Logger.Errorf(format, v...)
-}
-func (p *XormLogrus) Warn(v ...any) {
-	p.Logger.Warn(v...)
-}
-func (p *XormLogrus) Warnf(format string, v ...any) {
-	p.Logger.Warnf(format, v...)
-}
-
-func (p *XormLogrus) Level() log.LogLevel {
-	switch p.Logger.Level {
+func logrusLevelToXorm(lv logrus.Level) log.LogLevel {
+	switch lv {
 	case logrus.TraceLevel, logrus.DebugLevel:
 		return log.LOG_DEBUG
 	case logrus.InfoLevel:
@@ -77,18 +61,61 @@ func (p *XormLogrus) Level() log.LogLevel {
 		return log.LOG_UNKNOWN
 	}
 }
-func (p *XormLogrus) SetLevel(l log.LogLevel) {
-	switch l {
-	case log.LOG_DEBUG:
-		p.Logger.SetLevel(logrus.DebugLevel)
-	case log.LOG_WARNING:
-		p.Logger.SetLevel(logrus.WarnLevel)
-	case log.LOG_ERR:
-		p.Logger.SetLevel(logrus.ErrorLevel)
-	case log.LOG_OFF:
-		p.Logger.SetLevel(logrus.FatalLevel)
-	default:
+
+func (p *XormLogrus) enabled(min log.LogLevel) bool {
+	return p.level <= min
+}
+
+func (p *XormLogrus) Debug(v ...any) {
+	if p.enabled(log.LOG_DEBUG) {
+		p.Logger.Debug(v...)
 	}
+}
+func (p *XormLogrus) Debugf(format string, v ...any) {
+	if p.enabled(log.LOG_DEBUG) {
+		p.Logger.Debugf(format, v...)
+	}
+}
+func (p *XormLogrus) Info(v ...any) {
+	if p.enabled(log.LOG_INFO) {
+		p.Logger.Info(v...)
+	}
+}
+func (p *XormLogrus) Infof(format string, v ...any) {
+	if p.enabled(log.LOG_INFO) {
+		p.Logger.Infof(format, v...)
+	}
+}
+func (p *XormLogrus) Error(v ...any) {
+	if p.enabled(log.LOG_ERR) {
+		p.Logger.Error(v...)
+	}
+}
+func (p *XormLogrus) Errorf(format string, v ...any) {
+	if p.enabled(log.LOG_ERR) {
+		p.Logger.Errorf(format, v...)
+	}
+}
+func (p *XormLogrus) Warn(v ...any) {
+	if p.enabled(log.LOG_WARNING) {
+		p.Logger.Warn(v...)
+	}
+}
+func (p *XormLogrus) Warnf(format string, v ...any) {
+	if p.enabled(log.LOG_WARNING) {
+		p.Logger.Warnf(format, v...)
+	}
+}
+
+func (p *XormLogrus) Level() log.LogLevel {
+	return p.level
+}
+
+// SetLevel only filters xorm SQL logs. Never change the shared logrus level —
+// orm log_level: 4 is xorm LOG_OFF; the old code mapped that to logrus Fatal
+// and silenced the whole process after the first engine was created.
+func (p *XormLogrus) SetLevel(l log.LogLevel) {
+	p.level = l
 }
 
 func (p *XormLogrus) ShowSQL(show ...bool) {

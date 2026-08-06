@@ -49,25 +49,29 @@ func (p *trans) IsTransaction() bool {
 	return p.isTrans
 }
 
-func (p *trans) Commit(fun any, repos ...any) error {
-	// 获取逻辑函数
+func (p *trans) Commit(fun any, repos ...any) (err error) {
 	fn := transaction.GetLogicFunc(fun)
+
+	// TX session must be closed on every exit path, including invalid Logic.
+	if p.IsTransaction() {
+		if p.session == nil {
+			p.session = p.engine.NewSession()
+		}
+		defer p.session.Close()
+	}
+
 	if fn == nil || fn.Logic == nil {
-		// 返回错误
-		return nil
+		return transaction.ErrNotFoundFunction
 	}
 
 	var (
 		_values   []any
 		_newRepos []any
-		err       error
+		sessions  []*xorm.Session
 	)
 
-	// 判断是否是事务
 	if p.IsTransaction() {
-		defer p.session.Close()
-
-		if err := p.session.Begin(); err != nil {
+		if err = p.session.Begin(); err != nil {
 			return err
 		}
 
@@ -77,7 +81,6 @@ func (p *trans) Commit(fun any, repos ...any) error {
 			}
 		}()
 
-		// 设置事务会话
 		for _, repo := range repos {
 			if err = setTransactionRepoSession(repo, p.session); err != nil {
 				return err
@@ -85,9 +88,15 @@ func (p *trans) Commit(fun any, repos ...any) error {
 			_newRepos = append(_newRepos, repo)
 		}
 	} else {
-		// 设置非事务会话
+		defer func() {
+			for _, s := range sessions {
+				_ = s.Close()
+			}
+		}()
+
 		for _, repo := range repos {
 			session := p.engine.NewSession()
+			sessions = append(sessions, session)
 			if err = setTransactionRepoSession(repo, session); err != nil {
 				return err
 			}
@@ -101,29 +110,24 @@ func (p *trans) Commit(fun any, repos ...any) error {
 		}
 	}()
 
-	// 执行逻辑前的操作
 	if _, err = transaction.CallFunc(fn.BeforeLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 执行逻辑操作
 	if _values, err = transaction.CallFunc(fn.Logic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 执行逻辑后的操作
 	if _, err = transaction.CallFunc(fn.AfterLogic, _newRepos...); err != nil {
 		return err
 	}
 
-	// 提交事务
 	if p.isTrans {
 		if err = p.session.Commit(); err != nil {
 			return err
 		}
 	}
 
-	// 提交后的操作
 	if _, err = transaction.CallFunc(fn.AfterCommit, _values); err != nil {
 		return err
 	}
@@ -131,7 +135,6 @@ func (p *trans) Commit(fun any, repos ...any) error {
 	return nil
 }
 
-// 设置事务仓库会话
 func setTransactionRepoSession(repo any, session *xorm.Session) error {
 	tRepo, ok := repo.(transaction.Repo)
 	if !ok {
@@ -149,11 +152,17 @@ func Do(engine *xorm.Engine, fn func(*xorm.Session) error) error {
 
 // TransactionDo to do transaction with customer function
 func TransactionDo(engine *xorm.Engine, fn func(*xorm.Session) error) error {
-	return TransactionDoWithSession(engine.NewSession(), fn)
+	session := engine.NewSession()
+	defer session.Close()
+	return TransactionDoWithSession(session, fn)
 }
 
-// TransactionDoWithSession to do transaction with customer function
+// TransactionDoWithSession to do transaction with customer function.
+// Caller owns the session lifecycle.
 func TransactionDoWithSession(s *xorm.Session, fn func(*xorm.Session) error) (err error) {
+	if s == nil {
+		return errcode.New("nil session")
+	}
 	if err = s.Begin(); err != nil {
 		return
 	}

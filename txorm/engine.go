@@ -322,7 +322,7 @@ func configureToOptions(cfg config.Config) *Options {
 }
 
 func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {
-	return TransactionDoWithSession(p.Engine.NewSession(), fn)
+	return TransactionDo(p.Engine, fn)
 }
 
 func (p *XEngine) NewSession() (any, error) {

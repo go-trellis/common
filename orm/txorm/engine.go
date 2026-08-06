@@ -221,6 +221,12 @@ func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm
 		return nil, false, errcode.Newf("not found config with key: %s", key)
 	}
 	options := configureToOptions(dConfig)
+	// Stash the injected logger on options so configureEngine sets it before
+	// applying ShowSQL/log level; otherwise those settings land on the default
+	// logger and are lost when the logger is later replaced.
+	if l != nil {
+		options.logger = l
+	}
 
 	f, err := transaction.GetDSNFactory(options.driver)
 	if err != nil {
@@ -234,11 +240,6 @@ func newXORMEngineWithConfig(cfg config.Config, key string, l log.Logger) (*xorm
 	engine, err := newXormEngine(dsn, options, nil)
 	if err != nil {
 		return nil, false, err
-	}
-
-	// Set the xorm logger directly
-	if l != nil {
-		engine.SetLogger(l)
 	}
 
 	return engine, options.isDefault, nil
@@ -281,11 +282,12 @@ func newXormEngine(dsn string, options *Options, coreDB *core.DB) (*xorm.Engine,
 func configureEngine(engine *xorm.Engine, options *Options) {
 	engine.SetMaxIdleConns(options.maxIdleConns)
 	engine.SetMaxOpenConns(options.maxOpenConns)
-	engine.ShowSQL(options.showSQL)
-	// If a custom logger is provided, set the custom logger
+	// Set the custom logger first so ShowSQL/log level apply to it rather than
+	// the default logger (SetLogger replaces the logger without carrying settings over).
 	if options.logger != nil {
 		engine.SetLogger(options.logger)
 	}
+	engine.ShowSQL(options.showSQL)
 	engine.Logger().SetLevel(options.logLevel)
 }
 

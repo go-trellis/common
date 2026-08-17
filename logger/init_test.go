@@ -159,6 +159,29 @@ encoding: text
 	}
 }
 
+func TestInitLoggerFileCreatesNestedPathAtInfoLevel(t *testing.T) {
+	// Init message is Debug; with Info level the rotate writer never Write()s
+	// before the writability check — ensureLogFileWritable must still create it.
+	dir := t.TempDir()
+	filename := filepath.Join(dir, "nested", "app.log")
+
+	l, err := InitLogger(testLoggerConfig(t, `
+type: file
+level: 4
+filename: `+filename+`
+encoding: text
+`))
+	if err != nil {
+		t.Fatalf("InitLogger: %v", err)
+	}
+	if l == nil {
+		t.Fatal("expected logger")
+	}
+	if _, err := os.Stat(filename); err != nil {
+		t.Fatalf("nested log file should exist: %v", err)
+	}
+}
+
 func TestInitLoggerFileMissingFilename(t *testing.T) {
 	_, err := InitLogger(testLoggerConfig(t, `
 type: file

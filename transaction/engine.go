@@ -24,5 +24,8 @@ type Engine interface {
 	Exec(sql string, args ...any) (sql.Result, error)
 	BeginTransaction() (Transaction, error)
 	BeginNonTransaction() (Transaction, error)
+	// AddHook attaches an ORM-specific hook. Concrete engines (e.g. txorm.XEngine)
+	// assert the value to their hook type; pass any for ORM-agnostic callers.
+	AddHook(hook any) error
 	Close() error
 }

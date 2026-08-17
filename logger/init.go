@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/go-trellis/common/config"
@@ -81,14 +82,31 @@ func InitLogger(cfg config.Config) (Logger, error) {
 		if err != nil {
 			return nil, err
 		}
-		logW.WithField("filename", filename).Debug("file logger initialized")
-		if _, statErr := os.Stat(filename); statErr != nil {
-			return nil, fmt.Errorf("file logger created but %s is not writable: %w", filename, statErr)
+		if err := ensureLogFileWritable(filename); err != nil {
+			return nil, err
 		}
+		logW.WithField("filename", filename).Debug("file logger initialized")
 		return logW, nil
 	default:
 		return nil, fmt.Errorf("unknown logger type: %q", typ)
 	}
+}
+
+// ensureLogFileWritable creates parent dirs and verifies the active log path
+// can be opened. Rotate writer opens lazily on first Write, so InitLogger must
+// not rely on a log line (which may be filtered by level) to create the file.
+func ensureLogFileWritable(filename string) error {
+	dir := filepath.Dir(filename)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("create log directory for %s: %w", filename, err)
+		}
+	}
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
+	if err != nil {
+		return fmt.Errorf("logger file %s is not writable: %w", filename, err)
+	}
+	return f.Close()
 }
 
 func baseLogrusConfig(cfg config.Config, defaultWriter io.Writer, configs []any) *LogrusConfig {

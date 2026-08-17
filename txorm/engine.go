@@ -28,6 +28,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"xorm.io/xorm"
+	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/log"
 )
@@ -57,6 +58,7 @@ type Options struct {
 	showSQL            bool
 	logLevel           log.LogLevel
 	isDefault          bool
+	hooks              []contexts.Hook
 }
 
 func OptDriver(d string) Option {
@@ -110,6 +112,46 @@ func OptIsDefault(def bool) Option {
 	return func(o *Options) {
 		o.isDefault = def
 	}
+}
+
+// OptHook registers xorm context hooks at engine creation time.
+func OptHook(hooks ...contexts.Hook) Option {
+	return func(o *Options) {
+		o.hooks = append(o.hooks, hooks...)
+	}
+}
+
+// AddHook attaches a contexts.Hook to *xorm.Engine, *XEngine, or transaction.Engine.
+func AddHook(engine any, hook contexts.Hook) error {
+	if hook == nil {
+		return errcode.New("nil hook")
+	}
+	switch e := engine.(type) {
+	case nil:
+		return errcode.New("nil engine")
+	case *xorm.Engine:
+		e.AddHook(hook)
+		return nil
+	case *XEngine:
+		return e.AddHook(hook)
+	case transaction.Engine:
+		return e.AddHook(hook)
+	default:
+		return errcode.Newf("unsupported engine type %T", engine)
+	}
+}
+
+// AddHook implements transaction.Engine. hook must be a contexts.Hook.
+func (p *XEngine) AddHook(hook any) error {
+	if hook == nil {
+		return errcode.New("nil hook")
+	}
+	h, ok := hook.(contexts.Hook)
+	if !ok {
+		return errcode.Newf("hook must implement xorm contexts.Hook, got %T", hook)
+	}
+	p.Engine.AddHook(h)
+	return nil
 }
 
 // NewEnginesFromFile initial engines from file
@@ -307,6 +349,11 @@ func configureEngine(engine *xorm.Engine, options *Options) {
 	}
 	engine.ShowSQL(options.showSQL)
 	engine.Logger().SetLevel(options.logLevel)
+	for _, h := range options.hooks {
+		if h != nil {
+			engine.AddHook(h)
+		}
+	}
 }
 
 // - *Options: 配置生成的 Options 对象

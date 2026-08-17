@@ -29,6 +29,9 @@ type Engine interface {
 	BeginTransaction() (Transaction, error)
 	// BeginNonTransaction starts a non-transactional session.
 	BeginNonTransaction() (Transaction, error)
+	// AddHook attaches an ORM-specific hook. Concrete engines (e.g. txorm.XEngine)
+	// assert the value to their hook type; pass any for ORM-agnostic callers.
+	AddHook(hook any) error
 	// Close closes the engine.
 	Close() error
 }

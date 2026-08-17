@@ -20,6 +20,8 @@ package txorm
 import (
 	"database/sql"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/go-trellis/common/config"
 	"github.com/go-trellis/common/errors/errcode"
@@ -27,6 +29,7 @@ import (
 	"github.com/go-trellis/common/orm/transaction"
 
 	"xorm.io/xorm"
+	"xorm.io/xorm/contexts"
 	"xorm.io/xorm/core"
 	"xorm.io/xorm/log"
 )
@@ -56,6 +59,7 @@ type Options struct {
 	showSQL            bool
 	logLevel           log.LogLevel
 	isDefault          bool
+	hooks              []contexts.Hook
 }
 
 func OptDriver(d string) Option {
@@ -98,6 +102,46 @@ func OptIsDefault(def bool) Option {
 	return func(o *Options) {
 		o.isDefault = def
 	}
+}
+
+// OptHook registers xorm context hooks at engine creation time.
+func OptHook(hooks ...contexts.Hook) Option {
+	return func(o *Options) {
+		o.hooks = append(o.hooks, hooks...)
+	}
+}
+
+// AddHook attaches a contexts.Hook to *xorm.Engine, *XEngine, or transaction.Engine.
+func AddHook(engine any, hook contexts.Hook) error {
+	if hook == nil {
+		return errcode.New("nil hook")
+	}
+	switch e := engine.(type) {
+	case nil:
+		return errcode.New("nil engine")
+	case *xorm.Engine:
+		e.AddHook(hook)
+		return nil
+	case *XEngine:
+		return e.AddHook(hook)
+	case transaction.Engine:
+		return e.AddHook(hook)
+	default:
+		return errcode.Newf("unsupported engine type %T", engine)
+	}
+}
+
+// AddHook implements transaction.Engine. hook must be a contexts.Hook.
+func (p *XEngine) AddHook(hook any) error {
+	if hook == nil {
+		return errcode.New("nil hook")
+	}
+	h, ok := hook.(contexts.Hook)
+	if !ok {
+		return errcode.Newf("hook must implement xorm contexts.Hook, got %T", hook)
+	}
+	p.Engine.AddHook(h)
+	return nil
 }
 
 // NewEnginesFromFile initial engines from file.
@@ -285,10 +329,15 @@ func configureEngine(engine *xorm.Engine, options *Options) {
 	// Set the custom logger first so ShowSQL/log level apply to it rather than
 	// the default logger (SetLogger replaces the logger without carrying settings over).
 	if options.logger != nil {
-		engine.SetLogger(options.logger)
+		engine.SetLogger(logger.WrapXormFilter(options.logger))
 	}
 	engine.ShowSQL(options.showSQL)
 	engine.Logger().SetLevel(options.logLevel)
+	for _, h := range options.hooks {
+		if h != nil {
+			engine.AddHook(h)
+		}
+	}
 }
 
 // configureToOptions configure the options from given config.
@@ -297,11 +346,74 @@ func configureToOptions(cfg config.Config) *Options {
 		maxIdleConns: cfg.GetInt("max_idle_conns", defaultOptions.maxIdleConns),
 		maxOpenConns: cfg.GetInt("max_open_conns", defaultOptions.maxOpenConns),
 		showSQL:      cfg.GetBoolean("show_sql"),
-		logLevel:     log.LogLevel(cfg.GetInt("log_level")),
+		logLevel:     parseXormLogLevel(cfg.GetInterface("log_level")),
 		isDefault:    cfg.GetBoolean("is_default"),
 		driver:       cfg.GetString("driver", defaultOptions.driver),
 		coreDriver:   cfg.GetString("core_driver", defaultOptions.coreDriver),
 	}
+}
+
+// parseXormLogLevel accepts English names (debug|info|warn|error|off) or legacy ints 0–4.
+// Empty / omitted defaults to LOG_DEBUG (same as previous GetInt("log_level")).
+func parseXormLogLevel(v any) log.LogLevel {
+	if v == nil {
+		return log.LOG_DEBUG
+	}
+	switch x := v.(type) {
+	case string:
+		return parseXormLogLevelName(x)
+	case int:
+		return clampXormLogLevel(log.LogLevel(x))
+	case int8:
+		return clampXormLogLevel(log.LogLevel(x))
+	case int16:
+		return clampXormLogLevel(log.LogLevel(x))
+	case int32:
+		return clampXormLogLevel(log.LogLevel(x))
+	case int64:
+		return clampXormLogLevel(log.LogLevel(x))
+	case uint:
+		return clampXormLogLevel(log.LogLevel(x))
+	case uint64:
+		return clampXormLogLevel(log.LogLevel(x))
+	case float32:
+		return clampXormLogLevel(log.LogLevel(x))
+	case float64:
+		return clampXormLogLevel(log.LogLevel(x))
+	default:
+		return parseXormLogLevelName(fmt.Sprint(x))
+	}
+}
+
+func parseXormLogLevelName(s string) log.LogLevel {
+	s = strings.TrimSpace(strings.ToLower(s))
+	if s == "" {
+		return log.LOG_DEBUG
+	}
+	if n, err := strconv.Atoi(s); err == nil {
+		return clampXormLogLevel(log.LogLevel(n))
+	}
+	switch s {
+	case "debug":
+		return log.LOG_DEBUG
+	case "info":
+		return log.LOG_INFO
+	case "warn", "warning":
+		return log.LOG_WARNING
+	case "err", "error":
+		return log.LOG_ERR
+	case "off":
+		return log.LOG_OFF
+	default:
+		return log.LOG_DEBUG
+	}
+}
+
+func clampXormLogLevel(lv log.LogLevel) log.LogLevel {
+	if lv < log.LOG_DEBUG || lv > log.LOG_OFF {
+		return log.LOG_DEBUG
+	}
+	return lv
 }
 
 func (p *XEngine) TransactionDo(fn func(*xorm.Session) error) error {

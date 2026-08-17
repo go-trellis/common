@@ -13,6 +13,23 @@ import (
 	"xorm.io/xorm/log"
 )
 
+func TestReportCallerSkipsWrapper(t *testing.T) {
+	var buf bytes.Buffer
+	l := logrus.New()
+	l.SetOutput(&buf)
+	l.SetLevel(logrus.InfoLevel)
+	l.SetFormatter(&logrus.TextFormatter{DisableColors: true, DisableTimestamp: true})
+
+	ll := logger.NewWithLogrusLogger(l).(*logger.LogrusLogger)
+	ll.SetReportCaller(true)
+	ll.Infof("caller check")
+
+	out := buf.String()
+	testutils.Assert(t, strings.Contains(out, "caller check"), "log message missing: %s", out)
+	testutils.Assert(t, !strings.Contains(out, "logger_logrus.go"), "should not report wrapper file: %s", out)
+	testutils.Assert(t, strings.Contains(out, "logger_logrus_test.go"), "should report test call site: %s", out)
+}
+
 func TestLogLevelDoesNotGateAppInfof(t *testing.T) {
 	var buf bytes.Buffer
 	l := logrus.New()

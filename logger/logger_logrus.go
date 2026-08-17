@@ -23,7 +23,9 @@ import (
 	"io"
 	"maps"
 	"os"
+	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/go-trellis/common/config"
 	"github.com/sirupsen/logrus"
@@ -420,4 +422,160 @@ func (p *LogrusLogger) IsShowSQL() bool {
 
 func (p *LogrusLogger) Writer() io.Writer {
 	return p.logger.Out
+}
+
+const (
+	maxCallerDepth      = 32
+	logrusPackagePrefix = "github.com/sirupsen/logrus"
+)
+
+var (
+	loggerPackageOnce sync.Once
+	loggerPackageName string
+)
+
+func thisLoggerPackage() string {
+	loggerPackageOnce.Do(func() {
+		pc, _, _, _ := runtime.Caller(0)
+		loggerPackageName = callerPackageName(runtime.FuncForPC(pc).Name())
+	})
+	return loggerPackageName
+}
+
+// callerPackageName reduces a fully qualified function name to its package path
+// (same approach as logrus.getPackageName).
+func callerPackageName(fn string) string {
+	for {
+		lastPeriod := strings.LastIndex(fn, ".")
+		lastSlash := strings.LastIndex(fn, "/")
+		if lastPeriod > lastSlash {
+			fn = fn[:lastPeriod]
+			continue
+		}
+		break
+	}
+	return fn
+}
+
+func shouldSkipCallerPackage(pkg string) bool {
+	switch {
+	case pkg == "runtime":
+		return true
+	case pkg == thisLoggerPackage():
+		return true
+	case pkg == logrusPackagePrefix, strings.HasPrefix(pkg, logrusPackagePrefix+"/"):
+		return true
+	default:
+		return false
+	}
+}
+
+// findExternalCaller walks the stack past logrus and this wrapper package so
+// ReportCaller points at the real application / xorm call site.
+func findExternalCaller() *runtime.Frame {
+	pcs := make([]uintptr, maxCallerDepth)
+	n := runtime.Callers(0, pcs)
+	if n == 0 {
+		return nil
+	}
+	frames := runtime.CallersFrames(pcs[:n])
+	for {
+		f, more := frames.Next()
+		pkg := callerPackageName(f.Function)
+		if !shouldSkipCallerPackage(pkg) {
+			return &f
+		}
+		if !more {
+			break
+		}
+	}
+	return nil
+}
+
+func skipWrapperCallerPrettyfier(frame *runtime.Frame) (function string, file string) {
+	if real := findExternalCaller(); real != nil {
+		frame = real
+	}
+	if frame == nil {
+		return "", ""
+	}
+	return frame.Function, fmt.Sprintf("%s:%d", frame.File, frame.Line)
+}
+
+// ensureReportCallerPrettyfier makes Text/JSON formatters skip LogrusLogger
+// wrappers when printing func/file for ReportCaller.
+func ensureReportCallerPrettyfier(l *logrus.Logger) {
+	if l == nil {
+		return
+	}
+	switch f := l.Formatter.(type) {
+	case *logrus.TextFormatter:
+		if f.CallerPrettyfier == nil {
+			f.CallerPrettyfier = skipWrapperCallerPrettyfier
+		}
+	case *logrus.JSONFormatter:
+		if f.CallerPrettyfier == nil {
+			f.CallerPrettyfier = skipWrapperCallerPrettyfier
+		}
+	}
+}
+
+// xormLogFilter applies databases.*.log_level to xorm Infof/Debugf/Warnf/Errorf/AfterSQL
+// without changing the wrapped logger's application-facing methods when called directly.
+type xormLogFilter struct {
+	log.ContextLogger
+}
+
+// WrapXormFilter returns a ContextLogger for engine.SetLogger that respects SetLevel
+// for all xorm log calls (PING, SQL, sync, …). Pass the same underlying logger to
+// application code without this wrapper so app Infof is only gated by logrus level.
+func WrapXormFilter(l log.Logger) log.ContextLogger {
+	if l == nil {
+		return nil
+	}
+	var inner log.ContextLogger
+	switch t := l.(type) {
+	case log.ContextLogger:
+		inner = t
+	default:
+		inner = log.NewLoggerAdapter(t)
+	}
+	if f, ok := inner.(*xormLogFilter); ok {
+		return f
+	}
+	return &xormLogFilter{ContextLogger: inner}
+}
+
+func (f *xormLogFilter) Debugf(format string, v ...any) {
+	if f.Level() <= log.LOG_DEBUG {
+		f.ContextLogger.Debugf(format, v...)
+	}
+}
+
+func (f *xormLogFilter) Infof(format string, v ...any) {
+	if f.Level() <= log.LOG_INFO {
+		f.ContextLogger.Infof(format, v...)
+	}
+}
+
+func (f *xormLogFilter) Warnf(format string, v ...any) {
+	if f.Level() <= log.LOG_WARNING {
+		f.ContextLogger.Warnf(format, v...)
+	}
+}
+
+func (f *xormLogFilter) Errorf(format string, v ...any) {
+	if f.Level() <= log.LOG_ERR {
+		f.ContextLogger.Errorf(format, v...)
+	}
+}
+
+func (f *xormLogFilter) BeforeSQL(ctx log.LogContext) {
+	f.ContextLogger.BeforeSQL(ctx)
+}
+
+func (f *xormLogFilter) AfterSQL(ctx log.LogContext) {
+	if f.Level() <= log.LOG_INFO {
+		f.ContextLogger.AfterSQL(ctx)
+	}
 }

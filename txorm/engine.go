@@ -300,11 +300,12 @@ func newXormEngine(dsn string, options *Options, coreDB *core.DB) (*xorm.Engine,
 func configureEngine(engine *xorm.Engine, options *Options) {
 	engine.SetMaxIdleConns(options.maxIdleConns)
 	engine.SetMaxOpenConns(options.maxOpenConns)
-	engine.ShowSQL(options.showSQL)
-	// 如果提供了自定义日志器，则设置自定义日志器
+	// SetLogger replaces the logger and does not copy ShowSQL/level from the
+	// previous one. Apply those settings after the injected logger is in place.
 	if options.logger != nil {
 		engine.SetLogger(options.logger)
 	}
+	engine.ShowSQL(options.showSQL)
 	engine.Logger().SetLevel(options.logLevel)
 }
 

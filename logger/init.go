@@ -74,14 +74,14 @@ func InitLogger(cfg config.Config) (Logger, error) {
 					MoveFileType:  MoveFileType(cfg.GetInt("move_file_type", int(MoveFileTypeDaily))),
 					RotationSize:  int64(cfg.GetInt("max_length", 100000000)),
 					RotationCount: uint(cfg.GetInt("max_backups", 30)),
-					Caller:        true,
+					Caller:        cfg.GetBoolean("caller", true),
 				},
 			},
 		}))
 		if err != nil {
 			return nil, err
 		}
-		logW.WithField("filename", filename).Info("file logger initialized")
+		logW.WithField("filename", filename).Debug("file logger initialized")
 		if _, statErr := os.Stat(filename); statErr != nil {
 			return nil, fmt.Errorf("file logger created but %s is not writable: %w", filename, statErr)
 		}
@@ -94,7 +94,7 @@ func InitLogger(cfg config.Config) (Logger, error) {
 func baseLogrusConfig(cfg config.Config, defaultWriter io.Writer, configs []any) *LogrusConfig {
 	return &LogrusConfig{
 		Level:         configLevel(cfg),
-		ReportCaller:  true,
+		ReportCaller:  cfg.GetBoolean("caller", true),
 		Formatter:     logFormatter(cfg),
 		DefaultWriter: defaultWriter,
 		Configs:       configs,

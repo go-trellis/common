@@ -20,6 +20,8 @@ package logger
 import (
 	"testing"
 
+	"github.com/go-trellis/common/config"
+
 	"xorm.io/xorm/log"
 
 	"github.com/sirupsen/logrus"
@@ -36,6 +38,29 @@ func TestToXormLoggerNil(t *testing.T) {
 	// Must not panic.
 	xl.Info("noop")
 	xl.Debugf("noop %d", 1)
+}
+
+func TestToXormLoggerFromInitLogger(t *testing.T) {
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, `
+type: console
+level: 4
+encoding: text
+std_printers: [stdout]
+`))
+	if err != nil {
+		t.Fatalf("config: %v", err)
+	}
+	l, err := InitLogger(cfg)
+	if err != nil {
+		t.Fatalf("InitLogger: %v", err)
+	}
+	xl := ToXormLogger(l).(*XormLogrus)
+	if xl.Logger == nil {
+		t.Fatal("expected underlying *logrus.Logger from InitLogger")
+	}
+	if xl.Level() != log.LOG_INFO {
+		t.Fatalf("level = %v, want LOG_INFO", xl.Level())
+	}
 }
 
 func TestToXormLoggerLevelMapping(t *testing.T) {

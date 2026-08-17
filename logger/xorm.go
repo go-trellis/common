@@ -33,16 +33,29 @@ type XormLogrus struct {
 	Logger  *logrus.Logger
 }
 
-func ToXormLogger(l *logrus.Logger) XormLogger {
-	if l == nil {
-		l = logrus.New()
-		l.SetOutput(io.Discard)
-		return &XormLogrus{Logger: l, level: log.LOG_OFF}
+func ToXormLogger(l Logger) XormLogger {
+	switch t := l.(type) {
+	case nil:
+		return discardXormLogger()
+	case *logrus.Logger:
+		if t == nil {
+			return discardXormLogger()
+		}
+		return &XormLogrus{
+			Logger: t,
+			level:  logrusLevelToXorm(t.GetLevel()),
+		}
+	default:
+		// InitLogger returns *logrus.Logger; other FieldLogger values cannot
+		// drive SQL Infof safely, so fall back to a discard sink.
+		return discardXormLogger()
 	}
-	return &XormLogrus{
-		Logger: l,
-		level:  logrusLevelToXorm(l.GetLevel()),
-	}
+}
+
+func discardXormLogger() XormLogger {
+	l := logrus.New()
+	l.SetOutput(io.Discard)
+	return &XormLogrus{Logger: l, level: log.LOG_OFF}
 }
 
 func logrusLevelToXorm(lv logrus.Level) log.LogLevel {

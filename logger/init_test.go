@@ -84,7 +84,21 @@ encoding: text
 		t.Fatalf("formatter = %T, want *TextFormatter", ll.Formatter)
 	}
 	if !ll.ReportCaller {
-		t.Fatal("ReportCaller should be true")
+		t.Fatal("ReportCaller should default to true")
+	}
+}
+
+func TestInitLoggerCallerConfig(t *testing.T) {
+	l, err := InitLogger(testLoggerConfig(t, `
+type: console
+caller: false
+`))
+	if err != nil {
+		t.Fatalf("InitLogger: %v", err)
+	}
+	ll := l.(*logrus.Logger)
+	if ll.ReportCaller {
+		t.Fatal("ReportCaller should be false when caller: false")
 	}
 }
 

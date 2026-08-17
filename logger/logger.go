@@ -36,7 +36,7 @@ type Logger interface {
 
 func toString(v any) string {
 	switch reflect.TypeOf(v).Kind() {
-	case reflect.Ptr, reflect.Struct, reflect.Map:
+	case reflect.Pointer, reflect.Struct, reflect.Map:
 		bs, err := json.Marshal(v)
 		if err != nil {
 			return ""

@@ -19,28 +19,36 @@ package logger
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"maps"
+	"os"
+	"strings"
 
+	"github.com/go-trellis/common/config"
 	"github.com/sirupsen/logrus"
 	"xorm.io/xorm/log"
 )
 
 var (
-	_ Logger     = (*LogrusLogger)(nil)
-	_ log.Logger = (*LogrusLogger)(nil)
+	_ Logger            = (*LogrusLogger)(nil)
+	_ log.Logger        = (*LogrusLogger)(nil)
+	_ log.ContextLogger = (*LogrusLogger)(nil)
 )
 
 func NewWithLogrusLogger(l *logrus.Logger) Logger {
 	if l == nil {
 		return &noop{}
 	}
-	return &LogrusLogger{logger: l}
+	return &LogrusLogger{logger: l, level: logrusLevelToXorm(l.GetLevel())}
 }
 
 type LogrusLogger struct {
 	logger    *logrus.Logger
 	isShowSQL bool
+	// level filters xorm SQL/log output only; never mutate the shared logrus level.
+	// orm log_level: 4 (LOG_OFF) used to map to logrus Panic and silence the process.
+	level log.LogLevel
 }
 
 func NewLogrusLogger() (*LogrusLogger, error) {
@@ -50,6 +58,9 @@ func NewLogrusLogger() (*LogrusLogger, error) {
 
 	ll := &LogrusLogger{
 		logger: nullLogger,
+		// Default permissive for the xorm filter; databases.*.log_level overrides via SetLevel.
+		// logger config "level" only sets the logrus sink, not this field.
+		level: log.LOG_DEBUG,
 	}
 
 	return ll, nil
@@ -69,9 +80,140 @@ func NewLogrusLoggerWithRotate(config *RotateLogsConfig) (*LogrusLogger, error) 
 
 	ll := &LogrusLogger{
 		logger: logger,
+		// Default permissive for the xorm filter; databases.*.log_level overrides via SetLevel.
+		// logger config "level" only sets the logrus sink, not this field.
+		level: log.LOG_DEBUG,
 	}
 
 	return ll, nil
+}
+
+// NewLogrusLoggerWithConfig builds a LogrusLogger from config.Config.
+// Uses the same rotate keys as RotateLogsConfigFromConfig, plus optional:
+//
+//	std_printers: [stdout|stderr] — also write to these (MultiWriter with the file)
+//	level: logrus level name (debug|info|warn|error|...) — NOT xorm databases.*.log_level
+//	report_caller: bool — enable logrus ReportCaller (file:line of the caller)
+func NewLogrusLoggerWithConfig(cfg config.Config) (*LogrusLogger, error) {
+	if cfg == nil {
+		return NewLogrusLogger()
+	}
+
+	rc, err := RotateLogsConfigFromConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	ll, err := NewLogrusLoggerWithRotate(rc)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := applyLogrusLoggerExtras(ll, cfg); err != nil {
+		return nil, err
+	}
+	return ll, nil
+}
+
+func logrusLevelToXorm(lv logrus.Level) log.LogLevel {
+	switch lv {
+	case logrus.TraceLevel, logrus.DebugLevel:
+		return log.LOG_DEBUG
+	case logrus.InfoLevel:
+		return log.LOG_INFO
+	case logrus.WarnLevel:
+		return log.LOG_WARNING
+	case logrus.ErrorLevel:
+		return log.LOG_ERR
+	case logrus.FatalLevel, logrus.PanicLevel:
+		return log.LOG_OFF
+	default:
+		return log.LOG_UNKNOWN
+	}
+}
+
+func (p *LogrusLogger) enabled(min log.LogLevel) bool {
+	return p.level <= min
+}
+
+// BeforeSQL implements log.ContextLogger (no-op).
+func (p *LogrusLogger) BeforeSQL(log.LogContext) {}
+
+// AfterSQL implements log.ContextLogger. databases.*.log_level filters SQL here only;
+// it must not gate general Infof/Debugf used by application code on the same logger.
+func (p *LogrusLogger) AfterSQL(ctx log.LogContext) {
+	if !p.enabled(log.LOG_INFO) {
+		return
+	}
+	var sessionPart string
+	if ctx.Ctx != nil {
+		if v := ctx.Ctx.Value(log.SessionIDKey); v != nil {
+			if key, ok := v.(string); ok {
+				sessionPart = fmt.Sprintf(" [%s]", key)
+			}
+		}
+	}
+	if ctx.ExecuteTime > 0 {
+		p.logger.Infof("[SQL]%s %s %v - %v", sessionPart, ctx.SQL, ctx.Args, ctx.ExecuteTime)
+		return
+	}
+	p.logger.Infof("[SQL]%s %s %v", sessionPart, ctx.SQL, ctx.Args)
+}
+
+func applyLogrusLoggerExtras(ll *LogrusLogger, cfg config.Config) error {
+	if ll == nil || ll.logger == nil || cfg == nil {
+		return nil
+	}
+
+	if printers := cfg.GetStringList("std_printers"); len(printers) > 0 {
+		ws := []io.Writer{}
+		if ll.logger.Out != nil && ll.logger.Out != io.Discard {
+			ws = append(ws, ll.logger.Out)
+		}
+		for _, p := range printers {
+			switch strings.TrimSpace(strings.ToLower(p)) {
+			case "stdout":
+				ws = append(ws, os.Stdout)
+			case "stderr":
+				ws = append(ws, os.Stderr)
+			}
+		}
+		switch len(ws) {
+		case 0:
+			// keep current output
+		case 1:
+			ll.logger.SetOutput(ws[0])
+		default:
+			ll.logger.SetOutput(io.MultiWriter(ws...))
+		}
+	}
+
+	if lvlName := strings.TrimSpace(cfg.GetString("level")); lvlName != "" {
+		parsed, err := logrus.ParseLevel(lvlName)
+		if err != nil {
+			return err
+		}
+		// Only the logrus sink. xorm SQL filter is databases.*.log_level via SetLevel.
+		ll.logger.SetLevel(parsed)
+	}
+
+	if cfg.GetInterface("report_caller") != nil {
+		ll.SetReportCaller(cfg.GetBoolean("report_caller"))
+	}
+
+	return nil
+}
+
+// SetReportCaller enables or disables logrus caller reporting (file:line).
+// When enabled, func/file skip this wrapper package so they point at the real caller.
+func (p *LogrusLogger) SetReportCaller(reportCaller bool) {
+	if p == nil || p.logger == nil {
+		return
+	}
+	p.logger.SetReportCaller(reportCaller)
+	if reportCaller {
+		ensureReportCallerPrettyfier(p.logger)
+	}
 }
 
 // SetRotateLogs sets up file rotation for the logger
@@ -110,6 +252,7 @@ func (p *LogrusLogger) With(kvs ...any) Logger {
 		logger:    p.logger,
 		fields:    fields,
 		isShowSQL: p.isShowSQL,
+		level:     p.level,
 	}
 }
 
@@ -118,6 +261,7 @@ type logrusLoggerWithFields struct {
 	logger    *logrus.Logger
 	fields    logrus.Fields
 	isShowSQL bool
+	level     log.LogLevel
 }
 
 func (p *logrusLoggerWithFields) With(kvs ...any) Logger {
@@ -139,6 +283,7 @@ func (p *logrusLoggerWithFields) With(kvs ...any) Logger {
 		logger:    p.logger,
 		fields:    newFields,
 		isShowSQL: p.isShowSQL,
+		level:     p.level,
 	}
 }
 
@@ -180,18 +325,11 @@ func (p *logrusLoggerWithFields) Errorf(msg string, kvs ...any) {
 }
 
 func (p *logrusLoggerWithFields) Level() log.LogLevel {
-	if p.logger != nil {
-		tempLogger := &LogrusLogger{logger: p.logger}
-		return tempLogger.Level()
-	}
-	return log.LOG_DEBUG
+	return p.level
 }
 
 func (p *logrusLoggerWithFields) SetLevel(l log.LogLevel) {
-	if p.logger != nil {
-		tempLogger := &LogrusLogger{logger: p.logger}
-		tempLogger.SetLevel(l)
-	}
+	p.level = l
 }
 
 func (p *logrusLoggerWithFields) ShowSQL(show ...bool) {
@@ -215,7 +353,7 @@ func (p *LogrusLogger) Log(kvs ...any) error {
 	return nil
 }
 
-// Debug prints debug information
+// Debug prints debug information (gated by logrus level only, not databases.*.log_level).
 func (p *LogrusLogger) Debug(kvs ...any) {
 	p.logger.Debug(kvs...)
 }
@@ -255,38 +393,15 @@ func (p *LogrusLogger) Errorf(msg string, kvs ...any) {
 	p.logger.Errorf(msg, kvs...)
 }
 
-// Level returns current log level
+// Level returns current xorm filter log level
 func (p *LogrusLogger) Level() log.LogLevel {
-	switch p.logger.GetLevel() {
-	case logrus.DebugLevel:
-		return log.LOG_DEBUG
-	case logrus.InfoLevel:
-		return log.LOG_INFO
-	case logrus.WarnLevel:
-		return log.LOG_WARNING
-	case logrus.ErrorLevel:
-		return log.LOG_ERR
-	case logrus.PanicLevel, logrus.FatalLevel:
-		return log.LOG_OFF
-	default:
-		return log.LOG_DEBUG
-	}
+	return p.level
 }
 
-// SetLevel sets log level
+// SetLevel only filters xorm SQL via AfterSQL. Never change the shared logrus level,
+// and never gate general Infof/Debugf used by application code.
 func (p *LogrusLogger) SetLevel(l log.LogLevel) {
-	switch l {
-	case log.LOG_DEBUG:
-		p.logger.SetLevel(logrus.DebugLevel)
-	case log.LOG_INFO:
-		p.logger.SetLevel(logrus.InfoLevel)
-	case log.LOG_WARNING:
-		p.logger.SetLevel(logrus.WarnLevel)
-	case log.LOG_ERR:
-		p.logger.SetLevel(logrus.ErrorLevel)
-	case log.LOG_OFF:
-		p.logger.SetLevel(logrus.PanicLevel)
-	}
+	p.level = l
 }
 
 // ShowSQL sets whether to show SQL

@@ -24,6 +24,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-trellis/common/config"
 	"github.com/go-trellis/common/utils/types"
 	"github.com/sirupsen/logrus"
 	writerhook "github.com/sirupsen/logrus/hooks/writer"
@@ -93,6 +94,65 @@ func NewRotateLogsWriter(config *RotateLogsConfig) (io.Writer, error) {
 		return nil, nil
 	}
 	return newRotatingFileWriter(config)
+}
+
+// NewRotateLogsWriterFromConfig builds a rotate writer from config.Config.
+// Supported keys match RotateLogsConfig YAML tags:
+//
+//	log_path, rotate_mode, max_age, rotation_time, max_size,
+//	rotation_count, force_new_file, writer_levels
+//
+// Nil cfg returns (nil, nil), same as NewRotateLogsWriter(nil).
+func NewRotateLogsWriterFromConfig(cfg config.Config) (io.Writer, error) {
+	rc, err := RotateLogsConfigFromConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+	return NewRotateLogsWriter(rc)
+}
+
+// RotateLogsConfigFromConfig parses a RotateLogsConfig from config.Config.
+func RotateLogsConfigFromConfig(cfg config.Config) (*RotateLogsConfig, error) {
+	if cfg == nil {
+		return nil, nil
+	}
+
+	logPath := strings.TrimSpace(cfg.GetString("log_path"))
+	if logPath == "" {
+		return nil, fmt.Errorf("log_path is required")
+	}
+
+	r := DefaultRotateLogsConfig(logPath)
+
+	if mode := strings.TrimSpace(cfg.GetString("rotate_mode")); mode != "" {
+		r.RotateMode = RotateMode(strings.ToLower(mode))
+	}
+
+	maxAge := strings.TrimSpace(cfg.GetString("max_age"))
+	rotationTime := strings.TrimSpace(cfg.GetString("rotation_time"))
+	if err := applyRotateLogsConfigFields(r, maxAge, rotationTime, cfg.GetStringList("writer_levels")); err != nil {
+		return nil, err
+	}
+
+	if cfg.GetInterface("max_size") != nil {
+		r.MaxSize = int64(cfg.GetInt("max_size"))
+	}
+
+	hasRotationCount := cfg.GetInterface("rotation_count") != nil
+	if hasRotationCount {
+		r.RotationCount = uint(cfg.GetInt("rotation_count"))
+		// DefaultRotateLogsConfig sets MaxAge; clear it when only rotation_count is configured
+		// so newRotatingFileWriter does not reject both limits.
+		if maxAge == "" {
+			r.MaxAge = 0
+		}
+	}
+
+	if cfg.GetInterface("force_new_file") != nil {
+		r.ForceNewFile = cfg.GetBoolean("force_new_file")
+	}
+
+	return r, nil
 }
 
 // AddRotateLogsHook adds a file rotation hook to the logrus logger

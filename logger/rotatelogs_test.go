@@ -18,12 +18,14 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
+	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/go-trellis/common/config"
 	"github.com/go-trellis/common/utils/testutils"
 	"github.com/sirupsen/logrus"
 )
@@ -44,6 +46,70 @@ func TestNewRotateLogsWriter_NilConfig(t *testing.T) {
 	writer, err := NewRotateLogsWriter(nil)
 	testutils.Ok(t, err)
 	testutils.Assert(t, writer == nil, "writer should be nil for nil config")
+}
+
+func TestNewRotateLogsWriterFromConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, fmt.Sprintf(`
+log_path: %s
+rotate_mode: day
+max_age: 7d
+rotation_time: 24h
+max_size: 1048576
+force_new_file: false
+writer_levels:
+  - info
+  - error
+`, logPath)))
+	testutils.Ok(t, err)
+
+	writer, err := NewRotateLogsWriterFromConfig(cfg)
+	testutils.Ok(t, err)
+	testutils.Assert(t, writer != nil, "writer should not be nil")
+	_, err = writer.Write([]byte("hello from config\n"))
+	testutils.Ok(t, err)
+	if closer, ok := writer.(io.Closer); ok {
+		testutils.Ok(t, closer.Close())
+	}
+}
+
+func TestNewRotateLogsWriterFromConfig_Nil(t *testing.T) {
+	writer, err := NewRotateLogsWriterFromConfig(nil)
+	testutils.Ok(t, err)
+	testutils.Assert(t, writer == nil, "writer should be nil for nil config")
+}
+
+func TestRotateLogsConfigFromConfig_MissingLogPath(t *testing.T) {
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, `
+rotate_mode: hour
+`))
+	testutils.Ok(t, err)
+	_, err = RotateLogsConfigFromConfig(cfg)
+	testutils.Assert(t, err != nil, "expected error for missing log_path")
+}
+
+func TestRotateLogsConfigFromConfig_RotationCountClearsDefaultMaxAge(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, fmt.Sprintf(`
+log_path: %s
+rotation_count: 3
+`, logPath)))
+	testutils.Ok(t, err)
+
+	rc, err := RotateLogsConfigFromConfig(cfg)
+	testutils.Ok(t, err)
+	testutils.Equals(t, uint(3), rc.RotationCount, "rotation_count")
+	testutils.Equals(t, time.Duration(0), rc.MaxAge, "max_age should be cleared when only rotation_count is set")
+
+	writer, err := NewRotateLogsWriter(rc)
+	testutils.Ok(t, err)
+	testutils.Assert(t, writer != nil, "writer should not be nil")
+	if closer, ok := writer.(io.Closer); ok {
+		_ = closer.Close()
+	}
 }
 
 func TestNewRotateLogsWriter_HourMode(t *testing.T) {
@@ -434,6 +500,32 @@ func TestNewLogrusLoggerWithRotate_NilConfig(t *testing.T) {
 	testutils.Assert(t, logger != nil, "logger should not be nil")
 
 	logger.Info("test message")
+}
+
+func TestNewLogrusLoggerWithConfig(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, fmt.Sprintf(`
+log_path: %s
+rotate_mode: day
+level: info
+report_caller: true
+std_printers:
+  - stdout
+`, logPath)))
+	testutils.Ok(t, err)
+
+	ll, err := NewLogrusLoggerWithConfig(cfg)
+	testutils.Ok(t, err)
+	testutils.Assert(t, ll != nil, "logger should not be nil")
+	testutils.Assert(t, ll.logger.ReportCaller, "report_caller should be enabled")
+	ll.Infof("hello from config logger")
+}
+
+func TestNewLogrusLoggerWithConfig_Nil(t *testing.T) {
+	ll, err := NewLogrusLoggerWithConfig(nil)
+	testutils.Ok(t, err)
+	testutils.Assert(t, ll != nil, "nil config should return discard logger")
 }
 
 func TestLogrusLogger_SetRotateLogs(t *testing.T) {

@@ -16,6 +16,15 @@
 ##
 
 ## dsn info
+##
+## logger.* is configured separately (NewLogrusLoggerWithConfig), not in this file.
+## Two different "level" knobs:
+##   logger.level          → logrus sink (string: debug|info|warn|error|…)
+##   databases.*.log_level → xorm SQL filter (string: debug|info|warn|error|off)
+##
+## Bind request ctx with engine.Context(ctx) so SQL AfterSQL can print trace_id.
+## Do not SetLogger per request. Do not Close() the Engine returned by Context().
+
 test:
   # [user[:password]@][net[(addr)]]/dbname[?param1=value1&paramN=valueN]
   dsn: "root:123456@localhost:3306/test?allowNativePasswords=true&parseTime=True"

@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package transaction
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 )
@@ -41,8 +42,9 @@ func (e *stubEngine) BeginTransaction() (Transaction, error) {
 func (e *stubEngine) BeginNonTransaction() (Transaction, error) {
 	return &stubTrans{isTX: false}, nil
 }
-func (e *stubEngine) AddHook(any) error { return nil }
-func (e *stubEngine) Close() error      { return nil }
+func (e *stubEngine) Context(context.Context) Engine { return e }
+func (e *stubEngine) AddHook(any) error              { return nil }
+func (e *stubEngine) Close() error                   { return nil }
 
 type stubTrans struct {
 	isTX        bool

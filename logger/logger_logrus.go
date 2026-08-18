@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -31,6 +32,10 @@ import (
 	"github.com/sirupsen/logrus"
 	"xorm.io/xorm/log"
 )
+
+// traceIDLogField is both the context value key and the logrus field name.
+// Keep in sync with middleware/tracing.TraceIDKey ("trace_id").
+const traceIDLogField = "trace_id"
 
 var (
 	_ Logger            = (*LogrusLogger)(nil)
@@ -95,6 +100,7 @@ func NewLogrusLoggerWithRotate(config *RotateLogsConfig) (*LogrusLogger, error) 
 //
 //	std_printers: [stdout|stderr] — also write to these (MultiWriter with the file)
 //	level: logrus level name (debug|info|warn|error|...) — NOT xorm databases.*.log_level
+//	formatter: json|text — logrus JSONFormatter or TextFormatter (default text)
 //	report_caller: bool — enable logrus ReportCaller (file:line of the caller)
 func NewLogrusLoggerWithConfig(cfg config.Config) (*LogrusLogger, error) {
 	if cfg == nil {
@@ -143,6 +149,7 @@ func (p *LogrusLogger) BeforeSQL(log.LogContext) {}
 
 // AfterSQL implements log.ContextLogger. databases.*.log_level filters SQL here only;
 // it must not gate general Infof/Debugf used by application code on the same logger.
+// When session.Context(reqCtx) was set, trace_id is copied from ctx (do not SetLogger per request).
 func (p *LogrusLogger) AfterSQL(ctx log.LogContext) {
 	if !p.enabled(log.LOG_INFO) {
 		return
@@ -155,11 +162,27 @@ func (p *LogrusLogger) AfterSQL(ctx log.LogContext) {
 			}
 		}
 	}
+	entry := p.sqlLogEntry(ctx)
 	if ctx.ExecuteTime > 0 {
-		p.logger.Infof("[SQL]%s %s %v - %v", sessionPart, ctx.SQL, ctx.Args, ctx.ExecuteTime)
+		entry.Infof("[SQL]%s %s %v - %v", sessionPart, ctx.SQL, ctx.Args, ctx.ExecuteTime)
 		return
 	}
-	p.logger.Infof("[SQL]%s %s %v", sessionPart, ctx.SQL, ctx.Args)
+	entry.Infof("[SQL]%s %s %v", sessionPart, ctx.SQL, ctx.Args)
+}
+
+func (p *LogrusLogger) sqlLogEntry(ctx log.LogContext) *logrus.Entry {
+	if id := traceIDFromContext(ctx.Ctx); id != "" {
+		return p.logger.WithField(traceIDLogField, id)
+	}
+	return logrus.NewEntry(p.logger)
+}
+
+func traceIDFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	id, _ := ctx.Value(traceIDLogField).(string)
+	return id
 }
 
 func applyLogrusLoggerExtras(ll *LogrusLogger, cfg config.Config) error {
@@ -199,10 +222,31 @@ func applyLogrusLoggerExtras(ll *LogrusLogger, cfg config.Config) error {
 		ll.logger.SetLevel(parsed)
 	}
 
+	if name := strings.TrimSpace(cfg.GetString("formatter")); name != "" {
+		if err := applyLogrusFormatter(ll.logger, name); err != nil {
+			return err
+		}
+	}
+
 	if cfg.GetInterface("report_caller") != nil {
 		ll.SetReportCaller(cfg.GetBoolean("report_caller"))
 	}
 
+	return nil
+}
+
+func applyLogrusFormatter(l *logrus.Logger, name string) error {
+	if l == nil {
+		return nil
+	}
+	switch strings.TrimSpace(strings.ToLower(name)) {
+	case "text":
+		l.SetFormatter(&logrus.TextFormatter{FullTimestamp: true})
+	case "json":
+		l.SetFormatter(&logrus.JSONFormatter{})
+	default:
+		return fmt.Errorf("unsupported formatter %q, want json or text", name)
+	}
 	return nil
 }
 

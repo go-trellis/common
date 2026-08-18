@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package txorm
 
 import (
+	"context"
+
 	"github.com/go-trellis/common/errors/errcode"
 	"github.com/go-trellis/common/orm/transaction"
 
@@ -28,6 +30,18 @@ type trans struct {
 	isTrans bool
 	engine  *xorm.Engine
 	session *xorm.Session
+	ctx     context.Context
+}
+
+func applySessionContext(session *xorm.Session, ctx context.Context) *xorm.Session {
+	if session == nil || ctx == nil {
+		return session
+	}
+	return session.Context(ctx)
+}
+
+func (p *trans) newSession() *xorm.Session {
+	return applySessionContext(p.engine.NewSession(), p.ctx)
 }
 
 // Session returns the current session. If there is no active session, a new one will be created.
@@ -36,13 +50,13 @@ func (p *trans) Session() any {
 	if p.isTrans {
 		// session already exists and active, return it directly
 		if p.session == nil {
-			p.session = p.engine.NewSession()
+			p.session = p.newSession()
 		}
 		// return the existing session
 		return p.session
 	}
 	// if there is no active session, create a new one and return it
-	return p.engine.NewSession()
+	return p.newSession()
 }
 
 // IsTransaction returns true if there is an active transaction.
@@ -57,7 +71,7 @@ func (p *trans) Commit(fun any, repos ...any) (err error) {
 	// TX session must be closed on every exit path, including invalid Logic.
 	if p.IsTransaction() {
 		if p.session == nil {
-			p.session = p.engine.NewSession()
+			p.session = p.newSession()
 		}
 		defer p.session.Close()
 	}
@@ -97,7 +111,7 @@ func (p *trans) Commit(fun any, repos ...any) (err error) {
 		}()
 
 		for _, repo := range repos {
-			session := p.engine.NewSession()
+			session := p.newSession()
 			sessions = append(sessions, session)
 			if err = setTransactionRepoSession(repo, session); err != nil {
 				return err
@@ -147,36 +161,38 @@ func setTransactionRepoSession(repo any, session *xorm.Session) error {
 
 // Do to do transaction with customer function
 func Do(engine transaction.Engine, fn func(*xorm.Session) error) error {
-	xEngine, err := assertXormEngine(engine)
+	xEngine, ctx, err := unwrapXEngine(engine)
 	if err != nil {
 		return err
 	}
-	session := xEngine.Engine.NewSession()
+	session := applySessionContext(xEngine.Engine.NewSession(), ctx)
 	defer session.Close()
 	return fn(session)
 }
 
 // TransactionDo to do transaction with customer function
 func TransactionDo(engine transaction.Engine, fn func(*xorm.Session) error) error {
-	xEngine, err := assertXormEngine(engine)
+	xEngine, ctx, err := unwrapXEngine(engine)
 	if err != nil {
 		return err
 	}
-	session := xEngine.Engine.NewSession()
+	session := applySessionContext(xEngine.Engine.NewSession(), ctx)
 	defer session.Close()
 	return TransactionDoWithSession(session, fn)
 }
 
-func assertXormEngine(engine transaction.Engine) (*XEngine, error) {
+func unwrapXEngine(engine transaction.Engine) (*XEngine, context.Context, error) {
 	if engine == nil {
-		return nil, errcode.New("nil transaction engine")
+		return nil, nil, errcode.New("nil transaction engine")
 	}
-	xEngine, ok := engine.(*XEngine)
-	if !ok {
-		return nil, errcode.New("not txorm XEngine")
+	switch e := engine.(type) {
+	case *XEngine:
+		return e, nil, nil
+	case *ctxEngine:
+		return e.XEngine, e.ctx, nil
+	default:
+		return nil, nil, errcode.New("not txorm XEngine")
 	}
-
-	return xEngine, nil
 }
 
 // TransactionDoWithSession to do transaction with customer function.

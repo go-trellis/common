@@ -73,16 +73,49 @@ Logs are written directly to `log_path` as a regular file (no symlinks). When ro
 - Active log: `/var/log/app.log`
 - Archived logs: `/var/log/app.log.20250613` (day mode) or `/var/log/app.log.2025061314` (hour mode)
 
+```yaml
+logger:
+  log_path: /var/log/app.log
+  rotate_mode: day          # day | hour
+  max_age: 7d
+  rotation_time: 24h
+  level: info               # logrus sink: debug|info|warn|error|…
+  formatter: json           # json | text (omit to keep logrus default text)
+  report_caller: true
+  std_printers:
+    - stdout
+```
+
 ```go
 import "github.com/go-trellis/common/logger"
 
-config := logger.DefaultRotateLogsConfig("/var/log/app.log")
-config.RotateMode = logger.RotateModeDay
-config.MaxSize = 100 * 1024 * 1024
-logrusLogger, _ := logger.NewLogrusLoggerWithRotate(config)
+ll, err := logger.NewLogrusLoggerWithConfig(cfg.GetValuesConfig("logger"))
 ```
 
+`logger.level` only controls the logrus sink. xorm SQL is gated separately by `databases.*.log_level` (see [txorm](orm/txorm/README.md)).
+
 Use `tail -f /var/log/app.log` to follow the active log file.
+
+### Database (txorm)
+
+Bind request context with `Engine.Context` so SQL logs can include `trace_id`. Do not call `SetLogger` per request, and do not `Close()` the engine returned by `Context()` (that wrapper is a no-op; close the original engine).
+
+```go
+import (
+    "github.com/go-trellis/common/orm/txorm"
+    "xorm.io/xorm"
+)
+
+engines, err := txorm.NewEnginesWithConfig(cfg.GetValuesConfig("databases"), ll)
+engine := engines["default"].(*txorm.XEngine)
+
+// req.Context() already carries trace_id when tracing middleware ran.
+sessAny, err := engine.Context(req.Context()).NewSession()
+sess := sessAny.(*xorm.Session)
+defer sess.Close()
+```
+
+Full config keys, hooks, and `log_level` vs `logger.level`: [orm/txorm/README.md](orm/txorm/README.md).
 
 ### Common Utilities
 
@@ -117,6 +150,7 @@ make build       # Build all packages
 ## Documentation
 
 - [config](config/README.md) - Configuration management
+- [txorm](orm/txorm/README.md) - XORM engines, SQL logging, and request context
 - [cache](storage/cache/README.md) - LRU cache implementation
 - [snowflake](id/snowflake/README.md) - Snowflake ID generator
 - [fsm](state-machine/fsm/README.md) - Finite state machine

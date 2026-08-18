@@ -510,6 +510,7 @@ log_path: %s
 rotate_mode: day
 level: info
 report_caller: true
+formatter: json
 std_printers:
   - stdout
 `, logPath)))
@@ -519,7 +520,36 @@ std_printers:
 	testutils.Ok(t, err)
 	testutils.Assert(t, ll != nil, "logger should not be nil")
 	testutils.Assert(t, ll.logger.ReportCaller, "report_caller should be enabled")
+	_, ok := ll.logger.Formatter.(*logrus.JSONFormatter)
+	testutils.Assert(t, ok, "formatter should be JSONFormatter, got %T", ll.logger.Formatter)
 	ll.Infof("hello from config logger")
+}
+
+func TestNewLogrusLoggerWithConfig_TextFormatter(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, fmt.Sprintf(`
+log_path: %s
+formatter: text
+`, logPath)))
+	testutils.Ok(t, err)
+
+	ll, err := NewLogrusLoggerWithConfig(cfg)
+	testutils.Ok(t, err)
+	_, ok := ll.logger.Formatter.(*logrus.TextFormatter)
+	testutils.Assert(t, ok, "formatter should be TextFormatter, got %T", ll.logger.Formatter)
+}
+
+func TestNewLogrusLoggerWithConfig_BadFormatter(t *testing.T) {
+	tmpDir := t.TempDir()
+	logPath := filepath.Join(tmpDir, "app.log")
+	cfg, err := config.NewConfigOptions(config.OptionString(config.ReaderTypeYAML, fmt.Sprintf(`
+log_path: %s
+formatter: xml
+`, logPath)))
+	testutils.Ok(t, err)
+	_, err = NewLogrusLoggerWithConfig(cfg)
+	testutils.NotOk(t, err, "invalid formatter should fail")
 }
 
 func TestNewLogrusLoggerWithConfig_Nil(t *testing.T) {

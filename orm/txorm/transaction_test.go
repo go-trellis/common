@@ -18,8 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package txorm
 
 import (
+	"context"
+	"errors"
 	"testing"
 
+	"github.com/go-trellis/common/middleware/tracing"
 	"github.com/go-trellis/common/orm/transaction"
 
 	"xorm.io/xorm"
@@ -113,5 +116,77 @@ func TestTransactionDoClosesSessionOnBeginError(t *testing.T) {
 	})
 	if err == nil {
 		t.Fatal("expected Begin error")
+	}
+}
+
+func TestEngineContextBindsSession(t *testing.T) {
+	engine := testMySQLEngine(t)
+	xEngine := &XEngine{Engine: engine}
+	ctx := tracing.WithTraceID(context.Background(), "trc-sess")
+
+	bound := xEngine.Context(ctx)
+	if bound == nil {
+		t.Fatal("Engine.Context returned nil")
+	}
+	tr, err := bound.BeginNonTransaction()
+	if err != nil {
+		t.Fatalf("Context().BeginNonTransaction: %v", err)
+	}
+	tx, ok := tr.(*trans)
+	if !ok || tx.ctx == nil {
+		t.Fatal("trans should keep ctx")
+	}
+	if tracing.TraceIDFromContext(tx.ctx) != "trc-sess" {
+		t.Fatalf("trans ctx trace_id = %q", tracing.TraceIDFromContext(tx.ctx))
+	}
+
+	canceled, cancel := context.WithCancel(ctx)
+	cancel()
+	sessAny, err := xEngine.Context(canceled).NewSession()
+	if err != nil {
+		t.Fatalf("Context().NewSession: %v", err)
+	}
+	sess, ok := sessAny.(*xorm.Session)
+	if !ok {
+		t.Fatalf("session type = %T", sessAny)
+	}
+	defer sess.Close()
+	if err := sess.Ping(); !errors.Is(err, context.Canceled) {
+		t.Fatalf("session.Ping want context.Canceled (ctx bound), got %v", err)
+	}
+}
+
+func TestCtxEngineCloseDoesNotCloseEngine(t *testing.T) {
+	engine := testMySQLEngine(t)
+	xEngine := &XEngine{Engine: engine}
+	if err := xEngine.Context(context.Background()).Close(); err != nil {
+		t.Fatalf("Context().Close: %v", err)
+	}
+	sess, err := xEngine.NewXORMSession()
+	if err != nil {
+		t.Fatalf("NewXORMSession after wrapper Close: %v", err)
+	}
+	defer sess.Close()
+}
+
+func TestCtxEngineTransactionDoKeepsCtx(t *testing.T) {
+	engine := testMySQLEngine(t)
+	xEngine := &XEngine{Engine: engine}
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	type hasTransactionDo interface {
+		TransactionDo(func(*xorm.Session) error) error
+	}
+	td, ok := xEngine.Context(canceled).(hasTransactionDo)
+	if !ok {
+		t.Fatal("Context() engine should keep TransactionDo")
+	}
+	err := td.TransactionDo(func(*xorm.Session) error {
+		t.Fatal("logic should not run when ctx is canceled")
+		return nil
+	})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("TransactionDo want context.Canceled, got %v", err)
 	}
 }

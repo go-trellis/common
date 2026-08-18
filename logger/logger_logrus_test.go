@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/go-trellis/common/logger"
+	"github.com/go-trellis/common/middleware/tracing"
 	"github.com/go-trellis/common/utils/testutils"
 	"github.com/sirupsen/logrus"
 	"xorm.io/xorm/log"
@@ -85,4 +86,37 @@ func TestWrapXormFilterGatesEngineInfof(t *testing.T) {
 	filtered.SetLevel(log.LOG_INFO)
 	filtered.Infof("PING DATABASE mysql")
 	testutils.Assert(t, strings.Contains(buf.String(), "PING DATABASE"), "engine Infof at info: %s", buf.String())
+}
+
+func TestAfterSQLIncludesTraceID(t *testing.T) {
+	var buf bytes.Buffer
+	l := logrus.New()
+	l.SetOutput(&buf)
+	l.SetLevel(logrus.InfoLevel)
+	l.SetFormatter(&logrus.TextFormatter{DisableColors: true, DisableTimestamp: true})
+
+	xl := logger.NewWithLogrusLogger(l).(*logger.LogrusLogger)
+	xl.SetLevel(log.LOG_INFO)
+
+	ctx := tracing.WithTraceID(context.Background(), "trc-abc")
+	xl.AfterSQL(log.LogContext{
+		Ctx:         ctx,
+		SQL:         "SELECT 1",
+		Args:        []any{},
+		ExecuteTime: time.Millisecond,
+	})
+	out := buf.String()
+	testutils.Assert(t, strings.Contains(out, "[SQL]"), "missing SQL: %s", out)
+	testutils.Assert(t, strings.Contains(out, "trace_id=trc-abc") || strings.Contains(out, `trace_id="trc-abc"`), "missing trace_id: %s", out)
+
+	buf.Reset()
+	xl.AfterSQL(log.LogContext{
+		Ctx:         context.Background(),
+		SQL:         "SELECT 2",
+		Args:        []any{},
+		ExecuteTime: time.Millisecond,
+	})
+	out = buf.String()
+	testutils.Assert(t, strings.Contains(out, "[SQL]"), "missing SQL without trace: %s", out)
+	testutils.Assert(t, !strings.Contains(out, "trace_id="), "unexpected trace_id: %s", out)
 }

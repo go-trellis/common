@@ -29,6 +29,7 @@ import (
 
 	"github.com/go-trellis/common/config"
 	"github.com/go-trellis/common/logger"
+	"github.com/go-trellis/common/middleware/tracing"
 	"github.com/go-trellis/common/orm/transaction"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -152,7 +153,7 @@ func TestLogrusLoggerShowSQLPath(t *testing.T) {
 	}
 
 	engine.Logger().AfterSQL(log.LogContext{
-		Ctx:         context.Background(),
+		Ctx:         tracing.WithTraceID(context.Background(), "trc-hook"),
 		SQL:         "SELECT id FROM t WHERE n = ?",
 		Args:        []any{7},
 		ExecuteTime: 2 * time.Millisecond,
@@ -160,6 +161,9 @@ func TestLogrusLoggerShowSQLPath(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "[SQL]") || !strings.Contains(out, "SELECT id FROM t WHERE n = ?") {
 		t.Fatalf("logrus output %q missing SQL", out)
+	}
+	if !strings.Contains(out, "trace_id=trc-hook") && !strings.Contains(out, `trace_id="trc-hook"`) {
+		t.Fatalf("logrus output %q missing trace_id", out)
 	}
 }
 

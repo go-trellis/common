@@ -18,6 +18,7 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package txorm
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"strconv"
@@ -328,6 +329,9 @@ func configureEngine(engine *xorm.Engine, options *Options) {
 	engine.SetMaxOpenConns(options.maxOpenConns)
 	// Set the custom logger first so ShowSQL/log level apply to it rather than
 	// the default logger (SetLogger replaces the logger without carrying settings over).
+	// SetLogger is for engine construction only. Do not replace it at runtime under
+	// concurrency (data race, mixed trace_id). Bind request ctx via session.Context /
+	// Engine.Context instead so AfterSQL can read trace_id.
 	if options.logger != nil {
 		engine.SetLogger(logger.WrapXormFilter(options.logger))
 	}
@@ -439,4 +443,58 @@ func (p *XEngine) BeginTransaction() (transaction.Transaction, error) {
 
 func (p *XEngine) BeginNonTransaction() (transaction.Transaction, error) {
 	return &trans{isTrans: false, engine: p.Engine}, nil
+}
+
+// Context implements transaction.Engine. Subsequent NewSession/Begin*/Exec bind ctx.
+// The returned Engine wraps the same *xorm.Engine; Close on it is a no-op.
+func (p *XEngine) Context(ctx context.Context) transaction.Engine {
+	return &ctxEngine{XEngine: p, ctx: ctx}
+}
+
+type ctxEngine struct {
+	*XEngine
+	ctx context.Context
+}
+
+var _ transaction.Engine = (*ctxEngine)(nil)
+
+func (c *ctxEngine) Context(ctx context.Context) transaction.Engine {
+	return &ctxEngine{XEngine: c.XEngine, ctx: ctx}
+}
+
+// Close is a no-op. Context() does not own the shared engine; close *XEngine instead.
+func (c *ctxEngine) Close() error {
+	return nil
+}
+
+func (c *ctxEngine) NewXORMSession() (*xorm.Session, error) {
+	return applySessionContext(c.Engine.NewSession(), c.ctx), nil
+}
+
+func (c *ctxEngine) NewSession() (any, error) {
+	return c.NewXORMSession()
+}
+
+func (c *ctxEngine) TransactionDo(fn func(*xorm.Session) error) error {
+	return TransactionDo(c, fn)
+}
+
+func (c *ctxEngine) BeginTransaction() (transaction.Transaction, error) {
+	return &trans{
+		isTrans: true,
+		engine:  c.Engine,
+		session: applySessionContext(c.Engine.NewSession(), c.ctx),
+		ctx:     c.ctx,
+	}, nil
+}
+
+func (c *ctxEngine) BeginNonTransaction() (transaction.Transaction, error) {
+	return &trans{isTrans: false, engine: c.Engine, ctx: c.ctx}, nil
+}
+
+func (c *ctxEngine) Exec(sql string, args ...any) (sql.Result, error) {
+	session := applySessionContext(c.Engine.NewSession(), c.ctx)
+	defer session.Close()
+	sqlOrArgs := append([]any{sql}, args...)
+	return session.Exec(sqlOrArgs...)
 }

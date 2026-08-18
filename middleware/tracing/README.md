@@ -89,19 +89,27 @@ Example: `a1b2c3d4e5f6789012345678901234ab`
 
 ## Integration with Logging
 
-You can easily integrate trace IDs with your logging system:
+SQL logs from txorm include `trace_id` when the session is created through `Engine.Context` (or `session.Context`). Do not call `SetLogger` per request.
+
+```go
+sessAny, err := engine.Context(c.Request.Context()).NewSession()
+sess := sessAny.(*xorm.Session)
+defer sess.Close()
+```
+
+Application logs are not filled in automatically. Pass the field yourself:
 
 ```go
 func MyHandler(c *gin.Context) {
     traceID := tracing.TraceIDFromContext(c.Request.Context())
-    
-    // Include trace ID in logs
     log.WithFields(log.Fields{
         "trace_id": traceID,
-        "path": c.Request.URL.Path,
+        "path":     c.Request.URL.Path,
     }).Info("Request received")
 }
 ```
+
+See [orm/txorm/README.md](../../orm/txorm/README.md) for `formatter`, `log_level`, and the `Context()` wrapper.
 
 ## HTTP Response Headers
 
@@ -112,7 +120,8 @@ The trace ID is automatically added to HTTP response headers as `X-Trace-Id`, al
 ```
 Request → Tracing Middleware → Extract/Generate Trace ID → Store in Context
                                                               ↓
-                                                         Logger() → Include trace_id in logs
+                                        Engine.Context(ctx) → SQL AfterSQL prints trace_id
+                                        App logs → WithField("trace_id", …) yourself
 ```
 
 ## Constants
@@ -151,7 +160,8 @@ The middleware:
 ## Best Practices
 
 1. **Propagate trace IDs**: Always include `X-Trace-Id` header when making downstream HTTP requests
-2. **Use in logs**: The framework automatically includes trace IDs in logs - no manual work needed
-3. **Monitor trace IDs**: Use trace IDs to correlate logs across services
-4. **Custom trace IDs**: You can set custom trace IDs via HTTP headers or gRPC metadata
+2. **SQL logs**: Use `engine.Context(ctx)` (or `session.Context(ctx)`) so txorm SQL lines include `trace_id`
+3. **App logs**: Add `trace_id` with `WithField`; it is not injected into `Infof` automatically
+4. **Monitor trace IDs**: Use trace IDs to correlate logs across services
+5. **Custom trace IDs**: You can set custom trace IDs via HTTP headers or gRPC metadata
 

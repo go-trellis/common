@@ -44,28 +44,22 @@ Database-only keys: [mysql.yaml.sample](mysql.yaml.sample).
 
 xorm's engine logger is a shared field. Replacing it with `SetLogger` per request is a data race and will mix `trace_id`s.
 
-Bind the request context instead. SQL `AfterSQL` reads `ctx.Value("trace_id")`:
+Bind the request context instead. SQL `AfterSQL` reads `ctx.Value("trace_id")`.
 
 ```go
 ctx := context.WithValue(req.Context(), "trace_id", traceID)
+engine := engines[transaction.DefaultDatabase].Context(ctx) // do not Close() this wrapper
 
-sessAny, err := engine.Context(ctx).NewSession()
-sess := sessAny.(*xorm.Session)
-defer sess.Close()
-
-rows, err := sess.QueryString("SELECT 1")
-```
-
-`Ping` / application `Infof` have no session ctx and will not get `trace_id`.
-
-```go
-err := engine.Context(ctx).(interface {
-    TransactionDo(func(*xorm.Session) error) error
-}).TransactionDo(func(s *xorm.Session) error {
-    _, err := s.QueryString("SELECT 1")
-    return err
+c := transaction.NewCommitter(map[string]transaction.Engine{
+    transaction.DefaultDatabase: engine,
 })
+err := c.TX(func(repos ...any) error {
+    // repos[0] has the session; SQL AfterSQL prints trace_id
+    return nil
+}, repo)
 ```
+
+`Ping` / application `Infof` have no session ctx and will not get `trace_id`. `session.Context(ctx)` and `engine.Context(ctx).NewSession()` work the same way.
 
 ### `Context()` wrapper rules
 

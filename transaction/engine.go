@@ -17,13 +17,20 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 package transaction
 
-import "database/sql"
+import (
+	"context"
+	"database/sql"
+)
 
 type Engine interface {
 	NewSession() (any, error)
 	Exec(sql string, args ...any) (sql.Result, error)
 	BeginTransaction() (Transaction, error)
 	BeginNonTransaction() (Transaction, error)
+	// Context returns an Engine whose NewSession/Begin*/Exec bind ctx
+	// (SQL AfterSQL can read trace_id). Do not SetLogger per request.
+	// Close on the returned Engine must not close the underlying shared engine.
+	Context(ctx context.Context) Engine
 	// AddHook attaches an ORM-specific hook. Concrete engines (e.g. txorm.XEngine)
 	// assert the value to their hook type; pass any for ORM-agnostic callers.
 	AddHook(hook any) error

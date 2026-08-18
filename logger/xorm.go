@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
+	"context"
+	"fmt"
 	"io"
 
 	"xorm.io/xorm/log"
@@ -27,11 +29,16 @@ import (
 
 type XormLogger log.Logger
 
+// traceIDLogField is both the context value key and the logrus field name.
+const traceIDLogField = "trace_id"
+
 type XormLogrus struct {
 	showSQL bool
 	level   log.LogLevel
 	Logger  *logrus.Logger
 }
+
+var _ log.ContextLogger = (*XormLogrus)(nil)
 
 func ToXormLogger(l Logger) XormLogger {
 	switch t := l.(type) {
@@ -77,6 +84,47 @@ func logrusLevelToXorm(lv logrus.Level) log.LogLevel {
 
 func (p *XormLogrus) enabled(min log.LogLevel) bool {
 	return p.level <= min
+}
+
+// BeforeSQL implements log.ContextLogger (no-op).
+func (p *XormLogrus) BeforeSQL(log.LogContext) {}
+
+// AfterSQL implements log.ContextLogger. databases.*.log_level filters SQL here.
+// When session.Context(reqCtx) was set, trace_id is copied from ctx
+// (do not SetLogger per request).
+func (p *XormLogrus) AfterSQL(ctx log.LogContext) {
+	if !p.enabled(log.LOG_INFO) {
+		return
+	}
+	var sessionPart string
+	if ctx.Ctx != nil {
+		if v := ctx.Ctx.Value(log.SessionIDKey); v != nil {
+			if key, ok := v.(string); ok {
+				sessionPart = fmt.Sprintf(" [%s]", key)
+			}
+		}
+	}
+	entry := p.sqlLogEntry(ctx)
+	if ctx.ExecuteTime > 0 {
+		entry.Infof("[SQL]%s %s %v - %v", sessionPart, ctx.SQL, ctx.Args, ctx.ExecuteTime)
+		return
+	}
+	entry.Infof("[SQL]%s %s %v", sessionPart, ctx.SQL, ctx.Args)
+}
+
+func (p *XormLogrus) sqlLogEntry(ctx log.LogContext) *logrus.Entry {
+	if id := traceIDFromContext(ctx.Ctx); id != "" {
+		return p.Logger.WithField(traceIDLogField, id)
+	}
+	return logrus.NewEntry(p.Logger)
+}
+
+func traceIDFromContext(ctx context.Context) string {
+	if ctx == nil {
+		return ""
+	}
+	id, _ := ctx.Value(traceIDLogField).(string)
+	return id
 }
 
 func (p *XormLogrus) Debug(v ...any) {

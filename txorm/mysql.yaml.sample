@@ -16,6 +16,15 @@
 ##
 
 ## dsn info
+##
+## logger.* is configured separately (InitLogger), not in this file.
+## logger.formatter / logger.encoding: json | text
+## databases.*.log_level (int): 0 DEBUG, 1 INFO, 2 WARNING, 3 ERR, 4 OFF
+##
+## Bind request ctx with engine.Context(ctx) so SQL AfterSQL can print trace_id
+## from ctx.Value("trace_id"). Do not SetLogger per request.
+## Do not Close() the Engine returned by Context().
+
 test:
   # [user[:password]@][net[(addr)]]/dbname[?param1=value1&paramN=valueN]
   dsn: "root:123456@localhost:3306/test?allowNativePasswords=true&parseTime=True"

@@ -18,7 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package logger
 
 import (
+	"bytes"
+	"context"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/go-trellis/common/config"
 
@@ -88,5 +92,46 @@ func TestXormLogrusSetLevelDoesNotTouchLogrus(t *testing.T) {
 	}
 	if xl.Level() != log.LOG_OFF {
 		t.Fatalf("xorm filter level = %v, want LOG_OFF", xl.Level())
+	}
+}
+
+func TestAfterSQLIncludesTraceID(t *testing.T) {
+	var buf bytes.Buffer
+	l := logrus.New()
+	l.SetOutput(&buf)
+	l.SetLevel(logrus.InfoLevel)
+	l.SetFormatter(&logrus.TextFormatter{DisableColors: true, DisableTimestamp: true})
+
+	xl := ToXormLogger(l).(*XormLogrus)
+	xl.SetLevel(log.LOG_INFO)
+
+	ctx := context.WithValue(context.Background(), traceIDLogField, "trc-abc")
+	xl.AfterSQL(log.LogContext{
+		Ctx:         ctx,
+		SQL:         "SELECT 1",
+		Args:        []any{},
+		ExecuteTime: time.Millisecond,
+	})
+	out := buf.String()
+	if !strings.Contains(out, "[SQL]") {
+		t.Fatalf("missing SQL: %s", out)
+	}
+	if !strings.Contains(out, "trace_id=trc-abc") && !strings.Contains(out, `trace_id="trc-abc"`) {
+		t.Fatalf("missing trace_id: %s", out)
+	}
+
+	buf.Reset()
+	xl.AfterSQL(log.LogContext{
+		Ctx:         context.Background(),
+		SQL:         "SELECT 2",
+		Args:        []any{},
+		ExecuteTime: time.Millisecond,
+	})
+	out = buf.String()
+	if !strings.Contains(out, "[SQL]") {
+		t.Fatalf("missing SQL without trace: %s", out)
+	}
+	if strings.Contains(out, "trace_id=") {
+		t.Fatalf("unexpected trace_id: %s", out)
 	}
 }

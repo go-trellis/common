@@ -41,6 +41,7 @@ var allLevels = []Level{
 
 // InitLogger builds a logger from config.
 // Supported types: noop (default), console, file.
+// Optional formatter/encoding: json | text (formatter takes precedence over encoding).
 func InitLogger(cfg config.Config) (Logger, error) {
 	if cfg == nil {
 		return Noop(), nil
@@ -55,7 +56,11 @@ func InitLogger(cfg config.Config) (Logger, error) {
 		if len(printers) == 0 {
 			printers = []string{"stdout"}
 		}
-		return NewLogger(baseLogrusConfig(cfg, stdWriters(printers), nil))
+		lc, err := baseLogrusConfig(cfg, stdWriters(printers), nil)
+		if err != nil {
+			return nil, err
+		}
+		return NewLogger(lc)
 	case "file":
 		filename := strings.TrimSpace(cfg.GetString("filename"))
 		if filename == "" {
@@ -67,7 +72,7 @@ func InitLogger(cfg config.Config) (Logger, error) {
 			defaultWriter = stdWriters(printers)
 		}
 
-		logW, err := NewLogger(baseLogrusConfig(cfg, defaultWriter, []any{
+		lc, err := baseLogrusConfig(cfg, defaultWriter, []any{
 			&LugrusRotateConfig{
 				Levels: allLevels,
 				RotateConfig: &RotateConfig{
@@ -78,7 +83,11 @@ func InitLogger(cfg config.Config) (Logger, error) {
 					Caller:        cfg.GetBoolean("caller", true),
 				},
 			},
-		}))
+		})
+		if err != nil {
+			return nil, err
+		}
+		logW, err := NewLogger(lc)
 		if err != nil {
 			return nil, err
 		}
@@ -109,14 +118,18 @@ func ensureLogFileWritable(filename string) error {
 	return f.Close()
 }
 
-func baseLogrusConfig(cfg config.Config, defaultWriter io.Writer, configs []any) *LogrusConfig {
+func baseLogrusConfig(cfg config.Config, defaultWriter io.Writer, configs []any) (*LogrusConfig, error) {
+	fmtr, err := logFormatter(cfg)
+	if err != nil {
+		return nil, err
+	}
 	return &LogrusConfig{
 		Level:         configLevel(cfg),
 		ReportCaller:  cfg.GetBoolean("caller", true),
-		Formatter:     logFormatter(cfg),
+		Formatter:     fmtr,
 		DefaultWriter: defaultWriter,
 		Configs:       configs,
-	}
+	}, nil
 }
 
 // configLevel returns configured log level, defaulting to InfoLevel when unset
@@ -132,12 +145,18 @@ func configLevel(cfg config.Config) Level {
 	return lv
 }
 
-func logFormatter(cfg config.Config) logrus.Formatter {
-	switch cfg.GetString("encoding", "text") {
+func logFormatter(cfg config.Config) (logrus.Formatter, error) {
+	name := strings.TrimSpace(cfg.GetString("formatter"))
+	if name == "" {
+		name = strings.TrimSpace(cfg.GetString("encoding", "text"))
+	}
+	switch strings.ToLower(name) {
 	case "json":
-		return &JSONFormatter{}
+		return &JSONFormatter{}, nil
+	case "text", "":
+		return &TextFormatter{}, nil
 	default:
-		return &TextFormatter{}
+		return nil, fmt.Errorf("unsupported formatter %q, want json or text", name)
 	}
 }
 

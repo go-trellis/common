@@ -203,18 +203,53 @@ type: syslog
 
 func TestLogFormatter(t *testing.T) {
 	jsonCfg := testLoggerConfig(t, `encoding: json`)
-	if _, ok := logFormatter(jsonCfg).(*JSONFormatter); !ok {
-		t.Fatalf("json encoding: got %T", logFormatter(jsonCfg))
+	fmtr, err := logFormatter(jsonCfg)
+	if err != nil {
+		t.Fatalf("json encoding: %v", err)
+	}
+	if _, ok := fmtr.(*JSONFormatter); !ok {
+		t.Fatalf("json encoding: got %T", fmtr)
 	}
 
 	textCfg := testLoggerConfig(t, `encoding: text`)
-	if _, ok := logFormatter(textCfg).(*TextFormatter); !ok {
-		t.Fatalf("text encoding: got %T", logFormatter(textCfg))
+	fmtr, err = logFormatter(textCfg)
+	if err != nil {
+		t.Fatalf("text encoding: %v", err)
+	}
+	if _, ok := fmtr.(*TextFormatter); !ok {
+		t.Fatalf("text encoding: got %T", fmtr)
 	}
 
 	defaultCfg := testLoggerConfig(t, `{}`)
-	if _, ok := logFormatter(defaultCfg).(*TextFormatter); !ok {
-		t.Fatalf("default encoding: got %T", logFormatter(defaultCfg))
+	fmtr, err = logFormatter(defaultCfg)
+	if err != nil {
+		t.Fatalf("default encoding: %v", err)
+	}
+	if _, ok := fmtr.(*TextFormatter); !ok {
+		t.Fatalf("default encoding: got %T", fmtr)
+	}
+
+	formatterCfg := testLoggerConfig(t, `formatter: json`)
+	fmtr, err = logFormatter(formatterCfg)
+	if err != nil {
+		t.Fatalf("formatter json: %v", err)
+	}
+	if _, ok := fmtr.(*JSONFormatter); !ok {
+		t.Fatalf("formatter json: got %T", fmtr)
+	}
+
+	preferCfg := testLoggerConfig(t, "encoding: text\nformatter: json\n")
+	fmtr, err = logFormatter(preferCfg)
+	if err != nil {
+		t.Fatalf("formatter over encoding: %v", err)
+	}
+	if _, ok := fmtr.(*JSONFormatter); !ok {
+		t.Fatalf("formatter should win over encoding: got %T", fmtr)
+	}
+
+	_, err = logFormatter(testLoggerConfig(t, `formatter: xml`))
+	if err == nil {
+		t.Fatal("invalid formatter should fail")
 	}
 }
 

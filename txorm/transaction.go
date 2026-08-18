@@ -18,6 +18,8 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package txorm
 
 import (
+	"context"
+
 	"github.com/go-trellis/common/errcode"
 	"github.com/go-trellis/common/transaction"
 
@@ -28,6 +30,18 @@ type trans struct {
 	isTrans bool
 	engine  *xorm.Engine
 	session *xorm.Session
+	ctx     context.Context
+}
+
+func applySessionContext(session *xorm.Session, ctx context.Context) *xorm.Session {
+	if session == nil || ctx == nil {
+		return session
+	}
+	return session.Context(ctx)
+}
+
+func (p *trans) newSession() *xorm.Session {
+	return applySessionContext(p.engine.NewSession(), p.ctx)
 }
 
 // Session 返回一个会话对象。如果当前是事务状态且会话为空，则创建一个新的会话。
@@ -36,13 +50,13 @@ func (p *trans) Session() any {
 	if p.isTrans {
 		// 如果会话为空，则创建一个新的会话
 		if p.session == nil {
-			p.session = p.engine.NewSession()
+			p.session = p.newSession()
 		}
 		// 返回当前会话
 		return p.session
 	}
 	// 如果不是事务状态，直接创建并返回一个新的会话
-	return p.engine.NewSession()
+	return p.newSession()
 }
 
 func (p *trans) IsTransaction() bool {
@@ -55,7 +69,7 @@ func (p *trans) Commit(fun any, repos ...any) (err error) {
 	// TX session must be closed on every exit path, including invalid Logic.
 	if p.IsTransaction() {
 		if p.session == nil {
-			p.session = p.engine.NewSession()
+			p.session = p.newSession()
 		}
 		defer p.session.Close()
 	}
@@ -95,7 +109,7 @@ func (p *trans) Commit(fun any, repos ...any) (err error) {
 		}()
 
 		for _, repo := range repos {
-			session := p.engine.NewSession()
+			session := p.newSession()
 			sessions = append(sessions, session)
 			if err = setTransactionRepoSession(repo, session); err != nil {
 				return err

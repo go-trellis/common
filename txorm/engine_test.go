@@ -296,7 +296,7 @@ func TestToXormLoggerPrintsSQLAfterShowSQL(t *testing.T) {
 	}
 
 	engine.Logger().AfterSQL(log.LogContext{
-		Ctx:         context.Background(),
+		Ctx:         context.WithValue(context.Background(), "trace_id", "trc-hook"),
 		SQL:         "SELECT id FROM t WHERE n = ?",
 		Args:        []any{7},
 		ExecuteTime: 2 * time.Millisecond,
@@ -304,6 +304,9 @@ func TestToXormLoggerPrintsSQLAfterShowSQL(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "[SQL]") || !strings.Contains(out, "SELECT id FROM t WHERE n = ?") {
 		t.Fatalf("logrus output %q missing SQL", out)
+	}
+	if !strings.Contains(out, "trace_id=trc-hook") && !strings.Contains(out, `trace_id="trc-hook"`) {
+		t.Fatalf("logrus output %q missing trace_id", out)
 	}
 }
 

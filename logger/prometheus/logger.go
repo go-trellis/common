@@ -18,7 +18,11 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 package prometheus
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/go-kit/log"
+	"github.com/go-kit/log/level"
 	"github.com/go-trellis/common/logger"
 )
 
@@ -44,7 +48,7 @@ func (p *Config) UnmarshalYAML(unmarshal func(any) error) error {
 }
 
 func New(config *Config) (log.Logger, error) {
-	if config.FileName == "" {
+	if config == nil || config.FileName == "" {
 		return &PromeNoonLogger{}, nil
 	}
 
@@ -61,5 +65,33 @@ func New(config *Config) (log.Logger, error) {
 		return nil, err
 	}
 
-	return log.NewJSONLogger(rotator), nil
+	allow, err := allowOption(config.Level)
+	if err != nil {
+		return nil, err
+	}
+
+	// Filter first, then attach caller so log.DefaultCaller depth stays correct
+	// when callers use level.Info/Debug(...).Log (see go-kit level.TestLevelContext).
+	var l log.Logger = level.NewFilter(log.NewJSONLogger(rotator), allow)
+	if config.Caller {
+		l = log.With(l, "caller", log.DefaultCaller)
+	}
+	return l, nil
+}
+
+// allowOption maps Config.Level to a go-kit level filter option.
+// Empty defaults to info. Aliases: warning→warn, trace→debug, fatal/panic→error.
+func allowOption(name string) (level.Option, error) {
+	switch strings.TrimSpace(strings.ToLower(name)) {
+	case "", "info":
+		return level.AllowInfo(), nil
+	case "debug", "trace":
+		return level.AllowDebug(), nil
+	case "warn", "warning":
+		return level.AllowWarn(), nil
+	case "error", "fatal", "panic":
+		return level.AllowError(), nil
+	default:
+		return nil, fmt.Errorf("unsupported log level %q, want debug|info|warn|error", name)
+	}
 }

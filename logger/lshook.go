@@ -30,7 +30,11 @@ type RotateConfig struct {
 	MoveFileType  MoveFileType `yaml:"move_file_type" json:"move_file_type"`
 	RotationSize  int64        `yaml:"rotation_size" json:"rotation_size"`
 	RotationCount uint         `yaml:"rotation_count" json:"rotation_count"`
-	Caller        bool         `yaml:"caller" json:"caller"`
+	// Caller is not used by the rotating file writer (it is only an io.Writer).
+	// For go-kit (logger/prometheus.New) set Config.Caller so the logger is
+	// wrapped with log.With(..., "caller", log.DefaultCaller).
+	// For logrus InitLogger, ReportCaller is set from the top-level "caller" key.
+	Caller bool `yaml:"caller" json:"caller"`
 }
 
 type LugrusHookConfig struct {

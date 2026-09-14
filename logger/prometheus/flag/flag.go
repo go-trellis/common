@@ -25,7 +25,7 @@ import (
 // AddFlags adds the flags used by this package to the Kingpin application.
 // To use the default Kingpin application, call AddFlags(kingpin.CommandLine)
 func AddFlags(a *kingpin.Application, config *prometheus.Config) {
-	a.Flag("log.level", "Only log messages with the given severity or above. One of: [trace, debug, info, warn, error, fatal, panic]").Default("info").StringVar(&config.Level)
+	a.Flag("log.level", "Only log messages with the given severity or above. One of: [debug, info, warn, error] (aliases: trace→debug, warning→warn, fatal/panic→error)").Default("info").StringVar(&config.Level)
 	a.Flag("log.file-name", "Path to the log directory.").Default("").StringVar(&config.FileName)
 	a.Flag("log.move-file-type", "Move file type.[1-Move files every minute, 2-Move files every hour, 3-Move files every day]").
 		Default("3").IntVar(&config.MoveFileType)

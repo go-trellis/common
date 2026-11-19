@@ -99,6 +99,36 @@ func NewLFShook(output any, formatter logrus.Formatter) logrus.Hook {
 	return lfshook.NewHook(output, formatter)
 }
 
+// fileFormatter returns a formatter suitable for log files. logrus'
+// TextFormatter decides on colors from the logger's Out (e.g. a stderr
+// terminal) and, when colored, prints seconds-since-start instead of a real
+// timestamp plus ANSI codes. The hook shares the logger's formatter, so a
+// terminal stderr would corrupt the file output. Text formatters are therefore
+// rebuilt with colors off and full timestamps on; other formatters (JSON)
+// are returned unchanged.
+func fileFormatter(f logrus.Formatter) logrus.Formatter {
+	tf, ok := f.(*logrus.TextFormatter)
+	if !ok || tf == nil {
+		return f
+	}
+	// Fields are copied one by one: TextFormatter holds a sync.Once.
+	return &logrus.TextFormatter{
+		DisableColors:          true,
+		ForceQuote:             tf.ForceQuote,
+		DisableQuote:           tf.DisableQuote,
+		DisableTimestamp:       tf.DisableTimestamp,
+		FullTimestamp:          true,
+		TimestampFormat:        tf.TimestampFormat,
+		DisableSorting:         tf.DisableSorting,
+		SortingFunc:            tf.SortingFunc,
+		DisableLevelTruncation: tf.DisableLevelTruncation,
+		PadLevelText:           tf.PadLevelText,
+		QuoteEmptyFields:       tf.QuoteEmptyFields,
+		FieldMap:               tf.FieldMap,
+		CallerPrettyfier:       tf.CallerPrettyfier,
+	}
+}
+
 func NewLugrusHookWithConfig(cfg *LugrusHookConfig) (logrus.Hook, error) {
 	rotate, err := NewRotateLogsWithConfig(cfg.RotateConfig)
 	if err != nil {
@@ -106,7 +136,7 @@ func NewLugrusHookWithConfig(cfg *LugrusHookConfig) (logrus.Hook, error) {
 	}
 	// Without a level there is no per-level drop policy; the async writer's
 	// default (block with timeout) applies.
-	return NewLFShook(rotate, cfg.Formatter), nil
+	return NewLFShook(rotate, fileFormatter(cfg.Formatter)), nil
 }
 
 func NewLugrusHook(formatter logrus.Formatter, cfgs []any) (logrus.Hook, error) {
@@ -148,5 +178,5 @@ func NewLugrusHook(formatter logrus.Formatter, cfgs []any) (logrus.Hook, error) 
 		}
 	}
 
-	return NewLFShook(mapLevelWriter, formatter), nil
+	return NewLFShook(mapLevelWriter, fileFormatter(formatter)), nil
 }

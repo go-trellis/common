@@ -72,9 +72,13 @@ func New(config *Config) (log.Logger, error) {
 
 	// Filter first, then attach caller so log.DefaultCaller depth stays correct
 	// when callers use level.Info/Debug(...).Log (see go-kit level.TestLevelContext).
+	// Always stamp lines with the time; bind ts and caller in a single With so
+	// they share one context and DefaultCaller keeps its expected stack depth.
 	var l log.Logger = level.NewFilter(log.NewJSONLogger(rotator), allow)
 	if config.Caller {
-		l = log.With(l, "caller", log.DefaultCaller)
+		l = log.With(l, "ts", log.DefaultTimestamp, "caller", log.DefaultCaller)
+	} else {
+		l = log.With(l, "ts", log.DefaultTimestamp)
 	}
 	return l, nil
 }

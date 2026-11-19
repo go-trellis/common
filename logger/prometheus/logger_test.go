@@ -168,6 +168,9 @@ func TestNewCallerDisabled(t *testing.T) {
 	if strings.Contains(string(data), `"caller"`) {
 		t.Fatalf("caller=false should omit caller, got: %s", data)
 	}
+	if !strings.Contains(string(data), `"ts":"`) {
+		t.Fatalf("log line should include ts, got: %s", data)
+	}
 }
 
 func TestNewBadLevel(t *testing.T) {

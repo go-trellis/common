@@ -30,6 +30,15 @@ type RotateConfig struct {
 	MoveFileType  MoveFileType `yaml:"move_file_type" json:"move_file_type"`
 	RotationSize  int64        `yaml:"rotation_size" json:"rotation_size"`
 	RotationCount uint         `yaml:"rotation_count" json:"rotation_count"`
+	// Async moves file I/O off the logging goroutine: lines are queued in a
+	// bounded channel and written in batches by a background goroutine.
+	// When the queue is full Debug/Info/Trace lines are dropped, Warn/Error
+	// wait briefly, and Fatal/Panic are written synchronously (only when used
+	// through NewLugrusHook, which knows the level). Call Flush or Shutdown
+	// before exiting so queued lines are not lost.
+	Async bool `yaml:"async" json:"async"`
+	// QueueSize is the async queue capacity in lines (default 8192).
+	QueueSize int `yaml:"async_queue_size" json:"async_queue_size"`
 	// Caller is not used by the rotating file writer (it is only an io.Writer).
 	// For go-kit (logger/prometheus.New) set Config.Caller so the logger is
 	// wrapped with log.With(..., "caller", log.DefaultCaller).
@@ -57,11 +66,33 @@ type LugrusLevelConfig struct {
 type LugrusLevelConfigs []*LugrusLevelConfig
 
 func NewRotateLogsWithConfig(cfg *RotateConfig) (io.Writer, error) {
-	return newRotatingFileWriterFromRotateConfig(cfg, true)
+	return newRotateWriter(cfg, true)
 }
 
 func NewRotateLogs(cfg *RotateConfig) (io.Writer, error) {
-	return newRotatingFileWriterFromRotateConfig(cfg, false)
+	return newRotateWriter(cfg, false)
+}
+
+// newRotateWriter returns the sync rotating writer, wrapped in an asyncWriter
+// when cfg.Async is set. The result is always an io.Closer.
+func newRotateWriter(cfg *RotateConfig, defaultDaily bool) (io.Writer, error) {
+	w, err := newRotatingFileWriterFromRotateConfig(cfg, defaultDaily)
+	if err != nil {
+		return nil, err
+	}
+	if cfg.Async {
+		return newAsyncWriter(w, cfg.QueueSize), nil
+	}
+	return w, nil
+}
+
+// levelWriterFor returns the writer to register for lvl: for async writers a
+// per-level view with that level's drop policy, otherwise w itself.
+func levelWriterFor(w io.Writer, lvl Level) io.Writer {
+	if a, ok := w.(*asyncWriter); ok {
+		return &levelWriter{a: a, mode: writeModeForLevel(lvl)}
+	}
+	return w
 }
 
 func NewLFShook(output any, formatter logrus.Formatter) logrus.Hook {
@@ -73,6 +104,8 @@ func NewLugrusHookWithConfig(cfg *LugrusHookConfig) (logrus.Hook, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Without a level there is no per-level drop policy; the async writer's
+	// default (block with timeout) applies.
 	return NewLFShook(rotate, cfg.Formatter), nil
 }
 
@@ -90,7 +123,7 @@ func NewLugrusHook(formatter logrus.Formatter, cfgs []any) (logrus.Hook, error) 
 				return nil, errcode.Newf("NewRotateLogs(%+v) failed: %+v", t.RotateConfig, err)
 			}
 			for _, lvl := range t.Levels {
-				mapLevelWriter[logrus.Level(lvl)] = rotate
+				mapLevelWriter[logrus.Level(lvl)] = levelWriterFor(rotate, lvl)
 			}
 		case LugrusRotateConfigs:
 			for _, cfg := range t {
@@ -99,7 +132,7 @@ func NewLugrusHook(formatter logrus.Formatter, cfgs []any) (logrus.Hook, error) 
 					return nil, errcode.Newf("NewRotateLogs(%+v) failed: %+v", cfg.RotateConfig, err)
 				}
 				for _, lvl := range cfg.Levels {
-					mapLevelWriter[logrus.Level(lvl)] = rotate
+					mapLevelWriter[logrus.Level(lvl)] = levelWriterFor(rotate, lvl)
 				}
 			}
 		case *LugrusLevelConfig:

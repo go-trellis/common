@@ -81,6 +81,9 @@ func InitLogger(cfg config.Config) (Logger, error) {
 					RotationSize:  int64(cfg.GetInt("max_length", 100000000)),
 					RotationCount: uint(cfg.GetInt("max_backups", 30)),
 					Caller:        cfg.GetBoolean("caller", true),
+					// Keep file I/O off the request path by default.
+					Async:     cfg.GetBoolean("async", true),
+					QueueSize: cfg.GetInt("async_queue_size", defaultAsyncQueueSize),
 				},
 			},
 		})

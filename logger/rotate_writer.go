@@ -37,7 +37,11 @@ type rotatingFileWriter struct {
 	maxSize       int64
 	rotationCount uint
 
-	file      *os.File
+	file *os.File
+	// size tracks the active file size in memory so the size check on every
+	// Write does not need an fstat syscall. It is seeded once when the file is
+	// opened and advanced by the bytes written.
+	size      int64
 	curPeriod string
 	now       func() time.Time
 }
@@ -79,7 +83,9 @@ func (w *rotatingFileWriter) Write(p []byte) (int, error) {
 	if err := w.ensureOpen(); err != nil {
 		return 0, err
 	}
-	return w.file.Write(p)
+	n, err := w.file.Write(p)
+	w.size += int64(n)
+	return n, err
 }
 
 func (w *rotatingFileWriter) Close() error {
@@ -116,14 +122,8 @@ func (w *rotatingFileWriter) ensureOpen() error {
 		return w.rotateLocked(period)
 	}
 
-	if w.maxSize > 0 {
-		info, err := w.file.Stat()
-		if err != nil {
-			return err
-		}
-		if info.Size() >= w.maxSize {
-			return w.rotateLocked(period)
-		}
+	if w.maxSize > 0 && w.size >= w.maxSize {
+		return w.rotateLocked(period)
 	}
 
 	return nil
@@ -174,6 +174,16 @@ func (w *rotatingFileWriter) openActiveFile() error {
 	f, err := os.OpenFile(w.logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
 		return fmt.Errorf("open log file: %w", err)
+	}
+	w.size = 0
+	if w.maxSize > 0 {
+		// Opened in append mode, so the file may already hold data.
+		info, err := f.Stat()
+		if err != nil {
+			_ = f.Close()
+			return fmt.Errorf("stat log file: %w", err)
+		}
+		w.size = info.Size()
 	}
 	w.file = f
 	return nil
